@@ -1,0 +1,4 @@
+/home/fwaszkie/work/playground/FoosballTracker/build/CMakeFiles/foosball_tracker.dir
+/home/fwaszkie/work/playground/FoosballTracker/build/CMakeFiles/playground.dir
+/home/fwaszkie/work/playground/FoosballTracker/build/CMakeFiles/edit_cache.dir
+/home/fwaszkie/work/playground/FoosballTracker/build/CMakeFiles/rebuild_cache.dir
