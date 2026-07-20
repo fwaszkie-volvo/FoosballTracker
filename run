@@ -1,0 +1,107 @@
+#! /usr/bin/bash
+
+function help() {
+  cat <<EOF
+Uzycie: $0 <opcja>
+
+Dostepne opcje:
+  configure  Instaluje niezbedne pakiety, np. cmake, opencv itp.
+  build      Buduje projekt przy uzyciu CMake.
+  clean      Usuwa katalog build.
+  test       Builduje i uruchamia testy projektu.
+  app        Uruchamia aplikacje.
+EOF
+}
+
+function require_install_privileges() {
+  if [[ "$EUID" -eq 0 ]]; then
+    return 0
+  fi
+
+  if ! command -v sudo >/dev/null 2>&1; then
+    echo "Brak polecenia sudo. Uruchom skrypt jako root albo zainstaluj sudo."
+    return 1
+  fi
+
+  if ! sudo -v; then
+    echo "Uzytkownik nie ma uprawnien sudo. Uruchom skrypt jako root."
+    return 1
+  fi
+}
+
+function configure() {
+  local -a privilege_prefix=()
+
+  require_install_privileges || return 1
+
+  if [[ "$EUID" -ne 0 ]]; then
+    privilege_prefix=(sudo)
+  fi
+
+  if command -v apt >/dev/null 2>&1; then
+    "${privilege_prefix[@]}" apt update
+    "${privilege_prefix[@]}" apt install -y cmake libopencv-dev
+    return $?
+  fi
+
+  echo "Nieobslugiwany menedzer pakietow. Zainstaluj recznie: cmake i OpenCV."
+  return 1
+}
+
+function build() {
+  if ! command -v cmake >/dev/null 2>&1; then
+    echo "Brak pakietu cmake. Zainstaluj cmake i sprobuj ponownie."
+    return 1
+  fi
+
+  mkdir -p build
+  cmake -B build
+  cmake --build build
+}
+
+function clean() {
+  if [[ ! -d build ]]; then
+    echo "Katalog build nie istnieje."
+    return 0
+  fi
+
+  rm -rf build
+}
+
+function test() {
+  echo -e "NIC TU NIE MA! TESTUJEMY NA PRODUKCIE"  
+}
+
+function app() {
+  local binary_path="build/foosball_tracker"
+
+  if [[ ! -x "$binary_path" ]]; then
+    echo "Brak binarki: $binary_path"
+    echo "Uruchom ./run build, aby ją zbudować."
+    return 1
+  fi
+
+  "$binary_path"
+}
+
+case "$1" in
+  build)
+    build
+    ;;
+  clean)
+    clean
+    ;;
+  test)
+    test
+    ;;
+  app)
+    app
+    ;;
+  configure)
+    configure
+    ;;
+  *)
+    help
+    exit 1
+    ;;
+esac
