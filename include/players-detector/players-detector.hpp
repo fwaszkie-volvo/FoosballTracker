@@ -7,19 +7,22 @@ struct Players
 {
     std::vector<std::vector<cv::Point>> contours_blue_;
     std::vector<std::vector<cv::Point>> contours_red_;
+
+    std::vector<cv::Rect> rectangles_blue_;
+    std::vector<cv::Rect> rectangles_red_;
 };
 
 class PlayersDetector
 {
-public:
+  public:
     void DetectPlayers(const cv::Mat& frame);
     void DisplayPlayers(const cv::Mat& frame);
 
     Players players_;
 
-private:
-    void DetectRedTeam(const cv::Mat &frame);
-    void DetectBlueTeam(const cv::Mat &frame);
+  private:
+    void DetectRedTeam(const cv::Mat& frame);
+    void DetectBlueTeam(const cv::Mat& frame);
     void DeleteFalsePlayers();
 };
 
