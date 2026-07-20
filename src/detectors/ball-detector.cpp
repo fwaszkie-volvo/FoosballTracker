@@ -1,10 +1,10 @@
-#include "BallDetector.hpp"
+#include "ball-detector.hpp"
 
 #include <cmath>
 #include <vector>
 
-#include "MaskUtils.hpp"
-#include "detector_config.hpp"
+#include "mask-utils.hpp"
+#include "detector-config.hpp"
 
 bool BallDetector::IsCircleInsideFrame(const cv::Point &center, int radius, const cv::Size &size) const
 {

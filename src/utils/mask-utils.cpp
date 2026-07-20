@@ -1,6 +1,6 @@
-#include "MaskUtils.hpp"
+#include "mask-utils.hpp"
 
-#include "detector_config.hpp"
+#include "detector-config.hpp"
 
 cv::Mat MaskUtils::CreateKernel(int size, int shape)
 {

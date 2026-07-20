@@ -1,10 +1,10 @@
-#include "PlayfieldDetector.hpp"
+#include "playfield-detector.hpp"
 
 #include <cmath>
 #include <vector>
 
-#include "MaskUtils.hpp"
-#include "detector_config.hpp"
+#include "mask-utils.hpp"
+#include "detector-config.hpp"
 
 bool PlayfieldDetector::ChooseLargestContour(const std::vector<std::vector<cv::Point>> &contours,
                                              std::vector<cv::Point> &largest_contour) const
