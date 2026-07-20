@@ -15,5 +15,8 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    - name: Configure
+      run: ./run configure
+  
     - name: Build
       run: ./run build
