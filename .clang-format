@@ -1,0 +1,17 @@
+# Intended for clang-format 14.0.0
+Language: Cpp
+Standard: Auto
+BasedOnStyle: Google
+BreakBeforeBraces: Allman
+AccessModifierOffset: -2
+AllowShortIfStatementsOnASingleLine: false
+AllowShortLambdasOnASingleLine: true
+AllowShortLoopsOnASingleLine: false
+AlignAfterOpenBracket: Align
+BinPackArguments: false
+BinPackParameters: false
+ColumnLimit: 100
+ReflowComments: false
+ContinuationIndentWidth: 2
+Cpp11BracedListStyle: true
+IndentWidth: 4
