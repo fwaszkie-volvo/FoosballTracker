@@ -11,5 +11,5 @@ target_include_directories(test
 )
 target_link_libraries(test
     players_detector
-    gtest_main
+    # gtest
 )

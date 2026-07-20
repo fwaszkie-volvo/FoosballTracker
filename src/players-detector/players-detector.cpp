@@ -14,7 +14,6 @@ void PlayersDetector::DetectBlueTeam(const cv::Mat &frame) {
 
   cv::morphologyEx(mask, mask, cv::MORPH_OPEN, kernel);
 
-//   std::vector<std::vector<cv::Point>> contours;
   std::vector<cv::Vec4i> hierarchy;
   cv::findContours(mask, players_.contours_blue_, hierarchy, cv::RETR_EXTERNAL,
                    cv::CHAIN_APPROX_SIMPLE);
@@ -37,10 +36,36 @@ void PlayersDetector::DetectRedTeam(const cv::Mat &frame) {
 
   cv::morphologyEx(mask, mask, cv::MORPH_OPEN, kernel);
 
-//   std::vector<std::vector<cv::Point>> contours;
   std::vector<cv::Vec4i> hierarchy;
   cv::findContours(mask, players_.contours_red_, hierarchy, cv::RETR_EXTERNAL,
                    cv::CHAIN_APPROX_SIMPLE);
+
+
+}
+
+void RemoveFalsePlayers()
+{
+  int64_t upper_right_x{-1};
+  int64_t upper_right_y{-1};
+
+  int64_t lower_right_x{-1};
+  int64_t lower_right_y{-1};
+
+  int64_t upper_left_x{-1};
+  int64_t upper_left_y{-1};
+
+  int64_t lower_left_x{-1};
+  int64_t lower_left_y{-1};
+
+  std::vector<std::vector<cv::Point>> false_players;
+
+  for (const auto &contour : players_.contours_blue_)
+  {
+      cv::Rect bounding_box = cv::boundingRect(contour);
+      if(bounding_box.x > upper_right_x)
+
+
+   }
 }
 
 void PlayersDetector::DetectPlayers(const cv::Mat& frame)
@@ -66,17 +91,26 @@ void PlayersDetector::DisplayPlayers(const cv::Mat& frame)
     }
   }
 
+  int64_t blue_player_number = 0;
+  std::string player_name = "Blue Player ";
   for (const auto &contour : players_.contours_blue_) {
     double area = cv::contourArea(contour);
 
     if (area > 500) {
       cv::Rect bounding_box = cv::boundingRect(contour);
+      std::string coord_box = "(" + std::to_string(bounding_box.x) + ", " + std::to_string(bounding_box.y) + ")";
 
-      cv::rectangle(frame, bounding_box, cv::Scalar(0, 255, 0), 2);
+      cv::rectangle(frame, bounding_box, cv::Scalar(255, 0, 0), 2);
 
-      cv::putText(frame, "Blue Player",
-                  cv::Point(bounding_box.x, bounding_box.y - 10),
-                  cv::FONT_HERSHEY_SIMPLEX, 0.6, cv::Scalar(0, 255, 0), 2);
+      blue_player_number++;
+      player_name += std::to_string(blue_player_number);
+      cv::putText(frame, player_name,
+                  cv::Point(bounding_box.x - 20, bounding_box.y - 10),
+                  cv::FONT_HERSHEY_SIMPLEX, 0.6, cv::Scalar(255, 0, 0), 2);
+      cv::putText(frame, coord_box,
+                  cv::Point(bounding_box.x - 100, bounding_box.y - 100),
+                  cv::FONT_HERSHEY_SIMPLEX, 0.6, cv::Scalar(255, 0, 0), 2);
+      player_name.resize(player_name.size() - std::to_string(blue_player_number).size());
     }
   }
 

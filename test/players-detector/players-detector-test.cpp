@@ -21,8 +21,12 @@ int main()
   {
     double area = cv::contourArea(contour);
     player_count++;
-    std::cout << area << std::endl;
+    std::cout << "   " << player_count << std::endl;
+    for(const auto& points : contour)
+    {
+        std::cout << points << std::endl;
+    }
   }
-
+//   std::cout << player_count << std::endl;
   cv::waitKey(0);
 }

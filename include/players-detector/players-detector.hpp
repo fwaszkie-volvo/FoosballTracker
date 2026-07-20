@@ -15,11 +15,12 @@ public:
     void DetectPlayers(const cv::Mat& frame);
     void DisplayPlayers(const cv::Mat& frame);
 
+    Players players_;
+
 private:
     void DetectRedTeam(const cv::Mat &frame);
     void DetectBlueTeam(const cv::Mat &frame);
-
-    Players players_;
+    void DeleteFalsePlayers();
 };
 
 #endif
