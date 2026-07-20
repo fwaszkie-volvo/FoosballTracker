@@ -11,6 +11,10 @@ target_include_directories(players_detector
     PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/include/players-detector
 )
+target_link_libraries(players_detector
+    PUBLIC
+    ${OpenCV_LIBS}
+)
 
 add_executable(foosball_tracker
     src/main.cpp)

@@ -1,6 +1,6 @@
-#include "players-detector.hpp"
 #include <opencv2/opencv.hpp>
 
+#include "players-detector.hpp"
 /*
   Track:
 Possesion - time between a teams first and last touch of a ball, once the ball
@@ -19,6 +19,10 @@ and collision occured around player)
 
 int main() {
   cv::Mat frame = cv::imread("ball_unobscured.jpg", cv::IMREAD_COLOR);
+    if (frame.empty()) {
+        std::cerr << "Error: Could not open or find the image." << std::endl;
+        return -1;
+    }
 
   PlayersDetector players_detector{};
 

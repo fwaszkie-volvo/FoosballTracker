@@ -16,8 +16,8 @@ public:
     void DisplayPlayers(const cv::Mat& frame);
 
 private:
-    void DetectRedTeam();
-    void DetectBlueTeam();
+    void DetectRedTeam(const cv::Mat &frame);
+    void DetectBlueTeam(const cv::Mat &frame);
 
     Players players_;
 };
