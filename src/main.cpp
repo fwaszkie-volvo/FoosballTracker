@@ -18,18 +18,7 @@ and collision occured around player)
 */
 
 int main() {
-  cv::Mat frame = cv::imread("ball_unobscured.jpg", cv::IMREAD_COLOR);
-    if (frame.empty()) {
-        std::cerr << "Error: Could not open or find the image." << std::endl;
-        return -1;
-    }
 
-  PlayersDetector players_detector{};
-
-  players_detector.DetectPlayers(frame);
-  players_detector.DisplayPlayers(frame);
-
-  cv::waitKey(0);
 
   return 0;
 }

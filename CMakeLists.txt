@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.14)
 project(FoosballTracker)
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(OpenCV REQUIRED)
@@ -27,3 +27,5 @@ target_link_libraries(foosball_tracker
     ${OpenCV_LIBS}
     players_detector
 )
+
+add_subdirectory(test)
