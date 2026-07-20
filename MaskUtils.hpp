@@ -1,0 +1,23 @@
+#ifndef MASK_UTILS_HPP_
+#define MASK_UTILS_HPP_
+
+#include <string>
+
+#include <opencv2/opencv.hpp>
+
+class MaskUtils
+{
+public:
+    static cv::Mat CreateKernel(int size, int shape);
+    static cv::Mat BuildHsvMask(const cv::Mat &frame, const cv::Scalar &lower, const cv::Scalar &upper);
+    static cv::Mat BuildDualHsvMask(const cv::Mat &frame,
+                                    const cv::Scalar &lower1,
+                                    const cv::Scalar &upper1,
+                                    const cv::Scalar &lower2,
+                                    const cv::Scalar &upper2);
+    static void OpenMask(cv::Mat &mask, int kernel_size);
+    static void DrawLabel(cv::Mat &frame, const std::string &label, const cv::Point &anchor, const cv::Scalar &color);
+    static void WriteMaskIfVerbose(const char *path, const cv::Mat &mask);
+};
+
+#endif /* MASK_UTILS_HPP_ */
