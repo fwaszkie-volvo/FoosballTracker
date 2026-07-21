@@ -1,4 +1,4 @@
-include(GoogleTest)
+find_package(GTest REQUIRED)
 
 add_compile_definitions(TEST_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
 
@@ -11,5 +11,6 @@ target_include_directories(test
 )
 target_link_libraries(test
     players_detector
-    # gtest
+    GTest::gtest
+    GTest::gtest_main
 )

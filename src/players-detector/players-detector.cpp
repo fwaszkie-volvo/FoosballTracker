@@ -21,8 +21,12 @@ void PlayersDetector::DetectBlueTeam(const cv::Mat &frame)
 
     for (const auto &contour : players_.contours_blue_)
     {
-        cv::Rect bounding_box = cv::boundingRect(contour);
-        players_.rectangles_blue_.push_back(bounding_box);
+        double area = cv::contourArea(contour);
+        if (area > 500)
+        {
+            cv::Rect bounding_box = cv::boundingRect(contour);
+            players_.rectangles_blue_.push_back(bounding_box);
+        }
     }
 }
 
@@ -50,8 +54,12 @@ void PlayersDetector::DetectRedTeam(const cv::Mat &frame)
 
     for (const auto &contour : players_.contours_red_)
     {
-        cv::Rect bounding_box = cv::boundingRect(contour);
-        players_.rectangles_red_.push_back(bounding_box);
+        double area = cv::contourArea(contour);
+        if (area > 500)
+        {
+            cv::Rect bounding_box = cv::boundingRect(contour);
+            players_.rectangles_red_.push_back(bounding_box);
+        }
     }
 }
 
@@ -83,9 +91,10 @@ void PlayersDetector::RemoveFalseBluePlayers(const cv::Size size)
             false_player_blue_2 = rectangle;
         }
     }
-
+    std::cout << "Before blue: " << players_.rectangles_blue_.size() << std::endl;
     std::erase(players_.rectangles_blue_, false_player_blue_1);
     std::erase(players_.rectangles_blue_, false_player_blue_2);
+    std::cout << "After blue: " << players_.rectangles_blue_.size() << std::endl;
 }
 
 void PlayersDetector::RemoveFalseRedPlayers(const cv::Size size)
@@ -120,8 +129,10 @@ void PlayersDetector::RemoveFalseRedPlayers(const cv::Size size)
               << std::endl;
     std::cout << "False red 2: (" << false_player_red_2.x << ", " << false_player_red_2.y << ")"
               << std::endl;
+    std::cout << "Before red: " << players_.rectangles_red_.size() << std::endl;
     std::erase(players_.rectangles_red_, false_player_red_1);
     std::erase(players_.rectangles_red_, false_player_red_2);
+    std::cout << "After red: " << players_.rectangles_red_.size() << std::endl;
 }
 
 void PlayersDetector::DetectPlayers(const cv::Mat &frame)

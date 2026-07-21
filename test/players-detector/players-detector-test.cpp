@@ -1,7 +1,9 @@
 #include "players-detector.hpp"
 
-// TEST(PlayersDetector, CorrectPlayersAmount)
-int main()
+#include <gtest/gtest.h>
+
+TEST(PlayersDetector, CorrectPlayersAmount)
+// int main()
 {
     std::string image_path = std::string(TEST_SOURCE_DIR) + "/test-files/ball_unobscured.jpg";
     std::cout << image_path << std::endl;
@@ -9,7 +11,6 @@ int main()
     if (frame.empty())
     {
         std::cerr << "Error: Could not open or find the image." << std::endl;
-        return -1;
     }
 
     PlayersDetector players_detector{};
@@ -17,11 +18,15 @@ int main()
     players_detector.DetectPlayers(frame);
     players_detector.DisplayPlayers(frame);
 
-    int64_t team_blue_count{players_detector.players_.rectangles_blue_.size()};
-    int64_t team_red_count{players_detector.players_.rectangles_red_.size()};
+    size_t team_blue_count{players_detector.players_.rectangles_blue_.size()};
+    size_t team_red_count{players_detector.players_.rectangles_red_.size()};
+
+    size_t constexpr actual_team_count = 11;
+    EXPECT_EQ(team_blue_count, actual_team_count);
+    EXPECT_EQ(team_red_count, actual_team_count);
 
     cv::waitKey(0);
-
+    /*
     std::string video_path = std::string(TEST_SOURCE_DIR) + "/test-files/test_video.mp4";
     cv::VideoCapture cap(video_path);
 
@@ -58,4 +63,5 @@ int main()
     cap.release();
     cv::destroyAllWindows();
     return 0;
+*/
 }
