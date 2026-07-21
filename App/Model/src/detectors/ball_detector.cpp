@@ -1,20 +1,20 @@
-#include "ball-detector.hpp"
+#include "ball_detector.hpp"
 
 #include <cmath>
 #include <vector>
 
-#include "mask-utils.hpp"
-#include "detector-config.hpp"
+#include "detector_config.hpp"
+#include "mask_utils.hpp"
 
-bool BallDetector::IsCircleInsideFrame(const cv::Point &center, int radius, const cv::Size &size) const
+bool BallDetector::IsCircleInsideFrame(const cv::Point &center,
+                                       int radius,
+                                       const cv::Size &size) const
 {
-    return center.x - radius >= 0 && center.y - radius >= 0 && center.x + radius < size.width && center.y + radius < size.height;
+    return center.x - radius >= 0 && center.y - radius >= 0 && center.x + radius < size.width &&
+           center.y + radius < size.height;
 }
 
-void BallDetector::ResetBestCandidate()
-{
-    best_candidate_ = DetectionCandidate{};
-}
+void BallDetector::ResetBestCandidate() { best_candidate_ = DetectionCandidate{}; }
 
 void BallDetector::UpdateCandidate(const cv::Point &center, int radius, double score)
 {
@@ -95,13 +95,15 @@ void BallDetector::CollectContourCandidate(const cv::Mat &frame,
     }
 
     cv::Rect box = cv::boundingRect(contour);
-    if (box.x <= 1 || box.y <= 1 || box.x + box.width >= frame.cols - 1 || box.y + box.height >= frame.rows - 1)
+    if (box.x <= 1 || box.y <= 1 || box.x + box.width >= frame.cols - 1 ||
+        box.y + box.height >= frame.rows - 1)
     {
         return;
     }
 
     double aspect_ratio = static_cast<double>(box.width) / static_cast<double>(box.height);
-    if (aspect_ratio < detector_config::kBallMinAspectRatio || aspect_ratio > detector_config::kBallMaxAspectRatio)
+    if (aspect_ratio < detector_config::kBallMinAspectRatio ||
+        aspect_ratio > detector_config::kBallMaxAspectRatio)
     {
         return;
     }
@@ -112,7 +114,8 @@ void BallDetector::CollectContourCandidate(const cv::Mat &frame,
         return;
     }
 
-    cv::Point center(static_cast<int>(std::round(center_f.x)), static_cast<int>(std::round(center_f.y)));
+    cv::Point center(static_cast<int>(std::round(center_f.x)),
+                     static_cast<int>(std::round(center_f.y)));
     int radius = static_cast<int>(std::round(radius_f));
     UpdateCandidate(center, radius, circularity * extent);
 }
@@ -124,14 +127,20 @@ void BallDetector::DrawDetection(cv::Mat &frame) const
         return;
     }
 
-    cv::circle(frame, best_candidate_.center, best_candidate_.radius, detector_config::kBallDrawColor, detector_config::kDrawThickness);
+    cv::circle(frame,
+               best_candidate_.center,
+               best_candidate_.radius,
+               detector_config::kBallDrawColor,
+               detector_config::kDrawThickness);
     MaskUtils::DrawLabel(frame, "Ball", best_candidate_.center, detector_config::kBallDrawColor);
 }
 
 cv::Mat BallDetector::Detect(cv::Mat &frame)
 {
-    cv::Mat mask = MaskUtils::BuildHsvMask(frame, detector_config::kLowerWhite, detector_config::kUpperWhite);
-    cv::Mat ball_kernel = MaskUtils::CreateKernel(detector_config::kBallKernelSize, cv::MORPH_ELLIPSE);
+    cv::Mat mask =
+      MaskUtils::BuildHsvMask(frame, detector_config::kLowerWhite, detector_config::kUpperWhite);
+    cv::Mat ball_kernel =
+      MaskUtils::CreateKernel(detector_config::kBallKernelSize, cv::MORPH_ELLIPSE);
     cv::morphologyEx(mask, mask, cv::MORPH_OPEN, ball_kernel);
     cv::morphologyEx(mask, mask, cv::MORPH_CLOSE, ball_kernel);
 
@@ -139,7 +148,11 @@ cv::Mat BallDetector::Detect(cv::Mat &frame)
     cv::Mat playfield_mask;
     if (playfield_detector_.Detect(frame, playfield_polygon, playfield_mask))
     {
-        cv::polylines(frame, playfield_polygon, true, detector_config::kPlayfieldDrawColor, detector_config::kDrawThickness);
+        cv::polylines(frame,
+                      playfield_polygon,
+                      true,
+                      detector_config::kPlayfieldDrawColor,
+                      detector_config::kDrawThickness);
         MaskUtils::WriteMaskIfVerbose(detector_config::kFieldMaskPath, playfield_mask);
         cv::bitwise_and(mask, playfield_mask, mask);
     }
@@ -169,7 +182,8 @@ cv::Mat BallDetector::Detect(cv::Mat &frame)
 
     for (const auto &circle : circles)
     {
-        cv::Point center(static_cast<int>(std::round(circle[0])), static_cast<int>(std::round(circle[1])));
+        cv::Point center(static_cast<int>(std::round(circle[0])),
+                         static_cast<int>(std::round(circle[1])));
         int radius = static_cast<int>(std::round(circle[2]));
         CollectHoughCandidate(frame, mask, center, radius);
     }

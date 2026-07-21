@@ -1,18 +1,17 @@
-#ifndef BALL_DETECTOR_HPP_
-#define BALL_DETECTOR_HPP_
-
-#include <vector>
+#ifndef FOOSBALL_TRACKER_BALL_DETECTOR_HPP_
+#define FOOSBALL_TRACKER_BALL_DETECTOR_HPP_
 
 #include <opencv2/opencv.hpp>
+#include <vector>
 
-#include "playfield-detector.hpp"
+#include "playfield_detector.hpp"
 
 class BallDetector
 {
-public:
+  public:
     cv::Mat Detect(cv::Mat &frame);
 
-private:
+  private:
     struct DetectionCandidate
     {
         bool found = false;
@@ -28,8 +27,7 @@ private:
                                const cv::Mat &mask,
                                const cv::Point &center,
                                int radius);
-    void CollectContourCandidate(const cv::Mat &frame,
-                                 const std::vector<cv::Point> &contour);
+    void CollectContourCandidate(const cv::Mat &frame, const std::vector<cv::Point> &contour);
     void DrawDetection(cv::Mat &frame) const;
 
     PlayfieldDetector playfield_detector_;
@@ -38,4 +36,4 @@ private:
 
 cv::Mat detect_ball(cv::Mat &frame);
 
-#endif /* BALL_DETECTOR_HPP_ */
+#endif  // FOOSBALL_TRACKER_BALL_DETECTOR_HPP_

@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.14)
 
 project(FoosballTrackerController)
 
+
 add_library(foosball_controller STATIC
 	src/controller.cpp
 )
