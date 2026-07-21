@@ -1,7 +1,11 @@
 cmake_minimum_required(VERSION 3.14)
 project(FoosballTracker)
 
-set(CMAKE_CXX_STANDARD 17)
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+    set(CMAKE_BUILD_TYPE Debug CACHE STRING "Build type" FORCE)
+endif()
+
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(OpenCV REQUIRED)

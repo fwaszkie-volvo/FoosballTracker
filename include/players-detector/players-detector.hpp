@@ -16,6 +16,8 @@ class PlayersDetector
 {
   public:
     void DetectPlayers(const cv::Mat& frame);
+
+    // Debug only, to be removed in final version
     void DisplayPlayers(const cv::Mat& frame);
 
     Players players_;
@@ -23,7 +25,8 @@ class PlayersDetector
   private:
     void DetectRedTeam(const cv::Mat& frame);
     void DetectBlueTeam(const cv::Mat& frame);
-    void DeleteFalsePlayers();
+    void RemoveFalseRedPlayers(const cv::Size size);
+    void RemoveFalseBluePlayers(const cv::Size size);
 };
 
 #endif

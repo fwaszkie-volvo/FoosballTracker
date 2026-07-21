@@ -3,30 +3,59 @@
 // TEST(PlayersDetector, CorrectPlayersAmount)
 int main()
 {
-  std::string image_path = std::string(TEST_SOURCE_DIR) + "/test-files/ball_unobscured.jpg";
-  std::cout << image_path << std::endl;
-  cv::Mat frame = cv::imread(image_path, cv::IMREAD_COLOR);
-    if (frame.empty()) {
+    std::string image_path = std::string(TEST_SOURCE_DIR) + "/test-files/ball_unobscured.jpg";
+    std::cout << image_path << std::endl;
+    cv::Mat frame = cv::imread(image_path, cv::IMREAD_COLOR);
+    if (frame.empty())
+    {
         std::cerr << "Error: Could not open or find the image." << std::endl;
         return -1;
     }
 
-  PlayersDetector players_detector{};
+    PlayersDetector players_detector{};
 
-  players_detector.DetectPlayers(frame);
-  players_detector.DisplayPlayers(frame);
+    players_detector.DetectPlayers(frame);
+    players_detector.DisplayPlayers(frame);
 
-  int64_t player_count = 0;
-  for (const auto &contour : players_detector.players_.contours_red_)
-  {
-    double area = cv::contourArea(contour);
-    player_count++;
-    std::cout << "   " << player_count << std::endl;
-    for(const auto& points : contour)
+    int64_t team_blue_count{players_detector.players_.rectangles_blue_.size()};
+    int64_t team_red_count{players_detector.players_.rectangles_red_.size()};
+
+    cv::waitKey(0);
+
+    std::string video_path = std::string(TEST_SOURCE_DIR) + "/test-files/test_video.mp4";
+    cv::VideoCapture cap(video_path);
+
+    if (!cap.isOpened())
     {
-        std::cout << points << std::endl;
+        std::cerr << "Error: Could not open video source." << std::endl;
+        return -1;
     }
-  }
-//   std::cout << player_count << std::endl;
-  cv::waitKey(0);
+
+    while (true)
+    {
+        cap >> frame;
+
+        if (frame.empty())
+        {
+            std::cout << "End of video stream." << std::endl;
+            break;
+        }
+
+        players_detector.DetectPlayers(frame);
+        players_detector.DisplayPlayers(frame);
+        players_detector.players_.rectangles_blue_.clear();
+        players_detector.players_.rectangles_red_.clear();
+        players_detector.players_.contours_blue_.clear();
+        players_detector.players_.contours_red_.clear();
+
+        char key = (char)cv::waitKey(33);
+        if (key == 'q' || key == 27)
+        {
+            break;
+        }
+    }
+
+    cap.release();
+    cv::destroyAllWindows();
+    return 0;
 }
