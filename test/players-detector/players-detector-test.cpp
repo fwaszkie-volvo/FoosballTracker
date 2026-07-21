@@ -16,7 +16,7 @@ TEST(PlayersDetector, CorrectPlayersAmount)
     PlayersDetector players_detector{};
 
     players_detector.DetectPlayers(frame);
-    players_detector.DisplayPlayers(frame);
+    // players_detector.DisplayPlayers(frame);
 
     size_t team_blue_count{players_detector.players_.rectangles_blue_.size()};
     size_t team_red_count{players_detector.players_.rectangles_red_.size()};
@@ -25,8 +25,8 @@ TEST(PlayersDetector, CorrectPlayersAmount)
     EXPECT_EQ(team_blue_count, actual_team_count);
     EXPECT_EQ(team_red_count, actual_team_count);
 
-    cv::waitKey(0);
     /*
+    cv::waitKey(0);
     std::string video_path = std::string(TEST_SOURCE_DIR) + "/test-files/test_video.mp4";
     cv::VideoCapture cap(video_path);
 
