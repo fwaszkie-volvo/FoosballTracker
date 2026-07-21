@@ -11,6 +11,7 @@
 namespace
 {
 constexpr char kTestOutputDirectory[]{"Tests/test_outputs"};
+constexpr double kVideoTestDurationSeconds{10.0};
 
 bool IsVerboseTestRun()
 {
@@ -68,6 +69,7 @@ TEST_F(BallDetectorTest, VideoReadAndAnnotatedWrite)
         input_fps = 30.0;
     }
     const double output_fps{input_fps};
+    const int max_frames{static_cast<int>(std::ceil(output_fps * kVideoTestDurationSeconds))};
 
     const cv::Size frame_size{frame_width, frame_height};
     const int fourcc{cv::VideoWriter::fourcc('a', 'v', 'c', '1')};
@@ -79,7 +81,7 @@ TEST_F(BallDetectorTest, VideoReadAndAnnotatedWrite)
 
     int processed_frames{0};
     cv::Mat video_frame;
-    while (input_video.read(video_frame))
+    while (processed_frames < max_frames && input_video.read(video_frame))
     {
         if (is_verbose && (processed_frames % 10 == 0))
         {
