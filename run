@@ -1,5 +1,10 @@
 #! /usr/bin/bash
 
+SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+APP_DIR="$SCRIPT_DIR/App"
+BUILD_DIR="$SCRIPT_DIR/build"
+APP_BINARY="$BUILD_DIR/foosball_tracker"
+
 function help() {
   cat <<EOF
 Uzycie: $0 <opcja>
@@ -54,18 +59,18 @@ function build() {
     return 1
   fi
 
-  mkdir -p build
-  cmake -B build
-  cmake --build build
+  mkdir -p "$BUILD_DIR"
+  cmake -S "$APP_DIR" -B "$BUILD_DIR"
+  cmake --build "$BUILD_DIR"
 }
 
 function clean() {
-  if [[ ! -d build ]]; then
-    echo "Katalog build nie istnieje."
+  if [[ ! -d "$BUILD_DIR" ]]; then
+    echo "Katalog build nie istnieje: $BUILD_DIR"
     return 0
   fi
 
-  rm -rf build
+  rm -rf "$BUILD_DIR"
 }
 
 function test() {
@@ -73,15 +78,13 @@ function test() {
 }
 
 function app() {
-  local binary_path="build/foosball_tracker"
-
-  if [[ ! -x "$binary_path" ]]; then
-    echo "Brak binarki: $binary_path"
+  if [[ ! -x "$APP_BINARY" ]]; then
+    echo "Brak binarki: $APP_BINARY"
     echo "Uruchom ./run build, aby ją zbudować."
     return 1
   fi
 
-  "$binary_path"
+  "$APP_BINARY"
 }
 
 case "$1" in

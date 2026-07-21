@@ -1,10 +1,10 @@
-#include "playfield-detector.hpp"
+#include "playfield_detector.hpp"
 
 #include <cmath>
 #include <vector>
 
-#include "mask-utils.hpp"
-#include "detector-config.hpp"
+#include "detector_config.hpp"
+#include "mask_utils.hpp"
 
 bool PlayfieldDetector::ChooseLargestContour(const std::vector<std::vector<cv::Point>> &contours,
                                              std::vector<cv::Point> &largest_contour) const
@@ -24,10 +24,12 @@ bool PlayfieldDetector::ChooseLargestContour(const std::vector<std::vector<cv::P
     return !largest_contour.empty();
 }
 
-std::vector<cv::Point> PlayfieldDetector::ApproximatePolygon(const std::vector<cv::Point> &hull) const
+std::vector<cv::Point> PlayfieldDetector::ApproximatePolygon(
+  const std::vector<cv::Point> &hull) const
 {
     std::vector<cv::Point> best_polygon = hull;
-    int best_vertex_delta = std::abs(static_cast<int>(hull.size()) - detector_config::kPlayfieldTargetVertices);
+    int best_vertex_delta =
+      std::abs(static_cast<int>(hull.size()) - detector_config::kPlayfieldTargetVertices);
     double hull_perimeter = cv::arcLength(hull, true);
 
     for (double epsilon_scale = detector_config::kPlayfieldApproxStart;
@@ -42,7 +44,8 @@ std::vector<cv::Point> PlayfieldDetector::ApproximatePolygon(const std::vector<c
             continue;
         }
 
-        int vertex_delta = std::abs(static_cast<int>(polygon.size()) - detector_config::kPlayfieldTargetVertices);
+        int vertex_delta =
+          std::abs(static_cast<int>(polygon.size()) - detector_config::kPlayfieldTargetVertices);
         if (vertex_delta < best_vertex_delta)
         {
             best_vertex_delta = vertex_delta;
@@ -62,7 +65,8 @@ bool PlayfieldDetector::Detect(const cv::Mat &frame,
                                std::vector<cv::Point> &playfield_polygon,
                                cv::Mat &playfield_mask) const
 {
-    cv::Mat green_mask = MaskUtils::BuildHsvMask(frame, detector_config::kLowerGreen, detector_config::kUpperGreen);
+    cv::Mat green_mask =
+      MaskUtils::BuildHsvMask(frame, detector_config::kLowerGreen, detector_config::kUpperGreen);
     cv::Mat green_dominance_mask;
 
     std::vector<cv::Mat> bgr_channels;
@@ -75,15 +79,28 @@ bool PlayfieldDetector::Detect(const cv::Mat &frame,
 
     cv::Mat green_over_red_mask;
     cv::Mat green_over_blue_mask;
-    cv::threshold(green_minus_red, green_over_red_mask, detector_config::kGreenDominanceThreshold, 255, cv::THRESH_BINARY);
-    cv::threshold(green_minus_blue, green_over_blue_mask, detector_config::kGreenDominanceThreshold, 255, cv::THRESH_BINARY);
+    cv::threshold(green_minus_red,
+                  green_over_red_mask,
+                  detector_config::kGreenDominanceThreshold,
+                  255,
+                  cv::THRESH_BINARY);
+    cv::threshold(green_minus_blue,
+                  green_over_blue_mask,
+                  detector_config::kGreenDominanceThreshold,
+                  255,
+                  cv::THRESH_BINARY);
     cv::bitwise_and(green_over_red_mask, green_over_blue_mask, green_dominance_mask);
     cv::bitwise_and(green_mask, green_dominance_mask, green_mask);
 
-    cv::Mat kernel = MaskUtils::CreateKernel(detector_config::kPlayfieldKernelSize, cv::MORPH_ELLIPSE);
+    cv::Mat kernel =
+      MaskUtils::CreateKernel(detector_config::kPlayfieldKernelSize, cv::MORPH_ELLIPSE);
     cv::morphologyEx(green_mask, green_mask, cv::MORPH_CLOSE, kernel);
     cv::morphologyEx(green_mask, green_mask, cv::MORPH_OPEN, kernel);
-    cv::dilate(green_mask, green_mask, kernel, cv::Point(-1, -1), detector_config::kPlayfieldDilateIterations);
+    cv::dilate(green_mask,
+               green_mask,
+               kernel,
+               cv::Point(-1, -1),
+               detector_config::kPlayfieldDilateIterations);
 
     std::vector<std::vector<cv::Point>> contours;
     std::vector<cv::Vec4i> hierarchy;

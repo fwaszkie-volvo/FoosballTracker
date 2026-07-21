@@ -1,5 +1,5 @@
-#ifndef DETECTOR_CONFIG_HPP_
-#define DETECTOR_CONFIG_HPP_
+#ifndef FOOSBALL_TRACKER_DETECTOR_CONFIG_HPP_
+#define FOOSBALL_TRACKER_DETECTOR_CONFIG_HPP_
 
 #include <opencv2/opencv.hpp>
 
@@ -52,10 +52,11 @@ constexpr double kLabelScale = 0.6;
 constexpr int kLabelYOffset = 10;
 constexpr bool kVerbose = false;
 
-constexpr const char* kInputImagePath = "test/test-files/ball_unobscured.jpg";
-constexpr const char* kOutputImagePath = "test/test-outputs/output.jpg";
-constexpr const char* kFieldMaskPath = "test/test-outputs/field_mask.jpg";
-constexpr const char* kBallMaskPath = "test/test-outputs/ball_mask.jpg";
+// Temporary (hopefully) - works with run script
+constexpr const char* kInputImagePath = "Tests/test_files/ball_unobscured.jpg";
+constexpr const char* kOutputImagePath = "Tests/test_outputs/output.jpg";
+constexpr const char* kFieldMaskPath = "Tests/test_outputs/field_mask.jpg";
+constexpr const char* kBallMaskPath = "Tests/test_outputs/ball_mask.jpg";
 }  // namespace detector_config
 
-#endif /* DETECTOR_CONFIG_HPP_ */
+#endif  // FOOSBALL_TRACKER_DETECTOR_CONFIG_HPP_
