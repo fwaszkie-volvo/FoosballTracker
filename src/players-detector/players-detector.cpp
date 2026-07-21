@@ -91,10 +91,9 @@ void PlayersDetector::RemoveFalseBluePlayers(const cv::Size size)
             false_player_blue_2 = rectangle;
         }
     }
-    std::cout << "Before blue: " << players_.rectangles_blue_.size() << std::endl;
+
     std::erase(players_.rectangles_blue_, false_player_blue_1);
     std::erase(players_.rectangles_blue_, false_player_blue_2);
-    std::cout << "After blue: " << players_.rectangles_blue_.size() << std::endl;
 }
 
 void PlayersDetector::RemoveFalseRedPlayers(const cv::Size size)
@@ -108,7 +107,6 @@ void PlayersDetector::RemoveFalseRedPlayers(const cv::Size size)
 
     for (const auto &rectangle : players_.rectangles_red_)
     {
-        std::cout << "RedPlayers: (" << rectangle.x << ", " << rectangle.y << ")" << std::endl;
         current_distance_1 = (rectangle.x) * (rectangle.x) + (rectangle.y) * (rectangle.y);
 
         current_distance_2 =
@@ -125,14 +123,8 @@ void PlayersDetector::RemoveFalseRedPlayers(const cv::Size size)
         }
     }
 
-    std::cout << "False red 1: (" << false_player_red_1.x << ", " << false_player_red_1.y << ")"
-              << std::endl;
-    std::cout << "False red 2: (" << false_player_red_2.x << ", " << false_player_red_2.y << ")"
-              << std::endl;
-    std::cout << "Before red: " << players_.rectangles_red_.size() << std::endl;
     std::erase(players_.rectangles_red_, false_player_red_1);
     std::erase(players_.rectangles_red_, false_player_red_2);
-    std::cout << "After red: " << players_.rectangles_red_.size() << std::endl;
 }
 
 void PlayersDetector::DetectPlayers(const cv::Mat &frame)
@@ -148,15 +140,14 @@ void PlayersDetector::DisplayPlayers(const cv::Mat &frame)
     cv::Scalar red = cv::Scalar(0, 0, 255);
     cv::Scalar blue = cv::Scalar(255, 0, 0);
 
-    int64_t red_player_number = 0;
-    std::string player_name = "Red Player ";
+    // int64_t red_player_number = 0;
+    // std::string player_name = "Red Player ";
     for (const auto &rectangle : players_.rectangles_red_)
     {
-        std::string coord_box =
-          "(" + std::to_string(rectangle.x) + ", " + std::to_string(rectangle.y) + ")";
-
         cv::rectangle(frame, rectangle, red, 2);
 
+        // std::string coord_box =
+        //   "(" + std::to_string(rectangle.x) + ", " + std::to_string(rectangle.y) + ")";
         // red_player_number++;
         // player_name += std::to_string(red_player_number);
         // cv::putText(frame,
@@ -176,8 +167,8 @@ void PlayersDetector::DisplayPlayers(const cv::Mat &frame)
         // player_name.resize(player_name.size() - std::to_string(red_player_number).size());
     }
 
-    int64_t blue_player_number = 0;
-    std::string blue_player_name = "Blue Player ";
+    // int64_t blue_player_number = 0;
+    // std::string blue_player_name = "Blue Player ";
     for (const auto &rectangle : players_.rectangles_blue_)
     {
         std::string coord_box =
