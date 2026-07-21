@@ -54,35 +54,36 @@ void PlayersDetector::DetectRedTeam(const cv::Mat &frame)
         players_.rectangles_red_.push_back(bounding_box);
     }
 }
-void RemoveFalsePlayers()
-{
-    // Remove blue players with:
-    // 1 - highest x and lowest y
-    // 2 - highest x and highest y
 
-    cv::Rect false_player_blue_1{
-      std::numeric_limits<int64_t>::min, std::numeric_limits<int64_t>::max, 0, 0};
+// void RemoveFalsePlayers()
+// {
+//     // Remove blue players with:
+//     // 1 - highest x and lowest y
+//     // 2 - highest x and highest y
 
-    cv::Rect false_player_blue_2{
-      std::numeric_limits<int64_t>::min, std::numeric_limits<int64_t>::min, 0, 0};
+//     cv::Rect false_player_blue_1{
+//       std::numeric_limits<int64_t>::min, std::numeric_limits<int64_t>::max, 0, 0};
 
-    std::vector<cv::Rect> false_players;
+//     cv::Rect false_player_blue_2{
+//       std::numeric_limits<int64_t>::min, std::numeric_limits<int64_t>::min, 0, 0};
 
-    for (const auto &rectangle : players_.rectangles_blue_)
-    {
-        if (rectangle.x > false_player_blue_1.x && rectangle.y > false_player_blue_1.y)
-        {
-            false_player_blue_1 = rectangle;
-        }
-        if (rectangle.x > false_player_blue_2.x && rectangle.y < false_player_blue_2.y)
-        {
-            false_player_blue_2 = rectangle;
-        }
-    }
+//     std::vector<cv::Rect> false_players;
 
-    players_.rectangles_blue_.erase(false_player_blue_1);
-    players_.rectangles_blue_.erase(false_player_blue_2);
-}
+//     for (const auto &rectangle : players_.rectangles_blue_)
+//     {
+//         if (rectangle.x > false_player_blue_1.x && rectangle.y > false_player_blue_1.y)
+//         {
+//             false_player_blue_1 = rectangle;
+//         }
+//         if (rectangle.x > false_player_blue_2.x && rectangle.y < false_player_blue_2.y)
+//         {
+//             false_player_blue_2 = rectangle;
+//         }
+//     }
+
+//     players_.rectangles_blue_.erase(false_player_blue_1);
+//     players_.rectangles_blue_.erase(false_player_blue_2);
+// }
 
 void PlayersDetector::DetectPlayers(const cv::Mat &frame)
 {
