@@ -39,28 +39,28 @@ void BallDetector::CollectHoughCandidate(const cv::Mat& frame,
         return;
     }
 
-    cv::Mat circle_mask = cv::Mat::zeros(mask.size(), CV_8UC1);
+    cv::Mat circle_mask{cv::Mat::zeros(mask.size(), CV_8UC1)};
     cv::circle(circle_mask, center, radius, cv::Scalar(255), cv::FILLED);
 
     cv::Mat white_overlap;
     cv::bitwise_and(mask, circle_mask, white_overlap);
 
-    const double circle_area = static_cast<double>(cv::countNonZero(circle_mask));
+    const double circle_area{static_cast<double>(cv::countNonZero(circle_mask))};
     if (circle_area <= 0.0)
     {
         return;
     }
 
-    const double white_ratio = static_cast<double>(cv::countNonZero(white_overlap)) / circle_area;
+    const double white_ratio{static_cast<double>(cv::countNonZero(white_overlap)) / circle_area};
     if (white_ratio < detector_config::kCircleMinWhiteRatio)
     {
         return;
     }
 
-    const cv::Scalar mean_bgr = cv::mean(frame, circle_mask);
-    const double brightness = (mean_bgr[0] + mean_bgr[1] + mean_bgr[2]) / (3.0 * 255.0);
-    const double score = white_ratio * detector_config::kCircleWhiteRatioWeight +
-                         brightness * detector_config::kCircleBrightnessWeight;
+    const cv::Scalar mean_bgr{cv::mean(frame, circle_mask)};
+    const double brightness{(mean_bgr[0] + mean_bgr[1] + mean_bgr[2]) / (3.0 * 255.0)};
+    const double score{white_ratio * detector_config::kCircleWhiteRatioWeight +
+                       brightness * detector_config::kCircleBrightnessWeight};
 
     UpdateCandidate(center, radius, score);
 }
@@ -68,19 +68,19 @@ void BallDetector::CollectHoughCandidate(const cv::Mat& frame,
 void BallDetector::CollectContourCandidate(const cv::Mat& frame,
                                            const std::vector<cv::Point>& contour)
 {
-    const double area = cv::contourArea(contour);
+    const double area{cv::contourArea(contour)};
     if (area < detector_config::kBallMinArea || area > detector_config::kBallMaxArea)
     {
         return;
     }
 
-    const double perimeter = cv::arcLength(contour, true);
+    const double perimeter{cv::arcLength(contour, true)};
     if (perimeter <= 0.0)
     {
         return;
     }
 
-    const double circularity = 4.0 * CV_PI * area / (perimeter * perimeter);
+    const double circularity{4.0 * CV_PI * area / (perimeter * perimeter)};
     if (circularity < detector_config::kBallMinCircularity)
     {
         return;
@@ -94,29 +94,29 @@ void BallDetector::CollectContourCandidate(const cv::Mat& frame,
         return;
     }
 
-    const cv::Rect box = cv::boundingRect(contour);
+    const cv::Rect box{cv::boundingRect(contour)};
     if (box.x <= 1 || box.y <= 1 || box.x + box.width >= frame.cols - 1 ||
         box.y + box.height >= frame.rows - 1)
     {
         return;
     }
 
-    const double aspect_ratio = static_cast<double>(box.width) / static_cast<double>(box.height);
+    const double aspect_ratio{static_cast<double>(box.width) / static_cast<double>(box.height)};
     if (aspect_ratio < detector_config::kBallMinAspectRatio ||
         aspect_ratio > detector_config::kBallMaxAspectRatio)
     {
         return;
     }
 
-    const double extent = area / static_cast<double>(box.area());
+    const double extent{area / static_cast<double>(box.area())};
     if (extent < detector_config::kBallMinExtent || extent > detector_config::kBallMaxExtent)
     {
         return;
     }
 
-    const cv::Point center(static_cast<int>(std::round(center_f.x)),
-                           static_cast<int>(std::round(center_f.y)));
-    const int radius = static_cast<int>(std::round(radius_f));
+    const cv::Point center{static_cast<int>(std::round(center_f.x)),
+                           static_cast<int>(std::round(center_f.y))};
+    const int radius{static_cast<int>(std::round(radius_f))};
     UpdateCandidate(center, radius, circularity * extent);
 }
 
@@ -127,7 +127,7 @@ cv::Mat BallDetector::BuildForegroundMask(const cv::Mat& gray, const cv::Mat& pl
     {
         gray.convertTo(background_model_, CV_32FC1);
         background_initialized_ = true;
-        return cv::Mat();
+        return cv::Mat{};
     }
 
     cv::Mat background_u8;
@@ -177,10 +177,10 @@ void BallDetector::DrawDetection(cv::Mat& frame) const
 
 cv::Mat BallDetector::Detect(cv::Mat& frame)
 {
-    cv::Mat mask =
-      MaskUtils::BuildHsvMask(frame, detector_config::kLowerWhite, detector_config::kUpperWhite);
-    cv::Mat ball_kernel =
-      MaskUtils::CreateKernel(detector_config::kBallKernelSize, cv::MORPH_ELLIPSE);
+    cv::Mat mask{
+      MaskUtils::BuildHsvMask(frame, detector_config::kLowerWhite, detector_config::kUpperWhite)};
+    cv::Mat ball_kernel{
+      MaskUtils::CreateKernel(detector_config::kBallKernelSize, cv::MORPH_ELLIPSE)};
     cv::morphologyEx(mask, mask, cv::MORPH_OPEN, ball_kernel);
     cv::morphologyEx(mask, mask, cv::MORPH_CLOSE, ball_kernel);
 
@@ -197,7 +197,7 @@ cv::Mat BallDetector::Detect(cv::Mat& frame)
         cv::bitwise_and(mask, playfield_mask, mask);
     }
 
-    cv::Mat color_mask = mask.clone();
+    cv::Mat color_mask{mask.clone()};
 
     cv::Mat gray;
     cv::cvtColor(frame, gray, cv::COLOR_BGR2GRAY);
@@ -207,7 +207,7 @@ cv::Mat BallDetector::Detect(cv::Mat& frame)
         cv::bitwise_and(gray, playfield_mask, gray);
     }
 
-    cv::Mat foreground_mask = BuildForegroundMask(gray, playfield_mask);
+    cv::Mat foreground_mask{BuildForegroundMask(gray, playfield_mask)};
     if (!foreground_mask.empty())
     {
         MaskUtils::WriteMaskIfVerbose(detector_config::kForegroundMaskPath, foreground_mask);
@@ -246,9 +246,9 @@ cv::Mat BallDetector::Detect(cv::Mat& frame)
 
     for (const auto& circle : circles)
     {
-        cv::Point center(static_cast<int>(std::round(circle[0])),
-                         static_cast<int>(std::round(circle[1])));
-        int radius = static_cast<int>(std::round(circle[2]));
+        cv::Point center{static_cast<int>(std::round(circle[0])),
+                         static_cast<int>(std::round(circle[1]))};
+        int radius{static_cast<int>(std::round(circle[2]))};
         CollectHoughCandidate(frame, mask, center, radius);
     }
 
