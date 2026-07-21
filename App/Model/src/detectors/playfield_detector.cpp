@@ -6,14 +6,14 @@
 #include "detector_config.hpp"
 #include "mask_utils.hpp"
 
-bool PlayfieldDetector::ChooseLargestContour(const std::vector<std::vector<cv::Point>> &contours,
-                                             std::vector<cv::Point> &largest_contour) const
+bool PlayfieldDetector::ChooseLargestContour(const std::vector<std::vector<cv::Point>>& contours,
+                                             std::vector<cv::Point>& largest_contour) const
 {
     double best_area = 0.0;
 
-    for (const auto &contour : contours)
+    for (const auto& contour : contours)
     {
-        double area = cv::contourArea(contour);
+        const double area = cv::contourArea(contour);
         if (area > best_area)
         {
             best_area = area;
@@ -25,12 +25,12 @@ bool PlayfieldDetector::ChooseLargestContour(const std::vector<std::vector<cv::P
 }
 
 std::vector<cv::Point> PlayfieldDetector::ApproximatePolygon(
-  const std::vector<cv::Point> &hull) const
+  const std::vector<cv::Point>& hull) const
 {
     std::vector<cv::Point> best_polygon = hull;
     int best_vertex_delta =
       std::abs(static_cast<int>(hull.size()) - detector_config::kPlayfieldTargetVertices);
-    double hull_perimeter = cv::arcLength(hull, true);
+    const double hull_perimeter = cv::arcLength(hull, true);
     const int epsilon_steps = static_cast<int>(
       std::lround((detector_config::kPlayfieldApproxEnd - detector_config::kPlayfieldApproxStart) /
                   detector_config::kPlayfieldApproxStep));
@@ -47,7 +47,7 @@ std::vector<cv::Point> PlayfieldDetector::ApproximatePolygon(
             continue;
         }
 
-        int vertex_delta =
+        const int vertex_delta =
           std::abs(static_cast<int>(polygon.size()) - detector_config::kPlayfieldTargetVertices);
         if (vertex_delta < best_vertex_delta)
         {
@@ -64,9 +64,9 @@ std::vector<cv::Point> PlayfieldDetector::ApproximatePolygon(
     return best_polygon;
 }
 
-bool PlayfieldDetector::Detect(const cv::Mat &frame,
-                               std::vector<cv::Point> &playfield_polygon,
-                               cv::Mat &playfield_mask) const
+bool PlayfieldDetector::Detect(const cv::Mat& frame,
+                               std::vector<cv::Point>& playfield_polygon,
+                               cv::Mat& playfield_mask) const
 {
     cv::Mat green_mask =
       MaskUtils::BuildHsvMask(frame, detector_config::kLowerGreen, detector_config::kUpperGreen);

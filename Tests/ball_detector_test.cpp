@@ -1,12 +1,21 @@
 #include <gtest/gtest.h>
 
 #include <cmath>
+#include <cstdlib>
 #include <filesystem>
-#include <iostream>
 #include <opencv2/opencv.hpp>
 
 #include "detector.hpp"
 #include "detector_config.hpp"
+
+namespace
+{
+bool IsVerboseTestRun()
+{
+    const char* const verbose_flag = std::getenv("FOOSBALL_TEST_VERBOSE");
+    return verbose_flag != nullptr && verbose_flag[0] != '\0' && verbose_flag[0] != '0';
+}
+}  // namespace
 
 class BallDetectorTest : public ::testing::Test
 {
@@ -61,21 +70,22 @@ TEST_F(BallDetectorTest, video_read_and_annotated_write)
 
     ASSERT_TRUE(output_video.isOpened()) << "Failed to open output video with avc1 codec at path: "
                                          << detector_config::kOutputVideoPath;
-    std::cout << "Using output codec: avc1 at " << output_fps << " fps" << std::endl;
-    std::cout << "Processing full video stream." << std::endl;
+    const bool is_verbose = IsVerboseTestRun();
 
     int processed_frames = 0;
     cv::Mat video_frame;
     while (input_video.read(video_frame))
     {
-        std::cout << "Processing frame " << (processed_frames + 1) << std::endl;
+        if (is_verbose && (processed_frames + 1) % 10 == 0)
+        {
+            std::cout << "Processing frame " << (processed_frames + 1) << std::endl;
+        }
+
         cv::Mat annotated = detect_ball(video_frame);
         ASSERT_FALSE(annotated.empty());
         output_video.write(annotated);
         ++processed_frames;
     }
-
-    std::cout << "Finished processing " << processed_frames << " frame(s)." << std::endl;
 
     EXPECT_GT(processed_frames, 0)
       << "Input video had no readable frames: " << detector_config::kInputVideoPath;

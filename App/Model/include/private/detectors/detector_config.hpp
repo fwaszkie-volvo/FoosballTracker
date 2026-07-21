@@ -47,6 +47,11 @@ constexpr double kHoughParam2 = 12.0;
 constexpr int kHoughMinRadius = 16;
 constexpr int kHoughMaxRadius = 24;
 
+constexpr double kBackgroundLearningRate = 0.02;
+constexpr int kBackgroundDiffThreshold = 24;
+constexpr int kForegroundKernelSize = 5;
+constexpr int kForegroundMinPixels = 30;
+
 constexpr int kDrawThickness = 2;
 constexpr double kLabelScale = 0.6;
 constexpr int kLabelYOffset = 10;
@@ -58,6 +63,8 @@ constexpr const char* kOutputImagePath = "Tests/test_outputs/output.jpg";
 constexpr const char* kOutputVideoPath = "Tests/test_outputs/output.mp4";
 constexpr const char* kFieldMaskPath = "Tests/test_outputs/field_mask.jpg";
 constexpr const char* kBallMaskPath = "Tests/test_outputs/ball_mask.jpg";
+constexpr const char* kForegroundMaskPath = "Tests/test_outputs/foreground_mask.jpg";
+constexpr const char* kBackgroundDiffPath = "Tests/test_outputs/background_diff.jpg";
 }  // namespace detector_config
 
 #endif  // FOOSBALL_TRACKER_DETECTOR_CONFIG_HPP_

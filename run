@@ -156,7 +156,8 @@ case "$1" in
     clean
     ;;
   test)
-    test
+    shift
+    test "$@"
     ;;
   format-check)
     format_check
