@@ -6,9 +6,9 @@
 #include "detector_config.hpp"
 #include "mask_utils.hpp"
 
-bool BallDetector::IsCircleInsideFrame(const cv::Point &center,
+bool BallDetector::IsCircleInsideFrame(const cv::Point& center,
                                        int radius,
-                                       const cv::Size &size) const
+                                       const cv::Size& size) const
 {
     return center.x - radius >= 0 && center.y - radius >= 0 && center.x + radius < size.width &&
            center.y + radius < size.height;
@@ -16,7 +16,7 @@ bool BallDetector::IsCircleInsideFrame(const cv::Point &center,
 
 void BallDetector::ResetBestCandidate() { best_candidate_ = DetectionCandidate{}; }
 
-void BallDetector::UpdateCandidate(const cv::Point &center, int radius, double score)
+void BallDetector::UpdateCandidate(const cv::Point& center, int radius, double score)
 {
     if (score <= best_candidate_.score)
     {
@@ -29,9 +29,9 @@ void BallDetector::UpdateCandidate(const cv::Point &center, int radius, double s
     best_candidate_.score = score;
 }
 
-void BallDetector::CollectHoughCandidate(const cv::Mat &frame,
-                                         const cv::Mat &mask,
-                                         const cv::Point &center,
+void BallDetector::CollectHoughCandidate(const cv::Mat& frame,
+                                         const cv::Mat& mask,
+                                         const cv::Point& center,
                                          int radius)
 {
     if (!IsCircleInsideFrame(center, radius, frame.size()))
@@ -65,8 +65,8 @@ void BallDetector::CollectHoughCandidate(const cv::Mat &frame,
     UpdateCandidate(center, radius, score);
 }
 
-void BallDetector::CollectContourCandidate(const cv::Mat &frame,
-                                           const std::vector<cv::Point> &contour)
+void BallDetector::CollectContourCandidate(const cv::Mat& frame,
+                                           const std::vector<cv::Point>& contour)
 {
     double area = cv::contourArea(contour);
     if (area < detector_config::kBallMinArea || area > detector_config::kBallMaxArea)
@@ -120,7 +120,7 @@ void BallDetector::CollectContourCandidate(const cv::Mat &frame,
     UpdateCandidate(center, radius, circularity * extent);
 }
 
-void BallDetector::DrawDetection(cv::Mat &frame) const
+void BallDetector::DrawDetection(cv::Mat& frame) const
 {
     if (!best_candidate_.found)
     {
@@ -135,7 +135,7 @@ void BallDetector::DrawDetection(cv::Mat &frame) const
     MaskUtils::DrawLabel(frame, "Ball", best_candidate_.center, detector_config::kBallDrawColor);
 }
 
-cv::Mat BallDetector::Detect(cv::Mat &frame)
+cv::Mat BallDetector::Detect(cv::Mat& frame)
 {
     cv::Mat mask =
       MaskUtils::BuildHsvMask(frame, detector_config::kLowerWhite, detector_config::kUpperWhite);
@@ -180,7 +180,7 @@ cv::Mat BallDetector::Detect(cv::Mat &frame)
                      detector_config::kHoughMinRadius,
                      detector_config::kHoughMaxRadius);
 
-    for (const auto &circle : circles)
+    for (const auto& circle : circles)
     {
         cv::Point center(static_cast<int>(std::round(circle[0])),
                          static_cast<int>(std::round(circle[1])));
@@ -192,7 +192,7 @@ cv::Mat BallDetector::Detect(cv::Mat &frame)
     std::vector<cv::Vec4i> hierarchy;
     cv::findContours(mask, contours, hierarchy, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
 
-    for (const auto &contour : contours)
+    for (const auto& contour : contours)
     {
         CollectContourCandidate(frame, contour);
     }
@@ -201,7 +201,7 @@ cv::Mat BallDetector::Detect(cv::Mat &frame)
     return frame;
 }
 
-cv::Mat detect_ball(cv::Mat &frame)
+cv::Mat detect_ball(cv::Mat& frame)
 {
     static BallDetector detector;
     return detector.Detect(frame);

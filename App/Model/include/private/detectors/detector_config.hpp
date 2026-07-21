@@ -26,11 +26,11 @@ constexpr double kPlayfieldApproxEnd = 0.08;
 constexpr double kPlayfieldApproxStep = 0.005;
 constexpr int kPlayfieldTargetVertices = 8;
 
-constexpr int kBallMinArea = 80;
-constexpr int kBallMaxArea = 5000;
+constexpr int kBallMinArea = 700;
+constexpr int kBallMaxArea = 2300;
 constexpr double kBallMinCircularity = 0.75;
-constexpr float kBallMinRadius = 5.0f;
-constexpr float kBallMaxRadius = 45.0f;
+constexpr float kBallMinRadius = 16.0f;
+constexpr float kBallMaxRadius = 24.0f;
 constexpr double kBallMinAspectRatio = 0.75;
 constexpr double kBallMaxAspectRatio = 1.33;
 constexpr double kBallMinExtent = 0.55;
@@ -44,17 +44,18 @@ constexpr double kHoughDp = 1.2;
 constexpr double kHoughMinDist = 20.0;
 constexpr double kHoughParam1 = 120.0;
 constexpr double kHoughParam2 = 12.0;
-constexpr int kHoughMinRadius = 5;
-constexpr int kHoughMaxRadius = 45;
+constexpr int kHoughMinRadius = 16;
+constexpr int kHoughMaxRadius = 24;
 
 constexpr int kDrawThickness = 2;
 constexpr double kLabelScale = 0.6;
 constexpr int kLabelYOffset = 10;
 constexpr bool kVerbose = false;
 
-// Temporary (hopefully) - works with run script
 constexpr const char* kInputImagePath = "Tests/test_files/ball_unobscured.jpg";
+constexpr const char* kInputVideoPath = "Tests/test_files/test_video.mp4";
 constexpr const char* kOutputImagePath = "Tests/test_outputs/output.jpg";
+constexpr const char* kOutputVideoPath = "Tests/test_outputs/output.mp4";
 constexpr const char* kFieldMaskPath = "Tests/test_outputs/field_mask.jpg";
 constexpr const char* kBallMaskPath = "Tests/test_outputs/ball_mask.jpg";
 }  // namespace detector_config
