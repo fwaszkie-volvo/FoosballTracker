@@ -10,12 +10,28 @@ function help() {
 Uzycie: $0 <opcja>
 
 Dostepne opcje:
-  configure  Instaluje niezbedne pakiety, np. cmake, opencv itp.
+  configure  Instaluje niezbedne pakiety, np. cmake, opencv, gtest i clang-format.
   build      Buduje projekt przy uzyciu CMake.
   clean      Usuwa katalog build.
+  format-check  Sprawdza formatowanie plikow C++ zgodnie z .clang-format.
+  fix-format  Poprawia formatowanie plikow C++ zgodnie z .clang-format.
   test       Builduje i uruchamia testy projektu.
   app        Uruchamia aplikacje.
 EOF
+}
+
+function find_clang_format() {
+  local -a candidates=(clang-format-14 clang-format)
+
+  for candidate in "${candidates[@]}"; do
+    if command -v "$candidate" >/dev/null 2>&1; then
+      echo "$candidate"
+      return 0
+    fi
+  done
+
+  echo "Brak clang-format. Zainstaluj clang-format-14 albo clang-format." >&2
+  return 1
 }
 
 function require_install_privileges() {
@@ -45,11 +61,11 @@ function configure() {
 
   if command -v apt >/dev/null 2>&1; then
     "${privilege_prefix[@]}" apt update
-    "${privilege_prefix[@]}" apt install -y cmake libopencv-dev
+    "${privilege_prefix[@]}" apt install -y cmake libopencv-dev libgtest-dev clang-format-14
     return $?
   fi
 
-  echo "Nieobslugiwany menedzer pakietow. Zainstaluj recznie: cmake i OpenCV."
+  echo "Nieobslugiwany menedzer pakietow. Zainstaluj recznie: cmake, OpenCV, GoogleTest i clang-format."
   return 1
 }
 
@@ -74,7 +90,38 @@ function clean() {
 }
 
 function test() {
-  echo -e "NIC TU NIE MA! TESTUJEMY NA PRODUKCIE"  
+  build || return 1
+
+  if ! command -v ctest >/dev/null 2>&1; then
+    echo "Brak polecenia ctest. Zainstaluj cmake i sprobuj ponownie."
+    return 1
+  fi
+
+  ctest --test-dir build --output-on-failure
+}
+
+function format_targets() {
+  find "$APP_DIR" "$SCRIPT_DIR/Tests" \( -name '*.cpp' -o -name '*.hpp' -o -name '*.h' \) -print0
+}
+
+function fix_format() {
+  local clang_format_bin
+
+  clang_format_bin=$(find_clang_format) || return 1
+
+  format_targets | xargs -0 "$clang_format_bin" -i --style=file
+}
+
+function format_check() {
+  local clang_format_bin
+
+  clang_format_bin=$(find_clang_format) || return 1
+
+  if ! format_targets | xargs -0 "$clang_format_bin" --dry-run --Werror --style=file; then
+    fix_format || return 1
+    echo "Wykryto bledy formatowania. Uruchomiono ./run fix-format i poprawiono pliki." >&2
+    return 1
+  fi
 }
 
 function app() {
@@ -96,6 +143,12 @@ case "$1" in
     ;;
   test)
     test
+    ;;
+  format-check)
+    format_check
+    ;;
+  fix-format)
+    fix_format
     ;;
   app)
     app

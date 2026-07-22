@@ -17,6 +17,30 @@ jobs:
 
     - name: Configure
       run: ./run configure
-  
+
     - name: Build
       run: ./run build
+
+  format:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Configure
+      run: ./run configure
+
+    - name: Check formatting
+      run: ./run format-check
+
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Configure
+      run: ./run configure
+
+    - name: Test
+      run: ./run test
