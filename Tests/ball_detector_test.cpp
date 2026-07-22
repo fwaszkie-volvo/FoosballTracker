@@ -4,13 +4,14 @@
 #include <cstdlib>
 #include <filesystem>
 #include <opencv2/opencv.hpp>
+#include <string>
 
 #include "detector.hpp"
-#include "detector_config.hpp"
+#include "detector_types.hpp"
 
 namespace
 {
-constexpr char kTestOutputDirectory[]{"Tests/test_outputs"};
+const std::string kTestOutputDirectory{"Tests/test_outputs"};
 constexpr double kVideoTestDurationSeconds{10.0};
 
 bool IsVerboseTestRun()
@@ -33,7 +34,7 @@ class BallDetectorTest : public ::testing::Test
 
     void SetUp() override
     {
-        frame = cv::imread(detector_config::kInputImagePath, cv::IMREAD_COLOR);
+        frame = cv::imread(detector_types::kInputImagePath, cv::IMREAD_COLOR);
         EnsureTestOutputDirectoryExists();
     }
 };
@@ -41,7 +42,7 @@ class BallDetectorTest : public ::testing::Test
 TEST_F(BallDetectorTest, ImageLoads)
 {
     ASSERT_FALSE(frame.empty()) << "Failed to load input image: "
-                                << detector_config::kInputImagePath;
+                                << detector_types::kInputImagePath;
 }
 
 TEST_F(BallDetectorTest, BallDetectionRuns)
@@ -51,15 +52,15 @@ TEST_F(BallDetectorTest, BallDetectionRuns)
     detect_ball(frame);
 
     EXPECT_FALSE(frame.empty());
-    bool success{cv::imwrite(detector_config::kOutputImagePath, frame)};
-    EXPECT_TRUE(success) << "Failed to write output image: " << detector_config::kOutputImagePath;
+    bool success{cv::imwrite(detector_types::kOutputImagePath, frame)};
+    EXPECT_TRUE(success) << "Failed to write output image: " << detector_types::kOutputImagePath;
 }
 
 TEST_F(BallDetectorTest, VideoReadAndAnnotatedWrite)
 {
-    cv::VideoCapture input_video{detector_config::kInputVideoPath};
+    cv::VideoCapture input_video{detector_types::kInputVideoPath};
     ASSERT_TRUE(input_video.isOpened())
-      << "Failed to open input video: " << detector_config::kInputVideoPath;
+      << "Failed to open input video: " << detector_types::kInputVideoPath;
 
     const int frame_width{static_cast<int>(input_video.get(cv::CAP_PROP_FRAME_WIDTH))};
     const int frame_height{static_cast<int>(input_video.get(cv::CAP_PROP_FRAME_HEIGHT))};
@@ -73,10 +74,10 @@ TEST_F(BallDetectorTest, VideoReadAndAnnotatedWrite)
 
     const cv::Size frame_size{frame_width, frame_height};
     const int fourcc{cv::VideoWriter::fourcc('a', 'v', 'c', '1')};
-    cv::VideoWriter output_video{detector_config::kOutputVideoPath, fourcc, output_fps, frame_size};
+    cv::VideoWriter output_video{detector_types::kOutputVideoPath, fourcc, output_fps, frame_size};
 
     ASSERT_TRUE(output_video.isOpened()) << "Failed to open output video with avc1 codec at path: "
-                                         << detector_config::kOutputVideoPath;
+                                         << detector_types::kOutputVideoPath;
     const bool is_verbose{IsVerboseTestRun()};
 
     int processed_frames{0};
@@ -95,5 +96,5 @@ TEST_F(BallDetectorTest, VideoReadAndAnnotatedWrite)
     }
 
     EXPECT_GT(processed_frames, 0)
-      << "Input video had no readable frames: " << detector_config::kInputVideoPath;
+      << "Input video had no readable frames: " << detector_types::kInputVideoPath;
 }

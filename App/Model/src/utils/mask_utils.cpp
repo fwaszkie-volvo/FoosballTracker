@@ -1,6 +1,6 @@
 #include "mask_utils.hpp"
 
-#include "detector_config.hpp"
+#include "detector_types.hpp"
 
 cv::Mat MaskUtils::CreateKernel(int size, int shape)
 {
@@ -20,26 +20,6 @@ cv::Mat MaskUtils::BuildHsvMask(const cv::Mat& frame,
     return mask;
 }
 
-cv::Mat MaskUtils::BuildDualHsvMask(const cv::Mat& frame,
-                                    const cv::Scalar& lower1,
-                                    const cv::Scalar& upper1,
-                                    const cv::Scalar& lower2,
-                                    const cv::Scalar& upper2)
-{
-    cv::Mat mask1{BuildHsvMask(frame, lower1, upper1)};
-    cv::Mat mask2{BuildHsvMask(frame, lower2, upper2)};
-    cv::Mat mask;
-
-    cv::bitwise_or(mask1, mask2, mask);
-    return mask;
-}
-
-void MaskUtils::OpenMask(cv::Mat& mask, int kernel_size)
-{
-    cv::Mat kernel{CreateKernel(kernel_size, cv::MORPH_RECT)};
-    cv::morphologyEx(mask, mask, cv::MORPH_OPEN, kernel);
-}
-
 void MaskUtils::DrawLabel(cv::Mat& frame,
                           const std::string& label,
                           const cv::Point& anchor,
@@ -47,16 +27,16 @@ void MaskUtils::DrawLabel(cv::Mat& frame,
 {
     cv::putText(frame,
                 label,
-                cv::Point(anchor.x, anchor.y - detector_config::kLabelYOffset),
+                cv::Point(anchor.x, anchor.y - detector_types::kLabelYOffset),
                 cv::FONT_HERSHEY_SIMPLEX,
-                detector_config::kLabelScale,
+                detector_types::kLabelScale,
                 color,
-                detector_config::kDrawThickness);
+                detector_types::kDrawThickness);
 }
 
-void MaskUtils::WriteMaskIfVerbose(const char* path, const cv::Mat& mask)
+void MaskUtils::WriteMaskIfVerbose(const std::string& path, const cv::Mat& mask)
 {
-    if (!detector_config::kVerbose)
+    if (!detector_types::kVerbose)
     {
         return;
     }
