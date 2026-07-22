@@ -2,8 +2,10 @@
 
 SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 APP_DIR="$SCRIPT_DIR/App"
-BUILD_DIR="$SCRIPT_DIR/build"
+BUILD_DIR="$APP_DIR/build"
 APP_BINARY="$BUILD_DIR/foosball_tracker"
+TESTS_DIR="$SCRIPT_DIR/Tests"
+TESTS_BUILD_DIR="$TESTS_DIR/build"
 
 function help() {
   cat <<EOF
@@ -86,13 +88,24 @@ function clean() {
     return 0
   fi
 
-  rm -rf "$BUILD_DIR"
+  rm -rf "$BUILD_DIR" "$TESTS_BUILD_DIR"
+}
+
+function build_tests() {
+  if ! command -v cmake >/dev/null 2>&1; then
+    echo "Brak pakietu cmake. Zainstaluj cmake i sprobuj ponownie."
+    return 1
+  fi
+
+  mkdir -p "$TESTS_BUILD_DIR"
+  cmake -S "$TESTS_DIR" -B "$TESTS_BUILD_DIR"
+  cmake --build "$TESTS_BUILD_DIR"
 }
 
 function test() {
-  build || return 1
+  build_tests || return 1
 
-  local tests_binary="$BUILD_DIR/Tests/unit_tests"
+  local tests_binary="$TESTS_BUILD_DIR/unit_tests"
   if [[ ! -x "$tests_binary" ]]; then
     echo "Brak binarki testowej: $tests_binary"
     return 1
