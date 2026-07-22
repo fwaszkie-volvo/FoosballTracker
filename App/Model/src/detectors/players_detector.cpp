@@ -152,6 +152,4 @@ void PlayersDetector::DisplayPlayers(const cv::Mat& frame)
 
         cv::rectangle(frame, rectangle, blue, 2);
     }
-
-    cv::imshow("Foosball Tracking output", frame);
 }
