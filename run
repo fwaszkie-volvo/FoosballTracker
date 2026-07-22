@@ -102,18 +102,18 @@ function build_tests() {
   cmake --build "$TESTS_BUILD_DIR"
 }
 
-function test() {
-  local verbose=0
-
-  if [[ "$1" == "--verbose" ]]; then
-    verbose=1
-  elif [[ -n "$1" ]]; then
-    echo "Nieznana opcja dla test: $1"
-    echo "Uzycie: $0 test [--verbose]"
-    return 1
+function validate_test_option() {
+  if [[ "$1" == "--verbose" || -z "$1" ]]; then
+    return 0
   fi
 
-  build || return 1
+  echo "Nieznana opcja dla test: $1"
+  echo "Uzycie: $0 test [--verbose]"
+  return 1
+}
+
+function test() {
+  build_tests || return 1
 
   local tests_binary="$TESTS_BUILD_DIR/unit_tests"
   if [[ ! -x "$tests_binary" ]]; then
@@ -121,7 +121,9 @@ function test() {
     return 1
   fi
 
-  if [[ "$verbose" -eq 1 ]]; then
+  validate_test_option "$1" || return 1
+
+  if [[ "$1" == "--verbose" ]]; then
     FOOSBALL_TEST_VERBOSE=1 "$tests_binary" --gtest_color=yes
     return $?
   fi
