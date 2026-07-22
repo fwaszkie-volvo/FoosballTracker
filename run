@@ -13,8 +13,8 @@ Dostepne opcje:
   configure  Instaluje niezbedne pakiety, np. cmake, opencv, gtest i clang-format.
   build      Buduje projekt przy uzyciu CMake.
   clean      Usuwa katalog build.
-  format-check  Sprawdza formatowanie plikow C++ zgodnie z .clang-format.
-  fix-format  Poprawia formatowanie plikow C++ zgodnie z .clang-format.
+  format-check  Sprawdza formatowanie C++ oraz header guardy.
+  format-fix  Poprawia formatowanie C++ oraz header guardy.
   test       Builduje i uruchamia testy projektu.
   app        Uruchamia aplikacje.
 EOF
@@ -104,22 +104,111 @@ function format_targets() {
   find "$APP_DIR" "$SCRIPT_DIR/Tests" \( -name '*.cpp' -o -name '*.hpp' -o -name '*.h' \) -print0
 }
 
-function fix_format() {
+function header_targets() {
+  find "$APP_DIR" "$SCRIPT_DIR/Tests" \( -name '*.hpp' -o -name '*.h' \) -print0
+}
+
+function expected_guard_for_file() {
+  local file_path=$1
+  local relative_path=${file_path#"$SCRIPT_DIR/"}
+  local guard
+
+  guard=$(printf '%s' "$relative_path" | tr '[:lower:]' '[:upper:]' | sed -E 's#[^A-Z0-9]+#_#g')
+  printf 'FOOSBALL_TRACKER_%s_\n' "$guard"
+}
+
+function fix_header_guards() {
+  while IFS= read -r -d '' header; do
+    local expected_guard
+
+    expected_guard=$(expected_guard_for_file "$header")
+
+    awk -v expected="$expected_guard" '
+      BEGIN {
+        ifndef_line = 0;
+        define_line = 0;
+        endif_line = 0;
+      }
+      {
+        lines[++line_count] = $0;
+        if (ifndef_line == 0 && $0 ~ /^#ifndef[[:space:]]+[A-Z0-9_]+$/) {
+          ifndef_line = line_count;
+        }
+        if (define_line == 0 && $0 ~ /^#define[[:space:]]+[A-Z0-9_]+$/) {
+          define_line = line_count;
+        }
+        if ($0 ~ /^#endif/) {
+          endif_line = line_count;
+        }
+      }
+      END {
+        if (ifndef_line > 0 && define_line > 0 && endif_line > 0) {
+          lines[ifndef_line] = "#ifndef " expected;
+          lines[define_line] = "#define " expected;
+          lines[endif_line] = "#endif  // " expected;
+        }
+
+        for (i = 1; i <= line_count; ++i) {
+          print lines[i];
+        }
+      }
+    ' "$header" > "$header.tmp" && mv "$header.tmp" "$header"
+  done < <(header_targets)
+}
+
+function check_header_guards() {
+  local has_errors=0
+
+  while IFS= read -r -d '' header; do
+    local expected_guard
+    local ifndef_line
+    local define_line
+    local endif_line
+
+    expected_guard=$(expected_guard_for_file "$header")
+    ifndef_line=$(grep -m1 -E '^#ifndef[[:space:]]+[A-Z0-9_]+$' "$header" || true)
+    define_line=$(grep -m1 -E '^#define[[:space:]]+[A-Z0-9_]+$' "$header" || true)
+    endif_line=$(grep -E '^#endif' "$header" | tail -n1 || true)
+
+    if [[ "$ifndef_line" != "#ifndef $expected_guard" ||
+          "$define_line" != "#define $expected_guard" ||
+          "$endif_line" != "#endif  // $expected_guard" ]]; then
+      has_errors=1
+      echo "Niepoprawny header guard: $header" >&2
+      echo "  oczekiwane: $expected_guard" >&2
+    fi
+  done < <(header_targets)
+
+  return $has_errors
+}
+
+function format_fix() {
   local clang_format_bin
 
   clang_format_bin=$(find_clang_format) || return 1
 
   format_targets | xargs -0 "$clang_format_bin" -i --style=file
+  fix_header_guards
 }
 
 function format_check() {
   local clang_format_bin
+  local has_format_issues=0
+  local has_guard_issues=0
 
   clang_format_bin=$(find_clang_format) || return 1
 
   if ! format_targets | xargs -0 "$clang_format_bin" --dry-run --Werror --style=file; then
-    fix_format || return 1
-    echo "Wykryto bledy formatowania. Uruchomiono ./run fix-format i poprawiono pliki." >&2
+    has_format_issues=1
+  fi
+
+  if ! check_header_guards; then
+    has_guard_issues=1
+  fi
+
+  if [[ $has_format_issues -ne 0 || $has_guard_issues -ne 0 ]]; then
+    format_fix || return 1
+    echo "Wykryto bledy formatowania lub header guardow. Uruchomiono ./run format-fix i poprawiono pliki." >&2
     return 1
   fi
 }
@@ -147,8 +236,8 @@ case "$1" in
   format-check)
     format_check
     ;;
-  fix-format)
-    fix_format
+  format-fix)
+    format_fix
     ;;
   app)
     app

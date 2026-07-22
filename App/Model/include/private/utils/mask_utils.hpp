@@ -1,5 +1,5 @@
-#ifndef FOOSBALL_TRACKER_MASK_UTILS_HPP_
-#define FOOSBALL_TRACKER_MASK_UTILS_HPP_
+#ifndef FOOSBALL_TRACKER_APP_MODEL_INCLUDE_PRIVATE_UTILS_MASK_UTILS_HPP_
+#define FOOSBALL_TRACKER_APP_MODEL_INCLUDE_PRIVATE_UTILS_MASK_UTILS_HPP_
 
 #include <opencv2/opencv.hpp>
 #include <string>
@@ -24,4 +24,4 @@ class MaskUtils
     static void WriteMaskIfVerbose(const char *path, const cv::Mat &mask);
 };
 
-#endif  // FOOSBALL_TRACKER_MASK_UTILS_HPP_
+#endif  // FOOSBALL_TRACKER_APP_MODEL_INCLUDE_PRIVATE_UTILS_MASK_UTILS_HPP_
