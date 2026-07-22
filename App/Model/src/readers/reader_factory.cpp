@@ -1,8 +1,8 @@
-#include "reader-factory.hpp"
+#include "reader_factory.hpp"
 
-#include "online-reader.hpp"
-#include "photo-reader.hpp"
-#include "recording-reader.hpp"
+#include "online_reader.hpp"
+#include "photo_reader.hpp"
+#include "recording_reader.hpp"
 
 std::unique_ptr<IFrameReader> CreateReader(const ReaderType type)
 {

@@ -1,9 +1,9 @@
-#ifndef INPUT_ONLINE_READER_HPP_
-#define INPUT_ONLINE_READER_HPP_
+#ifndef INPUT_RECORDING_READER_HPP_
+#define INPUT_RECORDING_READER_HPP_
 
-#include "frame-reader.hpp"
+#include "frame_reader.hpp"
 
-class OnlineReader : public IFrameReader
+class RecordingReader : public IFrameReader
 {
   public:
     bool Open(const std::string& source) override;
@@ -16,4 +16,4 @@ class OnlineReader : public IFrameReader
     cv::VideoCapture capture_;
 };
 
-#endif  // INPUT_ONLINE_READER_HPP_
+#endif  // INPUT_RECORDING_READER_HPP_

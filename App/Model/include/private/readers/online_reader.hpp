@@ -1,9 +1,9 @@
-#ifndef INPUT_PHOTO_READER_HPP_
-#define INPUT_PHOTO_READER_HPP_
+#ifndef INPUT_ONLINE_READER_HPP_
+#define INPUT_ONLINE_READER_HPP_
 
-#include "frame-reader.hpp"
+#include "frame_reader.hpp"
 
-class PhotoReader : public IFrameReader
+class OnlineReader : public IFrameReader
 {
   public:
     bool Open(const std::string& source) override;
@@ -13,9 +13,7 @@ class PhotoReader : public IFrameReader
     std::optional<cv::Size> GetFrameSize() const override;
 
   private:
-    cv::Mat image_;
-    bool consumed_{};
-    double fps_{1.0};
+    cv::VideoCapture capture_;
 };
 
-#endif  // INPUT_PHOTO_READER_HPP_
+#endif  // INPUT_ONLINE_READER_HPP_

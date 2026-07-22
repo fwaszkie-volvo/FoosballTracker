@@ -1,10 +1,10 @@
+#include "frame_processor.hpp"
+
 #include <gtest/gtest.h>
 
 #include <filesystem>
 #include <opencv2/opencv.hpp>
 #include <string>
-
-#include "frame_processor.hpp"
 
 namespace
 {

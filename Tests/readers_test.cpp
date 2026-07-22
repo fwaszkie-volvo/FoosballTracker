@@ -3,10 +3,10 @@
 #include <filesystem>
 #include <string>
 
-#include "online-reader.hpp"
-#include "photo-reader.hpp"
-#include "reader-factory.hpp"
-#include "recording-reader.hpp"
+#include "online_reader.hpp"
+#include "photo_reader.hpp"
+#include "reader_factory.hpp"
+#include "recording_reader.hpp"
 
 namespace
 {

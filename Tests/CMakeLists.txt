@@ -3,8 +3,8 @@ include(GoogleTest)
 find_package(GTest)
 
 add_executable(unit_tests
-    ${CMAKE_CURRENT_SOURCE_DIR}/readers-test.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/frame-processor-test.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/readers_test.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/frame_processor_test.cpp
 )
 target_include_directories(unit_tests
     PRIVATE

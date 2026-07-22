@@ -1,9 +1,9 @@
-#ifndef INPUT_RECORDING_READER_HPP_
-#define INPUT_RECORDING_READER_HPP_
+#ifndef INPUT_PHOTO_READER_HPP_
+#define INPUT_PHOTO_READER_HPP_
 
-#include "frame-reader.hpp"
+#include "frame_reader.hpp"
 
-class RecordingReader : public IFrameReader
+class PhotoReader : public IFrameReader
 {
   public:
     bool Open(const std::string& source) override;
@@ -13,7 +13,9 @@ class RecordingReader : public IFrameReader
     std::optional<cv::Size> GetFrameSize() const override;
 
   private:
-    cv::VideoCapture capture_;
+    cv::Mat image_;
+    bool consumed_{};
+    double fps_{1.0};
 };
 
-#endif  // INPUT_RECORDING_READER_HPP_
+#endif  // INPUT_PHOTO_READER_HPP_

@@ -4,7 +4,7 @@
 #include <cstdint>
 #include <memory>
 
-#include "frame-reader.hpp"
+#include "frame_reader.hpp"
 
 enum class ReaderType : std::uint8_t
 {

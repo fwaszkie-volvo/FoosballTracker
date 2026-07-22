@@ -13,10 +13,10 @@ add_library(foosball_model STATIC
 )
 
 add_library(foosball_input_readers STATIC
-	src/readers/reader-factory.cpp
-	src/readers/recording-reader.cpp
-	src/readers/online-reader.cpp
-	src/readers/photo-reader.cpp
+	src/readers/reader_factory.cpp
+	src/readers/recording_reader.cpp
+	src/readers/online_reader.cpp
+	src/readers/photo_reader.cpp
 )
 
 target_link_libraries(foosball_model

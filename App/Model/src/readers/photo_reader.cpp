@@ -1,4 +1,4 @@
-#include "photo-reader.hpp"
+#include "photo_reader.hpp"
 
 bool PhotoReader::Open(const std::string& source)
 {

@@ -1,22 +1,8 @@
-#include "online-reader.hpp"
+#include "recording_reader.hpp"
 
-bool OnlineReader::Open(const std::string& source)
-{
-    capture_.release();
-    if (capture_.open(source, cv::CAP_FFMPEG))
-    {
-        return true;
-    }
+bool RecordingReader::Open(const std::string& source) { return capture_.open(source); }
 
-    capture_.release();
-    if (capture_.open(source, cv::CAP_GSTREAMER))
-    {
-        return true;
-    }
-    return false;
-}
-
-std::optional<cv::Mat> OnlineReader::Read()
+std::optional<cv::Mat> RecordingReader::Read()
 {
     if (!capture_.isOpened())
     {
@@ -33,9 +19,9 @@ std::optional<cv::Mat> OnlineReader::Read()
     return frame;
 }
 
-bool OnlineReader::IsOpened() const { return capture_.isOpened(); }
+bool RecordingReader::IsOpened() const { return capture_.isOpened(); }
 
-std::optional<double> OnlineReader::GetFps() const
+std::optional<double> RecordingReader::GetFps() const
 {
     if (!capture_.isOpened())
     {
@@ -45,7 +31,7 @@ std::optional<double> OnlineReader::GetFps() const
     return capture_.get(cv::CAP_PROP_FPS);
 }
 
-std::optional<cv::Size> OnlineReader::GetFrameSize() const
+std::optional<cv::Size> RecordingReader::GetFrameSize() const
 {
     if (!capture_.isOpened())
     {
@@ -54,6 +40,5 @@ std::optional<cv::Size> OnlineReader::GetFrameSize() const
 
     const int width = static_cast<int>(capture_.get(cv::CAP_PROP_FRAME_WIDTH));
     const int height = static_cast<int>(capture_.get(cv::CAP_PROP_FRAME_HEIGHT));
-
     return cv::Size(width, height);
 }
