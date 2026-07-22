@@ -17,7 +17,7 @@ Dostepne opcje:
   clean      Usuwa katalog build.
   format-check  Sprawdza formatowanie plikow C++ zgodnie z .clang-format.
   fix-format  Poprawia formatowanie plikow C++ zgodnie z .clang-format.
-  test       Builduje i uruchamia testy projektu.
+  test       Builduje i uruchamia testy projektu. [--verbose]
   app        Uruchamia aplikacje.
 EOF
 }
@@ -103,12 +103,27 @@ function build_tests() {
 }
 
 function test() {
-  build_tests || return 1
+  local verbose=0
+
+  if [[ "$1" == "--verbose" ]]; then
+    verbose=1
+  elif [[ -n "$1" ]]; then
+    echo "Nieznana opcja dla test: $1"
+    echo "Uzycie: $0 test [--verbose]"
+    return 1
+  fi
+
+  build || return 1
 
   local tests_binary="$TESTS_BUILD_DIR/unit_tests"
   if [[ ! -x "$tests_binary" ]]; then
     echo "Brak binarki testowej: $tests_binary"
     return 1
+  fi
+
+  if [[ "$verbose" -eq 1 ]]; then
+    FOOSBALL_TEST_VERBOSE=1 "$tests_binary" --gtest_color=yes
+    return $?
   fi
 
   "$tests_binary" --gtest_color=yes
@@ -156,7 +171,8 @@ case "$1" in
     clean
     ;;
   test)
-    test
+    shift
+    test "$@"
     ;;
   format-check)
     format_check

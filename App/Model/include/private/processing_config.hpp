@@ -1,7 +1,7 @@
 #ifndef FOOSBALL_TRACKER_PROCESSING_CONFIG_HPP_
 #define FOOSBALL_TRACKER_PROCESSING_CONFIG_HPP_
 
-#include "detector_config.hpp"
+#include "detector_types.hpp"
 #include "model_main.hpp"
 
 namespace config
@@ -15,8 +15,8 @@ struct ProcessingConfig
 
 const ProcessingConfig kProcessingConfigPhoto{
   ReaderType::kPhoto,
-  detector_config::kInputImagePath,
-  detector_config::kOutputImagePath,
+  detector_types::kInputImagePath,
+  detector_types::kOutputImagePath,
 };
 
 const ProcessingConfig kProcessingConfigRecording{

@@ -13,11 +13,14 @@ find_package(GTest REQUIRED)
 add_executable(unit_tests
     ${CMAKE_CURRENT_SOURCE_DIR}/readers_test.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/frame_processor_test.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ball_detector_test.cpp
 )
 target_include_directories(unit_tests
     PRIVATE
-    ${FOOSBALL_APP_MODEL_SOURCE_DIR}/include/private
-    ${FOOSBALL_APP_MODEL_SOURCE_DIR}/include/private/readers
+    ${FOOSBALL_APP_MODEL_SOURCE_DIR}/Model/include/private
+    ${FOOSBALL_APP_MODEL_SOURCE_DIR}/Model/include/private/detectors
+    ${FOOSBALL_APP_MODEL_SOURCE_DIR}/Model/include/private/utils
+    ${FOOSBALL_APP_MODEL_SOURCE_DIR}/Model/include/private/readers
 )
 target_compile_definitions(unit_tests
     PRIVATE
