@@ -1,5 +1,5 @@
-#ifndef TRACKPLAYERS_HPP_
-#define TRACKPLAYERS_HPP_
+#ifndef PLAYERS_DETECTOR_HPP_
+#define PLAYERS_DETECTOR_HPP_
 
 #include <opencv2/opencv.hpp>
 
@@ -29,4 +29,4 @@ class PlayersDetector
     void RemoveFalseBluePlayers(const cv::Size size);
 };
 
-#endif
+#endif /* PLAYERS_DETECTOR_HPP_ */

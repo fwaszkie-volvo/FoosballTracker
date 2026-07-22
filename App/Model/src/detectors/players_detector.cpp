@@ -1,6 +1,6 @@
-#include "players-detector.hpp"
+#include "players_detector.hpp"
 
-void PlayersDetector::DetectBlueTeam(const cv::Mat &frame)
+void PlayersDetector::DetectBlueTeam(const cv::Mat& frame)
 {
     cv::Mat hsv, mask;
 
@@ -19,7 +19,7 @@ void PlayersDetector::DetectBlueTeam(const cv::Mat &frame)
     cv::findContours(
       mask, players_.contours_blue_, hierarchy, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
 
-    for (const auto &contour : players_.contours_blue_)
+    for (const auto& contour : players_.contours_blue_)
     {
         double area = cv::contourArea(contour);
         if (area > 500)
@@ -30,7 +30,7 @@ void PlayersDetector::DetectBlueTeam(const cv::Mat &frame)
     }
 }
 
-void PlayersDetector::DetectRedTeam(const cv::Mat &frame)
+void PlayersDetector::DetectRedTeam(const cv::Mat& frame)
 {
     cv::Mat hsv, mask1, mask2, mask;
 
@@ -52,7 +52,7 @@ void PlayersDetector::DetectRedTeam(const cv::Mat &frame)
     cv::findContours(
       mask, players_.contours_red_, hierarchy, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
 
-    for (const auto &contour : players_.contours_red_)
+    for (const auto& contour : players_.contours_red_)
     {
         double area = cv::contourArea(contour);
         if (area > 500)
@@ -72,7 +72,7 @@ void PlayersDetector::RemoveFalseBluePlayers(const cv::Size size)
     int64_t current_distance_1{-1};
     int64_t current_distance_2{-1};
 
-    for (const auto &rectangle : players_.rectangles_blue_)
+    for (const auto& rectangle : players_.rectangles_blue_)
     {
         current_distance_1 =
           (rectangle.x - size.width) * (rectangle.x - size.width) + (rectangle.y) * (rectangle.y);
@@ -105,7 +105,7 @@ void PlayersDetector::RemoveFalseRedPlayers(const cv::Size size)
     int64_t current_distance_1{-1};
     int64_t current_distance_2{-1};
 
-    for (const auto &rectangle : players_.rectangles_red_)
+    for (const auto& rectangle : players_.rectangles_red_)
     {
         current_distance_1 = (rectangle.x) * (rectangle.x) + (rectangle.y) * (rectangle.y);
 
@@ -127,7 +127,7 @@ void PlayersDetector::RemoveFalseRedPlayers(const cv::Size size)
     std::erase(players_.rectangles_red_, false_player_red_2);
 }
 
-void PlayersDetector::DetectPlayers(const cv::Mat &frame)
+void PlayersDetector::DetectPlayers(const cv::Mat& frame)
 {
     DetectRedTeam(frame);
     DetectBlueTeam(frame);
@@ -135,65 +135,22 @@ void PlayersDetector::DetectPlayers(const cv::Mat &frame)
     RemoveFalseBluePlayers(frame.size());
 }
 
-void PlayersDetector::DisplayPlayers(const cv::Mat &frame)
+void PlayersDetector::DisplayPlayers(const cv::Mat& frame)
 {
     cv::Scalar red = cv::Scalar(0, 0, 255);
     cv::Scalar blue = cv::Scalar(255, 0, 0);
 
-    // int64_t red_player_number = 0;
-    // std::string player_name = "Red Player ";
-    for (const auto &rectangle : players_.rectangles_red_)
+    for (const auto& rectangle : players_.rectangles_red_)
     {
         cv::rectangle(frame, rectangle, red, 2);
-
-        // std::string coord_box =
-        //   "(" + std::to_string(rectangle.x) + ", " + std::to_string(rectangle.y) + ")";
-        // red_player_number++;
-        // player_name += std::to_string(red_player_number);
-        // cv::putText(frame,
-        //             player_name,
-        //             cv::Point(rectangle.x - 20, rectangle.y - 10),
-        //             cv::FONT_HERSHEY_SIMPLEX,
-        //             0.6,
-        //             red,
-        //             2);
-        // cv::putText(frame,
-        //             coord_box,
-        //             cv::Point(rectangle.x - 100, rectangle.y - 100),
-        //             cv::FONT_HERSHEY_SIMPLEX,
-        //             0.6,
-        //             red,
-        //             2);
-        // player_name.resize(player_name.size() - std::to_string(red_player_number).size());
     }
 
-    // int64_t blue_player_number = 0;
-    // std::string blue_player_name = "Blue Player ";
-    for (const auto &rectangle : players_.rectangles_blue_)
+    for (const auto& rectangle : players_.rectangles_blue_)
     {
         std::string coord_box =
           "(" + std::to_string(rectangle.x) + ", " + std::to_string(rectangle.y) + ")";
 
         cv::rectangle(frame, rectangle, blue, 2);
-
-        // blue_player_number++;
-        // blue_player_name += std::to_string(blue_player_number);
-        // cv::putText(frame,
-        //             blue_player_name,
-        //             cv::Point(rectangle.x - 20, rectangle.y - 10),
-        //             cv::FONT_HERSHEY_SIMPLEX,
-        //             0.6,
-        //             blue,
-        //             2);
-        // cv::putText(frame,
-        //             coord_box,
-        //             cv::Point(rectangle.x - 100, rectangle.y - 100),
-        //             cv::FONT_HERSHEY_SIMPLEX,
-        //             0.6,
-        //             blue,
-        //             2);
-        // blue_player_name.resize(blue_player_name.size() -
-        //                         std::to_string(blue_player_number).size());
     }
 
     cv::imshow("Foosball Tracking output", frame);
