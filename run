@@ -12,12 +12,27 @@ Uzycie: $0 <opcja>
 Dostepne opcje:
   configure  Instaluje niezbedne pakiety, np. cmake, opencv, gtest i clang-format.
   build      Buduje projekt przy uzyciu CMake.
+  clang-check  Uruchamia clang-tidy na plikach C++ projektu.
   clean      Usuwa katalog build.
   format-check  Sprawdza formatowanie C++ oraz header guardy.
   format-fix  Poprawia formatowanie C++ oraz header guardy.
   test       Builduje i uruchamia testy projektu.
   app        Uruchamia aplikacje.
 EOF
+}
+
+function find_clang_tidy() {
+  local -a candidates=(clang-tidy-14 clang-tidy)
+
+  for candidate in "${candidates[@]}"; do
+    if command -v "$candidate" >/dev/null 2>&1; then
+      echo "$candidate"
+      return 0
+    fi
+  done
+
+  echo "Brak clang-tidy. Zainstaluj clang-tidy-14 albo clang-tidy." >&2
+  return 1
 }
 
 function find_clang_format() {
@@ -61,11 +76,11 @@ function configure() {
 
   if command -v apt >/dev/null 2>&1; then
     "${privilege_prefix[@]}" apt update
-    "${privilege_prefix[@]}" apt install -y cmake libopencv-dev libgtest-dev clang-format-14
+    "${privilege_prefix[@]}" apt install -y cmake libopencv-dev libgtest-dev clang-format-14 clang-tidy-14
     return $?
   fi
 
-  echo "Nieobslugiwany menedzer pakietow. Zainstaluj recznie: cmake, OpenCV, GoogleTest i clang-format."
+  echo "Nieobslugiwany menedzer pakietow. Zainstaluj recznie: cmake, OpenCV, GoogleTest, clang-format i clang-tidy."
   return 1
 }
 
@@ -98,6 +113,22 @@ function test() {
   fi
 
   ctest --test-dir build --output-on-failure
+}
+
+function clang_check() {
+  local clang_tidy_bin
+  local header_filter='^(.*/)?(App|Tests)/.*\.(h|hpp)$'
+
+  build || return 1
+  clang_tidy_bin=$(find_clang_tidy) || return 1
+
+  if [[ ! -f "$BUILD_DIR/compile_commands.json" ]]; then
+    echo "Brak compile_commands.json w $BUILD_DIR. Uruchom ./run build." >&2
+    return 1
+  fi
+
+  find "$APP_DIR" "$SCRIPT_DIR/Tests" -name '*.cpp' -print0 |
+    xargs -0 "$clang_tidy_bin" -p "$BUILD_DIR" -header-filter="$header_filter" -extra-arg=-Wno-unknown-warning-option
 }
 
 function format_targets() {
@@ -232,6 +263,9 @@ case "$1" in
     ;;
   test)
     test
+    ;;
+  clang-check)
+    clang_check
     ;;
   format-check)
     format_check

@@ -16,17 +16,17 @@ bool BallDetector::IsCircleInsideFrame(const cv::Point &center,
 
 void BallDetector::ResetBestCandidate() { best_candidate_ = DetectionCandidate{}; }
 
-void BallDetector::UpdateCandidate(const cv::Point &center, int radius, double score)
+void BallDetector::UpdateCandidate(const cv::Point &center, const CandidateMetrics &metrics)
 {
-    if (score <= best_candidate_.score)
+    if (metrics.score <= best_candidate_.score)
     {
         return;
     }
 
     best_candidate_.found = true;
     best_candidate_.center = center;
-    best_candidate_.radius = radius;
-    best_candidate_.score = score;
+    best_candidate_.radius = metrics.radius;
+    best_candidate_.score = metrics.score;
 }
 
 void BallDetector::CollectHoughCandidate(const cv::Mat &frame,
@@ -62,7 +62,7 @@ void BallDetector::CollectHoughCandidate(const cv::Mat &frame,
     double score = white_ratio * detector_config::kCircleWhiteRatioWeight +
                    brightness * detector_config::kCircleBrightnessWeight;
 
-    UpdateCandidate(center, radius, score);
+    UpdateCandidate(center, CandidateMetrics{.radius = radius, .score = score});
 }
 
 void BallDetector::CollectContourCandidate(const cv::Mat &frame,
@@ -117,7 +117,7 @@ void BallDetector::CollectContourCandidate(const cv::Mat &frame,
     cv::Point center(static_cast<int>(std::round(center_f.x)),
                      static_cast<int>(std::round(center_f.y)));
     int radius = static_cast<int>(std::round(radius_f));
-    UpdateCandidate(center, radius, circularity * extent);
+    UpdateCandidate(center, CandidateMetrics{.radius = radius, .score = circularity * extent});
 }
 
 void BallDetector::DrawDetection(cv::Mat &frame) const

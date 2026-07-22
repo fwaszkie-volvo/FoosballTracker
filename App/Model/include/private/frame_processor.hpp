@@ -12,11 +12,16 @@
 class FrameProcessor
 {
   public:
+    struct ProcessingTarget
+    {
+        std::string source;
+        std::string output_path;
+    };
+
     using FrameHandler = std::function<void(cv::Mat&)>;
 
     void SetReaderType(const ReaderType reader_type);
-    std::optional<cv::Mat> ProcessFrames(const std::string& source,
-                                         const std::string& output_path,
+    std::optional<cv::Mat> ProcessFrames(const ProcessingTarget& target,
                                          const FrameHandler& frame_processor);
 
   private:

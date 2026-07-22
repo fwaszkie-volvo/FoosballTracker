@@ -1,5 +1,5 @@
-# This starter workflow is for a CMake project running on a single platform. There is a different starter workflow if you need cross-platform coverage.
-# See: https://github.com/actions/starter-workflows/blob/main/ci/cmake-multi-platform.yml
+This starter workflow is for a CMake project running on a single platform. There is a different starter workflow if you need cross-platform coverage.
+ See: https://github.com/actions/starter-workflows/blob/main/ci/cmake-multi-platform.yml
 name: CMake on a single platform
 
 on:
@@ -21,7 +21,7 @@ jobs:
     - name: Build
       run: ./run build
 
-  format:
+  clang:
     runs-on: ubuntu-latest
 
     steps:
@@ -29,6 +29,9 @@ jobs:
 
     - name: Configure
       run: ./run configure
+
+    - name: Clang check
+      run: ./run clang-check
 
     - name: Check formatting
       run: ./run format-check

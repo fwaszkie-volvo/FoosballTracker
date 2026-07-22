@@ -7,15 +7,19 @@
 class MaskUtils
 {
   public:
+    struct HsvRange
+    {
+        cv::Scalar lower;
+        cv::Scalar upper;
+    };
+
     static cv::Mat CreateKernel(int size, int shape);
     static cv::Mat BuildHsvMask(const cv::Mat &frame,
                                 const cv::Scalar &lower,
                                 const cv::Scalar &upper);
     static cv::Mat BuildDualHsvMask(const cv::Mat &frame,
-                                    const cv::Scalar &lower1,
-                                    const cv::Scalar &upper1,
-                                    const cv::Scalar &lower2,
-                                    const cv::Scalar &upper2);
+                                    const HsvRange &range1,
+                                    const HsvRange &range2);
     static void OpenMask(cv::Mat &mask, int kernel_size);
     static void DrawLabel(cv::Mat &frame,
                           const std::string &label,

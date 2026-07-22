@@ -19,10 +19,13 @@ void ModelMain::Calculate()
 
     FrameProcessor frame_processor;
     frame_processor.SetReaderType(config.reader_type);
+    const FrameProcessor::ProcessingTarget target{
+      .source = config.input_source,
+      .output_path = config.output_path,
+    };
 
     const auto frame =
-      frame_processor.ProcessFrames(config.input_source,
-                                    config.output_path,
+      frame_processor.ProcessFrames(target,
                                     [&](cv::Mat& current_frame)
                                     {
                                         detect_ball(current_frame);

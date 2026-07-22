@@ -12,6 +12,12 @@ class BallDetector
     cv::Mat Detect(cv::Mat &frame);
 
   private:
+    struct CandidateMetrics
+    {
+        int radius = 0;
+        double score = -1.0;
+    };
+
     struct DetectionCandidate
     {
         bool found = false;
@@ -22,7 +28,7 @@ class BallDetector
 
     bool IsCircleInsideFrame(const cv::Point &center, int radius, const cv::Size &size) const;
     void ResetBestCandidate();
-    void UpdateCandidate(const cv::Point &center, int radius, double score);
+    void UpdateCandidate(const cv::Point &center, const CandidateMetrics &metrics);
     void CollectHoughCandidate(const cv::Mat &frame,
                                const cv::Mat &mask,
                                const cv::Point &center,

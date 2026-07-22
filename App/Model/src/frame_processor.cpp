@@ -1,6 +1,7 @@
 #include "frame_processor.hpp"
 
 #include <filesystem>
+#include <vector>
 
 void FrameProcessor::SetReaderType(const ReaderType reader_type)
 {
@@ -8,8 +9,7 @@ void FrameProcessor::SetReaderType(const ReaderType reader_type)
     reader_.reset();
 }
 
-std::optional<cv::Mat> FrameProcessor::ProcessFrames(const std::string& source,
-                                                     const std::string& output_path,
+std::optional<cv::Mat> FrameProcessor::ProcessFrames(const ProcessingTarget& target,
                                                      const FrameHandler& frame_processor)
 {
     reader_ = CreateReader(reader_type_);
@@ -18,7 +18,7 @@ std::optional<cv::Mat> FrameProcessor::ProcessFrames(const std::string& source,
         return std::nullopt;
     }
 
-    if (!reader_->Open(source))
+    if (!reader_->Open(target.source))
     {
         return std::nullopt;
     }
@@ -26,17 +26,17 @@ std::optional<cv::Mat> FrameProcessor::ProcessFrames(const std::string& source,
     cv::VideoWriter output_writer;
 
     std::error_code error;
-    const auto output_directory = std::filesystem::path(output_path).parent_path();
+    const auto output_directory = std::filesystem::path(target.output_path).parent_path();
     if (!output_directory.empty())
     {
         std::filesystem::create_directories(output_directory, error);
     }
 
-    const auto last_frame = ProcessInputFrames(output_writer, output_path, frame_processor);
+    auto last_frame = ProcessInputFrames(output_writer, target.output_path, frame_processor);
 
     if (reader_type_ == ReaderType::kPhoto && HasValidFrame(last_frame))
     {
-        cv::imwrite(output_path, last_frame.value());
+        cv::imwrite(target.output_path, last_frame.value());
     }
     return last_frame;
 }
@@ -99,7 +99,7 @@ bool FrameProcessor::TryOpenOutputWriter(cv::VideoWriter& output_writer,
                                          const double fps,
                                          const cv::Size& frame_size)
 {
-    const int codecs[] = {
+    const std::vector<int> codecs = {
       cv::VideoWriter::fourcc('a', 'v', 'c', '1'),
       cv::VideoWriter::fourcc('m', 'p', '4', 'v'),
     };
