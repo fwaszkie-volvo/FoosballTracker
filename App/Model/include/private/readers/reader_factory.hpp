@@ -1,5 +1,5 @@
-#ifndef INPUT_READER_FACTORY_HPP_
-#define INPUT_READER_FACTORY_HPP_
+#ifndef FOOSBALL_TRACKER_APP_MODEL_INCLUDE_PRIVATE_READERS_READER_FACTORY_HPP_
+#define FOOSBALL_TRACKER_APP_MODEL_INCLUDE_PRIVATE_READERS_READER_FACTORY_HPP_
 
 #include <cstdint>
 #include <memory>
@@ -21,4 +21,4 @@ constexpr bool IsVideoType(const ReaderType reader_type)
 
 std::unique_ptr<IFrameReader> CreateReader(const ReaderType type);
 
-#endif  // INPUT_READER_FACTORY_HPP_
+#endif  // FOOSBALL_TRACKER_APP_MODEL_INCLUDE_PRIVATE_READERS_READER_FACTORY_HPP_

@@ -1,19 +1,12 @@
-#ifndef INPUT_ONLINE_READER_HPP_
-#define INPUT_ONLINE_READER_HPP_
+#ifndef FOOSBALL_TRACKER_APP_MODEL_INCLUDE_PRIVATE_READERS_ONLINE_READER_HPP_
+#define FOOSBALL_TRACKER_APP_MODEL_INCLUDE_PRIVATE_READERS_ONLINE_READER_HPP_
 
-#include "frame_reader.hpp"
+#include "video_frame_reader.hpp"
 
-class OnlineReader : public IFrameReader
+class OnlineReader : public VideoFrameReader
 {
   public:
     bool Open(const std::string& source) override;
-    std::optional<cv::Mat> Read() override;
-    bool IsOpened() const override;
-    std::optional<double> GetFps() const override;
-    std::optional<cv::Size> GetFrameSize() const override;
-
-  private:
-    cv::VideoCapture capture_;
 };
 
-#endif  // INPUT_ONLINE_READER_HPP_
+#endif  // FOOSBALL_TRACKER_APP_MODEL_INCLUDE_PRIVATE_READERS_ONLINE_READER_HPP_

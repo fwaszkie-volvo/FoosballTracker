@@ -1,5 +1,5 @@
-#ifndef INPUT_FRAME_READER_HPP_
-#define INPUT_FRAME_READER_HPP_
+#ifndef FOOSBALL_TRACKER_APP_MODEL_INCLUDE_PRIVATE_READERS_FRAME_READER_HPP_
+#define FOOSBALL_TRACKER_APP_MODEL_INCLUDE_PRIVATE_READERS_FRAME_READER_HPP_
 
 #include <opencv2/opencv.hpp>
 #include <optional>
@@ -17,4 +17,4 @@ class IFrameReader
     virtual std::optional<cv::Size> GetFrameSize() const = 0;
 };
 
-#endif  // INPUT_FRAME_READER_HPP_
+#endif  // FOOSBALL_TRACKER_APP_MODEL_INCLUDE_PRIVATE_READERS_FRAME_READER_HPP_
