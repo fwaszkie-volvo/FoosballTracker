@@ -27,18 +27,18 @@ bool PlayfieldDetector::ChooseLargestContour(const std::vector<std::vector<cv::P
 std::vector<cv::Point> PlayfieldDetector::ApproximatePolygon(
   const std::vector<cv::Point>& hull) const
 {
-    std::vector<cv::Point> best_polygon = hull;
-    int best_vertex_delta =
-      std::abs(static_cast<int>(hull.size()) - detector_types::kPlayfieldTargetVertices);
-    const double hull_perimeter = cv::arcLength(hull, true);
-    const int epsilon_steps = static_cast<int>(
+    std::vector<cv::Point> best_polygon{hull};
+    int best_vertex_delta{
+      std::abs(static_cast<int>(hull.size()) - detector_types::kPlayfieldTargetVertices)};
+    const double hull_perimeter{cv::arcLength(hull, true)};
+    const int epsilon_steps{static_cast<int>(
       std::lround((detector_types::kPlayfieldApproxEnd - detector_types::kPlayfieldApproxStart) /
-                  detector_types::kPlayfieldApproxStep));
+                  detector_types::kPlayfieldApproxStep))};
 
-    for (int epsilon_step = 0; epsilon_step <= epsilon_steps; ++epsilon_step)
+    for (int epsilon_step{0}; epsilon_step <= epsilon_steps; ++epsilon_step)
     {
-        const double epsilon_scale = detector_types::kPlayfieldApproxStart +
-                                     (epsilon_step * detector_types::kPlayfieldApproxStep);
+        const double epsilon_scale{detector_types::kPlayfieldApproxStart +
+                                   (epsilon_step * detector_types::kPlayfieldApproxStep)};
         std::vector<cv::Point> polygon;
         cv::approxPolyDP(hull, polygon, epsilon_scale * hull_perimeter, true);
 
