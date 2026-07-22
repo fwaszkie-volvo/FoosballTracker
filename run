@@ -92,12 +92,13 @@ function clean() {
 function test() {
   build || return 1
 
-  if ! command -v ctest >/dev/null 2>&1; then
-    echo "Brak polecenia ctest. Zainstaluj cmake i sprobuj ponownie."
+  local tests_binary="$BUILD_DIR/Tests/unit_tests"
+  if [[ ! -x "$tests_binary" ]]; then
+    echo "Brak binarki testowej: $tests_binary"
     return 1
   fi
 
-  ctest --test-dir build --output-on-failure
+  "$tests_binary" --gtest_color=yes
 }
 
 function format_targets() {
