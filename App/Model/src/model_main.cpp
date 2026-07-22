@@ -1,31 +1,50 @@
 #include "model_main.hpp"
 
-#include <filesystem>
+#include <cstdlib>
+#include <iostream>
 #include <opencv2/opencv.hpp>
 
 #include "detector.hpp"
-#include "detector_config.hpp"
+#include "frame_processor.hpp"
+#include "processing_config.hpp"
 
 void ModelMain::Calculate()
 {
-    const std::filesystem::path input_image_path =
-      std::filesystem::absolute(detector_config::kInputImagePath);
+    const auto config = config::kProcessingConfigOnline;
+    const char* preview_value = std::getenv("FOOSBALL_PREVIEW");
+    const bool is_interactive = (std::getenv("DISPLAY") != nullptr);
+    const bool preview_disabled = (preview_value != nullptr) && std::string(preview_value) == "0";
+    const bool show_realtime_preview =
+      is_interactive && IsVideoType(config.reader_type) && !preview_disabled;
 
-    cv::Mat frame = cv::imread(input_image_path.string(), cv::IMREAD_COLOR);
-    if (frame.empty())
+    FrameProcessor frame_processor;
+    frame_processor.SetReaderType(config.reader_type);
+
+    const auto frame =
+      frame_processor.ProcessFrames(config.input_source,
+                                    config.output_path,
+                                    [&](cv::Mat& current_frame)
+                                    {
+                                        detect_ball(current_frame);
+
+                                        if (show_realtime_preview)
+                                        {
+                                            cv::imshow("Foosball Tracking output", current_frame);
+                                            cv::waitKey(1);
+                                        }
+                                    });
+    if (!frame.has_value() || frame->empty())
     {
-        std::cerr << "Failed to load input image: " << input_image_path.string() << "\n";
+        std::cerr << "Failed to process input source: " << config.input_source << "\n";
         return;
     }
 
-    detect_ball(frame);
-
-    cv::imwrite(detector_config::kOutputImagePath, frame);
-
-    // Only display if running in interactive mode
-    if (std::getenv("DISPLAY") != nullptr)
+    if (!IsVideoType(config.reader_type) && is_interactive)
     {
-        cv::imshow("Foosball Tracking output", frame);
+        cv::imshow("Foosball Tracking output", frame.value());
         cv::waitKey(0);
+        cv::destroyAllWindows();
     }
+
+    std::cout << "Saved output to: " << config.output_path << "\n";
 }

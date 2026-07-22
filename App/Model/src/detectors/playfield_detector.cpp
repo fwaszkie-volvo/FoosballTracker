@@ -31,11 +31,14 @@ std::vector<cv::Point> PlayfieldDetector::ApproximatePolygon(
     int best_vertex_delta =
       std::abs(static_cast<int>(hull.size()) - detector_config::kPlayfieldTargetVertices);
     double hull_perimeter = cv::arcLength(hull, true);
+    const int epsilon_steps = static_cast<int>(
+      std::lround((detector_config::kPlayfieldApproxEnd - detector_config::kPlayfieldApproxStart) /
+                  detector_config::kPlayfieldApproxStep));
 
-    for (double epsilon_scale = detector_config::kPlayfieldApproxStart;
-         epsilon_scale <= detector_config::kPlayfieldApproxEnd;
-         epsilon_scale += detector_config::kPlayfieldApproxStep)
+    for (int epsilon_step = 0; epsilon_step <= epsilon_steps; ++epsilon_step)
     {
+        const double epsilon_scale = detector_config::kPlayfieldApproxStart +
+                                     (epsilon_step * detector_config::kPlayfieldApproxStep);
         std::vector<cv::Point> polygon;
         cv::approxPolyDP(hull, polygon, epsilon_scale * hull_perimeter, true);
 
