@@ -26,7 +26,7 @@ EOF
 }
 
 function find_clang_tidy() {
-  local -a candidates=(clang-tidy-18 clang-tidy-17 clang-tidy-16 clang-tidy-15 clang-tidy-14 clang-tidy)
+  candidates=(clang-tidy-18 clang-tidy-17 clang-tidy-16 clang-tidy-15 clang-tidy-14 clang-tidy)
 
   for candidate in "${candidates[@]}"; do
     if command -v "$candidate" >/dev/null 2>&1; then
@@ -40,7 +40,7 @@ function find_clang_tidy() {
 }
 
 function find_clang_format() {
-  local -a candidates=(clang-format-18 clang-format-17 clang-format-16 clang-format-15 clang-format-14 clang-format)
+  candidates=(clang-format-18 clang-format-17 clang-format-16 clang-format-15 clang-format-14 clang-format)
 
   for candidate in "${candidates[@]}"; do
     if command -v "$candidate" >/dev/null 2>&1; then
@@ -54,7 +54,7 @@ function find_clang_format() {
 }
 
 function first_available_apt_package() {
-  local package
+  package=""
 
   for package in "$@"; do
     if apt-cache show "$package" >/dev/null 2>&1; then
@@ -67,7 +67,7 @@ function first_available_apt_package() {
 }
 
 function find_iwyu_tool() {
-  local -a candidates=(iwyu_tool include-what-you-use)
+  candidates=(iwyu_tool include-what-you-use)
 
   for candidate in "${candidates[@]}"; do
     if command -v "$candidate" >/dev/null 2>&1; then
@@ -81,7 +81,7 @@ function find_iwyu_tool() {
 }
 
 function find_fix_include() {
-  local -a candidates=(fix_include)
+  candidates=(fix_include)
 
   for candidate in "${candidates[@]}"; do
     if command -v "$candidate" >/dev/null 2>&1; then
@@ -111,9 +111,9 @@ function require_install_privileges() {
 }
 
 function configure() {
-  local -a privilege_prefix=()
-  local clang_format_pkg
-  local clang_tidy_pkg
+  privilege_prefix=()
+  clang_format_pkg=""
+  clang_tidy_pkg=""
 
   require_install_privileges || return 1
 
@@ -200,7 +200,7 @@ function validate_test_option() {
 function test() {
   build_tests || return 1
 
-  local tests_binary="$TESTS_BUILD_DIR/unit_tests"
+  tests_binary="$TESTS_BUILD_DIR/unit_tests"
 
   if [[ ! -x "$tests_binary" ]]; then
     echo "Brak binarki testowej: $tests_binary"
@@ -213,8 +213,8 @@ function test() {
 }
 
 function clang_check() {
-  local clang_tidy_bin
-  local header_filter='^(.*/)?App/.*\.(h|hpp)$'
+  clang_tidy_bin=""
+  header_filter='^(.*/)?App/.*\.(h|hpp)$'
 
   build || return 1
   clang_tidy_bin=$(find_clang_tidy) || return 1
@@ -224,25 +224,25 @@ function clang_check() {
     return 1
   fi
 
-  find "$APP_DIR" -name '*.cpp' -print0 |
+  source_targets |
     xargs -0 "$clang_tidy_bin" -quiet -p "$BUILD_DIR" -header-filter="$header_filter" -checks=-modernize-use-nodiscard -extra-arg=-Wno-unknown-warning-option -extra-arg=-w
 }
 
 function format_targets() {
-  find "$APP_DIR" \( -name '*.cpp' -o -name '*.hpp' -o -name '*.h' \) -print0
+  find "$APP_DIR" -path "$BUILD_DIR" -prune -o \( -name '*.cpp' -o -name '*.hpp' -o -name '*.h' \) -print0
 }
 
 function header_targets() {
-  find "$APP_DIR" \( -name '*.hpp' -o -name '*.h' \) -print0
+  find "$APP_DIR" -path "$BUILD_DIR" -prune -o \( -name '*.hpp' -o -name '*.h' \) -print0
 }
 
 function source_targets() {
-  find "$APP_DIR" -name '*.cpp' -print0
+  find "$APP_DIR" -path "$BUILD_DIR" -prune -o -name '*.cpp' -print0
 }
 
 function filter_iwyu_output_for_includes_only() {
-  local input_path=$1
-  local output_path=$2
+  input_path=$1
+  output_path=$2
 
   awk '
     /^.* should add these lines:$/ {
@@ -283,14 +283,14 @@ function filter_iwyu_output_for_includes_only() {
 }
 
 function run_iwyu() {
-  local apply_fixes=$1
-  local iwyu_tool_bin
-  local fix_include_bin
-  local iwyu_output
-  local filtered_iwyu_output
-  local iwyu_status=0
-  local -a source_files=()
-  local -a include_fix_files=()
+  apply_fixes=$1
+  iwyu_tool_bin=""
+  fix_include_bin=""
+  iwyu_output=""
+  filtered_iwyu_output=""
+  iwyu_status=0
+  source_files=()
+  include_fix_files=()
 
   build || return 1
   iwyu_tool_bin=$(find_iwyu_tool) || return 1
@@ -338,9 +338,9 @@ function include_check() {
 }
 
 function expected_guard_for_file() {
-  local file_path=$1
-  local relative_path=${file_path#"$SCRIPT_DIR/"}
-  local guard
+  file_path=$1
+  relative_path=${file_path#"$SCRIPT_DIR/"}
+  guard=""
 
   guard=$(printf '%s' "$relative_path" | tr '[:lower:]' '[:upper:]' | sed -E 's#[^A-Z0-9]+#_#g')
   printf 'FOOSBALL_TRACKER_%s_\n' "$guard"
@@ -348,7 +348,7 @@ function expected_guard_for_file() {
 
 function fix_header_guards() {
   while IFS= read -r -d '' header; do
-    local expected_guard
+    expected_guard=""
 
     expected_guard=$(expected_guard_for_file "$header")
 
@@ -386,13 +386,13 @@ function fix_header_guards() {
 }
 
 function check_header_guards() {
-  local has_errors=0
+  has_errors=0
 
   while IFS= read -r -d '' header; do
-    local expected_guard
-    local ifndef_line
-    local define_line
-    local endif_line
+    expected_guard=""
+    ifndef_line=""
+    define_line=""
+    endif_line=""
 
     expected_guard=$(expected_guard_for_file "$header")
     ifndef_line=$(grep -m1 -E '^#ifndef[[:space:]]+[A-Z0-9_]+$' "$header" || true)
@@ -412,7 +412,7 @@ function check_header_guards() {
 }
 
 function format_fix() {
-  local clang_format_bin
+  clang_format_bin=""
 
   clang_format_bin=$(find_clang_format) || return 1
 
@@ -422,9 +422,9 @@ function format_fix() {
 }
 
 function format_check() {
-  local clang_format_bin
-  local has_format_issues=0
-  local has_guard_issues=0
+  clang_format_bin=""
+  has_format_issues=0
+  has_guard_issues=0
 
   clang_format_bin=$(find_clang_format) || return 1
 
@@ -444,14 +444,19 @@ function format_check() {
 }
 
 function format_check_ci() {
+  has_format_issues=""
+  has_guard_issues=""
+  has_include_issues=""
+  has_clang_issues=""
+
   clang_format_bin=$(find_clang_format) || return 1
 
   if ! format_targets | xargs -0 "$clang_format_bin" --dry-run --Werror --style=file; then
-    has_format_issues="1"
+    has_format_issues=1
   fi
 
   if ! check_header_guards; then
-    has_guard_issues="1"
+    has_guard_issues=1
   fi
 
   if ! run_iwyu 0; then
@@ -462,12 +467,12 @@ function format_check_ci() {
     has_clang_issues=1
   fi
 
-  if [[ $has_format_issues -z || $has_guard_issues  -z || $has_include_issues  -z || $has_clang_issues  -z ]]; then
+  if [[ -n "$has_format_issues" || -n "$has_guard_issues" || -n "$has_include_issues" || -n "$has_clang_issues" ]]; then
     echo "Wykryto bledy formatowania, header guardow, include'ow lub clang-tidy." >&2
-    [[ $has_format_issues -z ]] && echo "  - format-check (clang-format)" >&2
-    [[ $has_guard_issues -z ]] && echo "  - header-guards" >&2
-    [[ $has_include_issues -z ]] && echo "  - include-check (iwyu)" >&2
-    [[ $has_clang_issues -z ]] && echo "  - clang-check (clang-tidy)" >&2
+    [[ -n "$has_format_issues" ]] && echo "  - format-check (clang-format)" >&2
+    [[ -n "$has_guard_issues" ]] && echo "  - header-guards" >&2
+    [[ -n "$has_include_issues" ]] && echo "  - include-check (iwyu)" >&2
+    [[ -n "$has_clang_issues" ]] && echo "  - clang-check (clang-tidy)" >&2
     return 1
   fi
 }
