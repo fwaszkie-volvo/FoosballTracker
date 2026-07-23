@@ -1,5 +1,4 @@
 build/
-build-tests/
 build-iwyu/
 .vscode/
 .venv/
