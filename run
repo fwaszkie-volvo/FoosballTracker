@@ -66,6 +66,39 @@ function first_available_apt_package() {
   return 1
 }
 
+function latest_libstdcpp_dev_package() {
+  first_available_apt_package \
+    libstdc++-18-dev \
+    libstdc++-17-dev \
+    libstdc++-16-dev \
+    libstdc++-15-dev \
+    libstdc++-14-dev \
+    libstdc++-13-dev \
+    libstdc++-12-dev \
+    libstdc++-11-dev
+}
+
+function iwyu_clang_common_package() {
+  iwyu_depends=""
+  iwyu_libclang_package=""
+  llvm_major_version=""
+
+  iwyu_depends=$(apt-cache show iwyu 2>/dev/null | awk -F'Depends: ' '/^Depends: / { print $2; exit }')
+  iwyu_libclang_package=$(printf '%s\n' "$iwyu_depends" | grep -o 'libclang-cpp[0-9]\+' | head -n1 || true)
+
+  if [[ -z "$iwyu_libclang_package" ]]; then
+    return 1
+  fi
+
+  llvm_major_version=${iwyu_libclang_package#libclang-cpp}
+  if apt-cache show "libclang-common-${llvm_major_version}-dev" >/dev/null 2>&1; then
+    echo "libclang-common-${llvm_major_version}-dev"
+    return 0
+  fi
+
+  return 1
+}
+
 function find_iwyu_tool() {
   candidates=(iwyu_tool include-what-you-use)
 
@@ -114,6 +147,9 @@ function configure() {
   privilege_prefix=()
   clang_format_pkg=""
   clang_tidy_pkg=""
+  libstdcpp_dev_pkg=""
+  iwyu_clang_common_pkg=""
+  install_packages=()
 
   require_install_privileges || return 1
 
@@ -136,14 +172,29 @@ function configure() {
       return 1
     }
 
-    "${privilege_prefix[@]}" apt install -y \
-      build-essential \
-      cmake \
-      libopencv-dev \
-      libgtest-dev \
-      "$clang_format_pkg" \
-      "$clang_tidy_pkg" \
+    libstdcpp_dev_pkg=$(latest_libstdcpp_dev_package) || {
+      echo "Brak dostepnego pakietu libstdc++-dev w repozytoriach apt." >&2
+      return 1
+    }
+
+    iwyu_clang_common_pkg=$(iwyu_clang_common_package) || {
+      echo "Brak pakietu libclang-common-dev zgodnego z include-what-you-use." >&2
+      return 1
+    }
+
+    install_packages=(
+      build-essential
+      cmake
+      libopencv-dev
+      libgtest-dev
+      "$clang_format_pkg"
+      "$clang_tidy_pkg"
+      "$libstdcpp_dev_pkg"
+      "$iwyu_clang_common_pkg"
       iwyu
+    )
+
+    "${privilege_prefix[@]}" apt install -y "${install_packages[@]}"
     return $?
   fi
 

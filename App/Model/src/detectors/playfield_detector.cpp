@@ -3,13 +3,13 @@
 #include <bits/std_abs.h>
 #include <opencv2/core/hal/interface.h>
 
-#include <algorithm>
 #include <cmath>
 #include <cstdlib>
 #include <opencv2/core.hpp>
 #include <opencv2/core/mat.hpp>
 #include <opencv2/core/mat.inl.hpp>
 #include <opencv2/core/matx.hpp>
+#include <opencv2/core/types.hpp>
 #include <opencv2/imgproc.hpp>
 #include <vector>
 

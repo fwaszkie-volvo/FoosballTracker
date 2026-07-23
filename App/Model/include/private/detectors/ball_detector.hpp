@@ -3,7 +3,6 @@
 
 #include <opencv2/core/mat.hpp>
 #include <opencv2/core/types.hpp>
-#include <vector>
 
 #include "detector.hpp"
 #include "detector_types.hpp"
