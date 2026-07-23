@@ -23,11 +23,7 @@ bool BallDetector::IsCircleInsideFrame(const cv::Point& center,
 
 void BallDetector::ResetBestCandidate() { best_candidate_ = DetectionCandidate{}; }
 
-<<<<<<< HEAD
-void BallDetector::UpdateCandidate(const cv::Point &center, const CandidateMetrics &metrics)
-=======
-void BallDetector::UpdateCandidate(const cv::Point& center, const int radius, const double score)
->>>>>>> origin/master
+void BallDetector::UpdateCandidate(const cv::Point& center, const CandidateMetrics& metrics)
 {
     if (metrics.score <= best_candidate_.score)
     {
@@ -129,17 +125,10 @@ void BallDetector::CollectContourCandidate(const cv::Mat& frame,
         return;
     }
 
-<<<<<<< HEAD
-    cv::Point center(static_cast<int>(std::round(center_f.x)),
-                     static_cast<int>(std::round(center_f.y)));
-    int radius = static_cast<int>(std::round(radius_f));
-    UpdateCandidate(center, CandidateMetrics{.radius = radius, .score = circularity * extent});
-=======
     const cv::Point center{static_cast<int>(std::round(center_f.x)),
                            static_cast<int>(std::round(center_f.y))};
     const int radius{static_cast<int>(std::round(radius_f))};
-    UpdateCandidate(center, radius, circularity * extent);
->>>>>>> origin/master
+    UpdateCandidate(center, CandidateMetrics{.radius = radius, .score = circularity * extent});
 }
 
 cv::Mat BallDetector::BuildForegroundMask(const cv::Mat& gray, const cv::Mat& playfield_mask)

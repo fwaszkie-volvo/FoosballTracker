@@ -1,5 +1,10 @@
 #include "mask_utils.hpp"
 
+#include <opencv2/core.hpp>
+#include <opencv2/core/mat.inl.hpp>
+#include <opencv2/imgcodecs.hpp>
+#include <opencv2/imgproc.hpp>
+
 #include "detector_types.hpp"
 
 namespace mask_utils

@@ -8,7 +8,7 @@
 #include <optional>
 #include <string>
 
-#include "ball_detector.hpp"
+#include "detector.hpp"
 #include "frame_processor.hpp"
 #include "processing_config.hpp"
 #include "reader_factory.hpp"
