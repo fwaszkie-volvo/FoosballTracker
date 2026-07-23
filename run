@@ -17,7 +17,7 @@ Dostepne opcje:
   include-check    Uruchamia include-what-you-use na plikach C++ projektu.
   clean            Usuwa katalog build.
   format-check     Sprawdza formatowanie C++ oraz header guardy z auto-poprawkami.
-  format-check-ci  Sprawdza formatowanie C++ oraz header guardy bez auto-poprawek.
+  format-check-ci  Sprawdza formatowanie C++, header guardy, clang-tidy oraz include-what-you-use bez auto-poprawek.
   format-fix       Poprawia formatowanie C++ oraz header guardy.
   test             Builduje i uruchamia testy projektu.
   app              Uruchamia aplikacje.
@@ -392,6 +392,7 @@ function format_check_ci() {
   local has_format_issues=0
   local has_guard_issues=0
   local has_include_issues=0
+  local has_clang_issues=0
 
   clang_format_bin=$(find_clang_format) || return 1
 
@@ -407,8 +408,12 @@ function format_check_ci() {
     has_include_issues=1
   fi
 
-  if [[ $has_format_issues -ne 0 || $has_guard_issues -ne 0 || $has_include_issues -ne 0 ]]; then
-    echo "Wykryto bledy formatowania, header guardow lub include'ow. CI nie wykonuje auto-poprawek." >&2
+  if ! clang_check; then
+    has_clang_issues=1
+  fi
+
+  if [[ $has_format_issues -ne 0 || $has_guard_issues -ne 0 || $has_include_issues -ne 0 || $has_clang_issues -ne 0 ]]; then
+    echo "Wykryto bledy formatowania, header guardow, include'ow lub clang-tidy. CI nie wykonuje auto-poprawek." >&2
     return 1
   fi
 }

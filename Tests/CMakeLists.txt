@@ -1,6 +1,6 @@
 include(GoogleTest)
 
-find_package(GTest)
+find_package(GTest REQUIRED)
 
 add_executable(unit_tests
     ${CMAKE_CURRENT_SOURCE_DIR}/readers_test.cpp
@@ -8,13 +8,21 @@ add_executable(unit_tests
 )
 target_include_directories(unit_tests
     PRIVATE
-      ${CMAKE_SOURCE_DIR}/Model/include/private
-      ${CMAKE_SOURCE_DIR}/Model/include/private/readers
+      ${FOOSBALL_APP_MODEL_SOURCE_DIR}/include/private
+      ${FOOSBALL_APP_MODEL_SOURCE_DIR}/include/private/readers
 )
 target_compile_definitions(unit_tests
     PRIVATE
     TEST_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}"
 )
+
+set(FOOSBALL_APP_MODEL_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../App/Model")
+if(EXISTS "${FOOSBALL_APP_MODEL_SOURCE_DIR}/CMakeLists.txt")
+    add_subdirectory("${FOOSBALL_APP_MODEL_SOURCE_DIR}" "${CMAKE_BINARY_DIR}/App/Model")
+else()
+    message(FATAL_ERROR "Nie znaleziono App/Model/CMakeLists.txt pod sciezka: ${FOOSBALL_APP_MODEL_SOURCE_DIR}")
+endif()
+
 target_link_libraries(unit_tests
     PRIVATE
       foosball_model
