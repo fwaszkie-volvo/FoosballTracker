@@ -452,7 +452,11 @@ function format_check_ci() {
   fi
 
   if [[ $has_format_issues -ne 0 || $has_guard_issues -ne 0 || $has_include_issues -ne 0 || $has_clang_issues -ne 0 ]]; then
-    echo "Wykryto bledy formatowania, header guardow, include'ow lub clang-tidy. CI nie wykonuje auto-poprawek." >&2
+    echo "Wykryto bledy formatowania, header guardow, include'ow lub clang-tidy." >&2
+    [[ $has_format_issues -ne 0 ]] && echo "  - format-check (clang-format)" >&2
+    [[ $has_guard_issues -ne 0 ]] && echo "  - header-guards" >&2
+    [[ $has_include_issues -ne 0 ]] && echo "  - include-check (iwyu)" >&2
+    [[ $has_clang_issues -ne 0 ]] && echo "  - clang-check (clang-tidy)" >&2
     return 1
   fi
 }
