@@ -3,7 +3,7 @@
 
 #include <string>
 
-#include "detector_config.hpp"
+#include "detector_types.hpp"
 #include "reader_factory.hpp"
 
 namespace config
@@ -24,8 +24,8 @@ const ProcessingConfig kProcessingConfigPhoto{
   .reader_type = ReaderType::kPhoto,
   .target =
     ProcessingTarget{
-      .source = detector_config::kInputImagePath,
-      .output_path = detector_config::kOutputImagePath,
+      .source = detector_types::kInputImagePath,
+      .output_path = detector_types::kOutputImagePath,
     },
 };
 

@@ -20,7 +20,7 @@ Dostepne opcje:
   format-check     Sprawdza formatowanie C++ oraz header guardy z auto-poprawkami.
   format-check-ci  Sprawdza formatowanie C++, header guardy, clang-tidy oraz include-what-you-use bez auto-poprawek.
   format-fix       Poprawia formatowanie C++ oraz header guardy.
-  test             Builduje i uruchamia testy projektu.
+  test             Builduje i uruchamia testy projektu [--verbose].
   app              Uruchamia aplikacje.
 EOF
 }
@@ -182,6 +182,21 @@ function build_tests() {
   cmake --build "$TESTS_BUILD_DIR"
 }
 
+function validate_test_option() {
+  if [[ "$1" == "--verbose" ]]; then
+    export FOOSBALL_TEST_VERBOSE=1
+    return 0
+  fi
+
+  if [[ -z "$1" ]]; then
+   return 0
+  fi
+
+  echo "Nieznana opcja dla test: $1"
+  echo "Uzycie: $0 test [--verbose]"
+  return 1
+}
+
 function test() {
   build_tests || return 1
 
@@ -191,6 +206,8 @@ function test() {
     echo "Brak binarki testowej: $tests_binary"
     return 1
   fi
+
+  validate_test_option "$1" || return 1
 
   "$tests_binary" --gtest_color=yes
 }
@@ -427,20 +444,14 @@ function format_check() {
 }
 
 function format_check_ci() {
-  local clang_format_bin
-  local has_format_issues=0
-  local has_guard_issues=0
-  local has_include_issues=0
-  local has_clang_issues=0
-
   clang_format_bin=$(find_clang_format) || return 1
 
   if ! format_targets | xargs -0 "$clang_format_bin" --dry-run --Werror --style=file; then
-    has_format_issues=1
+    has_format_issues="1"
   fi
 
   if ! check_header_guards; then
-    has_guard_issues=1
+    has_guard_issues="1"
   fi
 
   if ! run_iwyu 0; then
@@ -451,12 +462,12 @@ function format_check_ci() {
     has_clang_issues=1
   fi
 
-  if [[ $has_format_issues -ne 0 || $has_guard_issues -ne 0 || $has_include_issues -ne 0 || $has_clang_issues -ne 0 ]]; then
+  if [[ $has_format_issues -z || $has_guard_issues  -z || $has_include_issues  -z || $has_clang_issues  -z ]]; then
     echo "Wykryto bledy formatowania, header guardow, include'ow lub clang-tidy." >&2
-    [[ $has_format_issues -ne 0 ]] && echo "  - format-check (clang-format)" >&2
-    [[ $has_guard_issues -ne 0 ]] && echo "  - header-guards" >&2
-    [[ $has_include_issues -ne 0 ]] && echo "  - include-check (iwyu)" >&2
-    [[ $has_clang_issues -ne 0 ]] && echo "  - clang-check (clang-tidy)" >&2
+    [[ $has_format_issues -z ]] && echo "  - format-check (clang-format)" >&2
+    [[ $has_guard_issues -z ]] && echo "  - header-guards" >&2
+    [[ $has_include_issues -z ]] && echo "  - include-check (iwyu)" >&2
+    [[ $has_clang_issues -z ]] && echo "  - clang-check (clang-tidy)" >&2
     return 1
   fi
 }
@@ -479,7 +490,8 @@ case "$1" in
     clean
     ;;
   test)
-    test
+    shift
+    test "$@"
     ;;
   clang-check)
     clang_check
