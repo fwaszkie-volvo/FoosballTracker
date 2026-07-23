@@ -1,9 +1,15 @@
 #include "players_detector.hpp"
 
-#include <stdint.h>
+#include <cstdint.h>
 
+#include <algorithm>
+#include <limits>
 #include <opencv2/core/mat.hpp>
+#include <opencv2/core/mat.inl.hpp>
+#include <opencv2/core/matx.hpp>
 #include <opencv2/core/types.hpp>
+#include <opencv2/imgproc.hpp>
+#include <string>
 #include <vector>
 
 #include "detector_types.hpp"
