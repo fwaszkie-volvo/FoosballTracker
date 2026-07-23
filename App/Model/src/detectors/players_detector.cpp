@@ -1,6 +1,6 @@
 #include "players_detector.hpp"
 
-#include <cstdint.h>
+#include <cstdint>
 
 #include <algorithm>
 #include <limits>
