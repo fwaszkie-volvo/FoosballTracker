@@ -56,3 +56,9 @@ void ModelMain::Calculate()
 
     std::cout << "Saved output to: " << config.target.output_path << "\n";
 }
+
+std::optional<TeamDraw> ModelMain::GenerateTeams(
+  const std::array<std::string, kPlayersCount>& nicknames) const
+{
+    return generator::GenerateTeams(nicknames);
+}
