@@ -20,13 +20,17 @@ class PlayersDetector
     // Debug only, to be removed in final version
     void DisplayPlayers(const cv::Mat& frame);
 
-    Players players_;
+    Players players_{};
 
   private:
-    void DetectRedTeam(const cv::Mat& frame);
-    void DetectBlueTeam(const cv::Mat& frame);
-    void RemoveFalseRedPlayers(const cv::Size size);
-    void RemoveFalseBluePlayers(const cv::Size size);
+    static int64_t DistanceToCorner(const cv::Rect& rectangle, const cv::Point& corner);
+    template <typename ColorRange>
+    void DetectTeamImpl(const cv::Mat& frame,
+                        std::vector<std::vector<cv::Point>>& contours,
+                        std::vector<cv::Rect>& rectangles);
+    static void RemoveInvalidPlayers(std::vector<cv::Rect>& rectangles,
+                                     const cv::Point& first_corner,
+                                     const cv::Point& second_corner);
 };
 
 #endif /* PLAYERS_DETECTOR_HPP_ */
