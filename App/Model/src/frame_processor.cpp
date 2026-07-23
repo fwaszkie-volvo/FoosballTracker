@@ -26,7 +26,7 @@ std::optional<cv::Mat> FrameProcessor::ProcessFrames(const config::ProcessingTar
         return std::nullopt;
     }
 
-    if (!reader_->Open(target.source))
+    if (!reader_->Open(target.input_source))
     {
         return std::nullopt;
     }

@@ -29,7 +29,7 @@ TEST(FrameProcessorTest, UnspecifiedReaderTypeReturnsNullopt)
 
     int processed_frames = 0;
     const auto result = processor.ProcessFrames(
-      config::ProcessingTarget{.source = TestFile("ball_unobscured.jpg"),
+      config::ProcessingTarget{.input_source = TestFile("ball_unobscured.jpg"),
                                .output_path = TestOutput("unspecified_output.jpg")},
       [&](cv::Mat&) { ++processed_frames; });
 
@@ -47,7 +47,7 @@ TEST(FrameProcessorTest, PhotoModeProcessesSingleFrameAndWritesImage)
     std::filesystem::remove(output_path);
 
     const auto result = processor.ProcessFrames(
-      config::ProcessingTarget{.source = TestFile("ball_unobscured.jpg"),
+      config::ProcessingTarget{.input_source = TestFile("ball_unobscured.jpg"),
                                .output_path = output_path},
       [&](cv::Mat& frame)
       {
@@ -74,9 +74,10 @@ TEST(FrameProcessorTest, RecordingModeProcessesVideoAndWritesOutput)
     const auto output_path = TestOutput("frame_processor_recording_output.mp4");
     std::filesystem::remove(output_path);
 
-    const auto result = processor.ProcessFrames(
-      config::ProcessingTarget{.source = TestFile("test_video.mp4"), .output_path = output_path},
-      [&](cv::Mat&) { ++processed_frames; });
+    const auto result =
+      processor.ProcessFrames(config::ProcessingTarget{.input_source = TestFile("test_video.mp4"),
+                                                       .output_path = output_path},
+                              [&](cv::Mat&) { ++processed_frames; });
 
     ASSERT_TRUE(result.has_value());
     EXPECT_FALSE(result->empty());
@@ -92,7 +93,7 @@ TEST(FrameProcessorTest, RecordingModeReturnsNulloptForInvalidInput)
 
     int processed_frames = 0;
     const auto result = processor.ProcessFrames(
-      config::ProcessingTarget{.source = TestFile("missing.mp4"),
+      config::ProcessingTarget{.input_source = TestFile("missing.mp4"),
                                .output_path = TestOutput("recording_invalid_output.mp4")},
       [&](cv::Mat&) { ++processed_frames; });
 
@@ -107,7 +108,7 @@ TEST(FrameProcessorTest, OnlineModeReturnsNulloptForInvalidInput)
 
     int processed_frames = 0;
     const auto result = processor.ProcessFrames(
-      config::ProcessingTarget{.source = TestFile("missing.mp4"),
+      config::ProcessingTarget{.input_source = TestFile("missing.mp4"),
                                .output_path = TestOutput("online_invalid_output.mp4")},
       [&](cv::Mat&) { ++processed_frames; });
 
@@ -126,7 +127,7 @@ TEST(FrameProcessorTest, OnlineModeProcessesVideoSourceAndWritesOutput)
     std::filesystem::remove(output_path);
 
     const auto result = processor.ProcessFrames(
-      config::ProcessingTarget{.source = source, .output_path = output_path},
+      config::ProcessingTarget{.input_source = source, .output_path = output_path},
       [&](cv::Mat&) { ++processed_frames; });
 
     ASSERT_TRUE(result.has_value());

@@ -25,7 +25,7 @@ void ModelMain::Calculate()
     FrameProcessor frame_processor;
     frame_processor.SetReaderType(config.reader_type);
     const config::ProcessingTarget target{
-      .source = config.target.source,
+      .input_source = config.target.input_source,
       .output_path = config.target.output_path,
     };
 
@@ -43,7 +43,7 @@ void ModelMain::Calculate()
                                     });
     if (!frame.has_value() || frame->empty())
     {
-        std::cerr << "Failed to process input source: " << config.target.source << "\n";
+        std::cerr << "Failed to process input source: " << config.target.input_source << "\n";
         return;
     }
 

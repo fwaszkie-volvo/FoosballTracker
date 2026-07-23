@@ -10,7 +10,7 @@ namespace config
 {
 struct ProcessingTarget final
 {
-    std::string source;
+    std::string input_source;
     std::string output_path;
 };
 
@@ -24,8 +24,8 @@ const ProcessingConfig kProcessingConfigPhoto{
   .reader_type = ReaderType::kPhoto,
   .target =
     ProcessingTarget{
-      .source = detector_types::kInputImagePath,
-      .output_path = detector_types::kOutputImagePath,
+      .input_source{detector_types::kInputImagePath},
+      .output_path{detector_types::kOutputImagePath},
     },
 };
 
@@ -33,8 +33,8 @@ const ProcessingConfig kProcessingConfigRecording{
   .reader_type = ReaderType::kRecording,
   .target =
     ProcessingTarget{
-      .source = "Tests/test_files/test_video.mp4",
-      .output_path = "Tests/test_outputs/output_recording.mp4",
+      .input_source{"Tests/test_files/test_video.mp4"},
+      .output_path{"Tests/test_outputs/output_recording.mp4"},
     },
 };
 
@@ -42,8 +42,8 @@ const ProcessingConfig kProcessingConfigOnline{
   .reader_type = ReaderType::kOnline,
   .target =
     ProcessingTarget{
-      .source = "rtsp://127.0.0.1:8554/stream",
-      .output_path = "Tests/test_outputs/output_online.mp4",
+      .input_source{"rtsp://127.0.0.1:8554/stream"},
+      .output_path{"Tests/test_outputs/output_online.mp4"},
     },
 };
 }  // namespace config
