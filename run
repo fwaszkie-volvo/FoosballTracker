@@ -4,7 +4,8 @@ SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 APP_DIR="$SCRIPT_DIR/App"
 BUILD_DIR="$SCRIPT_DIR/build"
 APP_BINARY="$BUILD_DIR/foosball_tracker"
-TEST_BINARY="$BUILD_DIR/Tests/unit_tests"
+TESTS_DIR="$SCRIPT_DIR/Tests"
+TESTS_BUILD_DIR="$TESTS_DIR/build"
 
 function help() {
   cat <<EOF
@@ -25,7 +26,7 @@ EOF
 }
 
 function find_clang_tidy() {
-  local -a candidates=(clang-tidy-14 clang-tidy)
+  local -a candidates=(clang-tidy-18 clang-tidy-17 clang-tidy-16 clang-tidy-15 clang-tidy-14 clang-tidy)
 
   for candidate in "${candidates[@]}"; do
     if command -v "$candidate" >/dev/null 2>&1; then
@@ -34,12 +35,12 @@ function find_clang_tidy() {
     fi
   done
 
-  echo "Brak clang-tidy. Zainstaluj clang-tidy-14 albo clang-tidy." >&2
+  echo "Brak clang-tidy. Zainstaluj clang-tidy." >&2
   return 1
 }
 
 function find_clang_format() {
-  local -a candidates=(clang-format-14 clang-format)
+  local -a candidates=(clang-format-18 clang-format-17 clang-format-16 clang-format-15 clang-format-14 clang-format)
 
   for candidate in "${candidates[@]}"; do
     if command -v "$candidate" >/dev/null 2>&1; then
@@ -48,7 +49,20 @@ function find_clang_format() {
     fi
   done
 
-  echo "Brak clang-format. Zainstaluj clang-format-14 albo clang-format." >&2
+  echo "Brak clang-format. Zainstaluj clang-format." >&2
+  return 1
+}
+
+function first_available_apt_package() {
+  local package
+
+  for package in "$@"; do
+    if apt-cache show "$package" >/dev/null 2>&1; then
+      echo "$package"
+      return 0
+    fi
+  done
+
   return 1
 }
 
@@ -98,6 +112,8 @@ function require_install_privileges() {
 
 function configure() {
   local -a privilege_prefix=()
+  local clang_format_pkg
+  local clang_tidy_pkg
 
   require_install_privileges || return 1
 
@@ -107,20 +123,31 @@ function configure() {
 
   if command -v apt >/dev/null 2>&1; then
     "${privilege_prefix[@]}" apt update
+
+    clang_format_pkg=$(first_available_apt_package \
+      clang-format-18 clang-format-17 clang-format-16 clang-format-15 clang-format-14 clang-format) || {
+      echo "Brak dostepnego pakietu clang-format w repozytoriach apt." >&2
+      return 1
+    }
+
+    clang_tidy_pkg=$(first_available_apt_package \
+      clang-tidy-18 clang-tidy-17 clang-tidy-16 clang-tidy-15 clang-tidy-14 clang-tidy) || {
+      echo "Brak dostepnego pakietu clang-tidy w repozytoriach apt." >&2
+      return 1
+    }
+
     "${privilege_prefix[@]}" apt install -y \
       build-essential \
       cmake \
       libopencv-dev \
       libgtest-dev \
-      clang-13 \
-      libclang-common-13-dev \
-      clang-format-14 \
-      clang-tidy-14 \
+      "$clang_format_pkg" \
+      "$clang_tidy_pkg" \
       iwyu
     return $?
   fi
 
-  echo "Nieobslugiwany menedzer pakietow. Zainstaluj recznie: build-essential, cmake, OpenCV, GoogleTest, clang-13, libclang-common-13-dev, clang-format, clang-tidy, include-what-you-use."
+  echo "Nieobslugiwany menedzer pakietow. Zainstaluj recznie: build-essential, cmake, OpenCV, GoogleTest, clang-format, clang-tidy, include-what-you-use."
   return 1
 }
 
@@ -136,24 +163,36 @@ function build() {
 }
 
 function clean() {
-  if [[ ! -d "$BUILD_DIR" ]]; then
-    echo "Katalog build nie istnieje: $BUILD_DIR"
+  if [[ ! -d "$BUILD_DIR" && ! -d "$TESTS_BUILD_DIR" ]]; then
+    echo "Katalogi build nie istnieja: $BUILD_DIR, $TESTS_BUILD_DIR"
     return 0
   fi
 
-  rm -rf "$BUILD_DIR"
+  rm -rf "$BUILD_DIR" "$TESTS_BUILD_DIR"
 }
 
-function test() {
-  build || return 1
-
-  if [[ ! -x "$TEST_BINARY" ]]; then
-    echo "Brak binarki testowej: $TEST_BINARY"
-    echo "Sprawdz, czy aktualny CMake nadal generuje target unit_tests."
+function build_tests() {
+  if ! command -v cmake >/dev/null 2>&1; then
+    echo "Brak pakietu cmake. Zainstaluj cmake i sprobuj ponownie."
     return 1
   fi
 
-  "$TEST_BINARY"
+  mkdir -p "$TESTS_BUILD_DIR"
+  cmake -S "$TESTS_DIR" -B "$TESTS_BUILD_DIR"
+  cmake --build "$TESTS_BUILD_DIR"
+}
+
+function test() {
+  build_tests || return 1
+
+  local tests_binary="$TESTS_BUILD_DIR/unit_tests"
+
+  if [[ ! -x "$tests_binary" ]]; then
+    echo "Brak binarki testowej: $tests_binary"
+    return 1
+  fi
+
+  "$tests_binary" --gtest_color=yes
 }
 
 function clang_check() {
