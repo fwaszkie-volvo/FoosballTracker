@@ -1,7 +1,6 @@
 #include "players_detector.hpp"
 
 #include <algorithm>
-#include <cstdint>
 #include <limits>
 #include <opencv2/core/mat.hpp>
 #include <opencv2/core/mat.inl.hpp>
