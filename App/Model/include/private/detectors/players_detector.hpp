@@ -7,10 +7,10 @@
 #include <opencv2/core/types.hpp>
 #include <vector>
 
+#include "detector_types.hpp"
+
 struct Players
 {
-    using Contour = std::vector<cv::Point>;
-
     std::vector<Contour> contours_blue_;
     std::vector<Contour> contours_red_;
 
@@ -31,7 +31,7 @@ class PlayersDetector
     static int64_t DistanceToCorner(const cv::Rect& rectangle, const cv::Point& corner);
     template <typename ColorRange>
     void DetectTeam(const cv::Mat& frame,
-                    std::vector<std::vector<cv::Point>>& contours,
+                    std::vector<Contour>& contours,
                     std::vector<cv::Rect>& rectangles);
     static void RemoveInvalidPlayers(std::vector<cv::Rect>& rectangles,
                                      const cv::Point& first_corner,

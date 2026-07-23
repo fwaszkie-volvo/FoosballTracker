@@ -75,8 +75,7 @@ void BallDetector::CollectHoughCandidate(const cv::Mat& frame,
     UpdateCandidate(center, CandidateMetrics{.radius = radius, .score = score});
 }
 
-void BallDetector::CollectContourCandidate(const cv::Mat& frame,
-                                           const std::vector<cv::Point>& contour)
+void BallDetector::CollectContourCandidate(const cv::Mat& frame, const Contour& contour)
 {
     const double area{cv::contourArea(contour)};
     if (area < detector_types::kBallMinArea || area > detector_types::kBallMaxArea)

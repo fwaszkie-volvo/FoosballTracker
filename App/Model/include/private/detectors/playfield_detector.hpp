@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "detector.hpp"
+#include "detector_types.hpp"
 
 class PlayfieldDetector : public Detector
 {
@@ -17,11 +18,10 @@ class PlayfieldDetector : public Detector
     bool HasDetection() const { return detected_; }
 
   private:
-    bool ChooseLargestContour(const std::vector<std::vector<cv::Point>>& contours,
-                              std::vector<cv::Point>& largest_contour) const;
-    std::vector<cv::Point> ApproximatePolygon(const std::vector<cv::Point>& hull) const;
+    bool ChooseLargestContour(const std::vector<Contour>& contours, Contour& largest_contour) const;
+    Contour ApproximatePolygon(const Contour& hull) const;
 
-    std::vector<cv::Point> playfield_polygon_{};
+    Contour playfield_polygon_{};
     cv::Mat playfield_mask_{};
     bool detected_{};
 };

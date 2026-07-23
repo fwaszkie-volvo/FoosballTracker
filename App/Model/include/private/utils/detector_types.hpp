@@ -6,6 +6,8 @@
 
 #include "mask_utils.hpp"
 
+using Contour = std::vector<cv::Point>;
+
 namespace detector_types
 {
 const cv::Scalar kLowerGreen(17, 22, 22);

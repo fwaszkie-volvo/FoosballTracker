@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "detector.hpp"
+#include "detector_types.hpp"
 #include "playfield_detector.hpp"
 
 class BallDetector : public Detector
@@ -36,7 +37,7 @@ class BallDetector : public Detector
                                const cv::Mat& mask,
                                const cv::Point& center,
                                const int radius);
-    void CollectContourCandidate(const cv::Mat& frame, const std::vector<cv::Point>& contour);
+    void CollectContourCandidate(const cv::Mat& frame, const Contour& contour);
     cv::Mat BuildForegroundMask(const cv::Mat& gray, const cv::Mat& playfield_mask);
 
     PlayfieldDetector playfield_detector_{};

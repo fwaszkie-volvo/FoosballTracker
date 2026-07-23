@@ -17,7 +17,7 @@ const Players& PlayersDetector::GetPlayers() const { return players_; }
 
 template <typename ColorRange>
 void PlayersDetector::DetectTeam(const cv::Mat& frame,
-                                 std::vector<std::vector<cv::Point>>& contours,
+                                 std::vector<Contour>& contours,
                                  std::vector<cv::Rect>& rectangles)
 {
     cv::Mat mask{ColorRange::CreateMask(frame)};
