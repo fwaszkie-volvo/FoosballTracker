@@ -3,21 +3,21 @@
 #include <bits/std_abs.h>
 #include <opencv2/core/hal/interface.h>
 
-#include <algorithm>
 #include <cmath>
 #include <cstdlib>
 #include <opencv2/core.hpp>
 #include <opencv2/core/mat.hpp>
 #include <opencv2/core/mat.inl.hpp>
 #include <opencv2/core/matx.hpp>
+#include <opencv2/core/types.hpp>
 #include <opencv2/imgproc.hpp>
 #include <vector>
 
 #include "detector_types.hpp"
 #include "mask_utils.hpp"
 
-bool PlayfieldDetector::ChooseLargestContour(const std::vector<std::vector<cv::Point>>& contours,
-                                             std::vector<cv::Point>& largest_contour) const
+bool PlayfieldDetector::ChooseLargestContour(const std::vector<Contour>& contours,
+                                             Contour& largest_contour) const
 {
     double best_area{0.0};
 
@@ -34,10 +34,9 @@ bool PlayfieldDetector::ChooseLargestContour(const std::vector<std::vector<cv::P
     return !largest_contour.empty();
 }
 
-std::vector<cv::Point> PlayfieldDetector::ApproximatePolygon(
-  const std::vector<cv::Point>& hull) const
+Contour PlayfieldDetector::ApproximatePolygon(const Contour& hull) const
 {
-    std::vector<cv::Point> best_polygon{hull};
+    Contour best_polygon{hull};
     int best_vertex_delta{
       std::abs(static_cast<int>(hull.size()) - detector_types::kPlayfieldTargetVertices)};
     const double hull_perimeter{cv::arcLength(hull, true)};
@@ -49,7 +48,7 @@ std::vector<cv::Point> PlayfieldDetector::ApproximatePolygon(
     {
         const double epsilon_scale{detector_types::kPlayfieldApproxStart +
                                    (epsilon_step * detector_types::kPlayfieldApproxStep)};
-        std::vector<cv::Point> polygon;
+        Contour polygon;
         cv::approxPolyDP(hull, polygon, epsilon_scale * hull_perimeter, true);
 
         if (polygon.size() < 4)
@@ -117,17 +116,17 @@ void PlayfieldDetector::Detect(const cv::Mat& frame)
                cv::Point(-1, -1),
                detector_types::kPlayfieldDilateIterations);
 
-    std::vector<std::vector<cv::Point>> contours;
+    std::vector<Contour> contours;
     std::vector<cv::Vec4i> hierarchy;
     cv::findContours(green_mask, contours, hierarchy, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
 
-    std::vector<cv::Point> largest_contour;
+    Contour largest_contour;
     if (!ChooseLargestContour(contours, largest_contour))
     {
         return;
     }
 
-    std::vector<cv::Point> hull{};
+    Contour hull{};
     cv::convexHull(largest_contour, hull);
 
     playfield_mask_ = cv::Mat::zeros(frame.size(), CV_8UC1);

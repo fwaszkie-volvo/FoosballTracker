@@ -4,6 +4,10 @@
 #include <opencv2/opencv.hpp>
 #include <string>
 
+#include "mask_utils.hpp"
+
+using Contour = std::vector<cv::Point>;
+
 namespace detector_types
 {
 const cv::Scalar kLowerGreen(17, 22, 22);
@@ -14,9 +18,20 @@ const cv::Scalar kUpperWhite(180, 90, 255);
 
 const cv::Scalar kBallDrawColor(0, 255, 255);
 const cv::Scalar kPlayfieldDrawColor(255, 255, 0);
+const cv::Scalar kPlayersDrawRedColor(0, 0, 255);
+const cv::Scalar kPlayersDrawBlueColor(255, 0, 0);
+
+const cv::Scalar kPlayersLowerBlue(100, 150, 50);
+const cv::Scalar kPlayersUpperBlue(140, 255, 255);
+
+const cv::Scalar kPlayersLowerRed1(0, 120, 70);
+const cv::Scalar kPlayersUpperRed1(10, 255, 255);
+const cv::Scalar kPlayersLowerRed2(170, 120, 70);
+const cv::Scalar kPlayersUpperRed2(180, 255, 255);
 
 constexpr int kPlayfieldKernelSize{15};
 constexpr int kBallKernelSize{7};
+constexpr int kPlayersKernelSize{5};
 constexpr int kPlayfieldDilateIterations{1};
 constexpr int kGreenDominanceThreshold{5};
 
@@ -27,6 +42,7 @@ constexpr int kPlayfieldTargetVertices{8};
 
 constexpr int kBallMinArea{700};
 constexpr int kBallMaxArea{2300};
+constexpr int kPlayersMinArea{500};
 constexpr double kBallMinCircularity{0.75};
 constexpr float kBallMinRadius{16.0f};
 constexpr float kBallMaxRadius{24.0f};
@@ -74,6 +90,26 @@ inline const std::string kFieldMaskPath{kTestOutputsDir + "field_mask.jpg"};
 inline const std::string kBallMaskPath{kTestOutputsDir + "ball_mask.jpg"};
 inline const std::string kForegroundMaskPath{kTestOutputsDir + "foreground_mask.jpg"};
 inline const std::string kBackgroundDiffPath{kTestOutputsDir + "background_diff.jpg"};
+
+struct BlueColorRange
+{
+    static cv::Mat CreateMask(const cv::Mat& frame)
+    {
+        return mask_utils::build_hsv_mask(frame, kPlayersLowerBlue, kPlayersUpperBlue);
+    }
+};
+
+struct RedColorRange
+{
+    static cv::Mat CreateMask(const cv::Mat& frame)
+    {
+        cv::Mat mask1{mask_utils::build_hsv_mask(frame, kPlayersLowerRed1, kPlayersUpperRed1)};
+        cv::Mat mask2{mask_utils::build_hsv_mask(frame, kPlayersLowerRed2, kPlayersUpperRed2)};
+        cv::Mat mask;
+        cv::bitwise_or(mask1, mask2, mask);
+        return mask;
+    }
+};
 }  // namespace detector_types
 
 #endif  // FOOSBALL_TRACKER_APP_MODEL_INCLUDE_PRIVATE_UTILS_DETECTOR_TYPES_HPP_
