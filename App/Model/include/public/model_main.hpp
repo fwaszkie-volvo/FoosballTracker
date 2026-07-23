@@ -9,7 +9,7 @@ class ModelMain
 {
   public:
     void Calculate();
-    std::optional<generator::TeamDraw> GenerateTeams(const generator::Players& nicknames) const;
+    std::optional<generator::TeamDrawResult> GenerateTeams(const generator::Players& players) const;
 };
 
 #endif  // FOOSBALL_TRACKER_APP_MODEL_INCLUDE_PUBLIC_MODEL_MAIN_HPP_

@@ -58,8 +58,8 @@ void ModelMain::Calculate()
     std::cout << "Saved output to: " << config.target.output_path << "\n";
 }
 
-std::optional<generator::TeamDraw> ModelMain::GenerateTeams(
-  const generator::Players& nicknames) const
+std::optional<generator::TeamDrawResult> ModelMain::GenerateTeams(
+  const generator::Players& players) const
 {
-    return generator::GenerateTeams(nicknames);
+    return generator::GenerateTeams(players);
 }

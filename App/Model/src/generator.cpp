@@ -3,23 +3,24 @@
 #include <algorithm>
 #include <optional>
 #include <random>
-#include <string>
 #include <vector>
+
+#include "player.hpp"
 
 namespace generator
 {
-std::optional<TeamDraw> GenerateTeams(const Players& nicknames)
+std::optional<TeamDrawResult> GenerateTeams(const Players& players)
 {
-    std::vector<std::string> shuffled_nicknames{nicknames.begin(), nicknames.end()};
+    std::vector<Player> shuffled_players{players.begin(), players.end()};
 
     std::mt19937 random_generator{std::random_device{}()};
-    std::shuffle(shuffled_nicknames.begin(), shuffled_nicknames.end(), random_generator);
+    std::shuffle(shuffled_players.begin(), shuffled_players.end(), random_generator);
 
-    TeamDraw team_draw{
+    TeamDrawResult team_draw{
       .first_team =
-        Team{.player_one = shuffled_nicknames.at(0), .player_two = shuffled_nicknames.at(1)},
+        Team{.first_player = shuffled_players.at(0), .second_player = shuffled_players.at(1)},
       .second_team =
-        Team{.player_one = shuffled_nicknames.at(2), .player_two = shuffled_nicknames.at(3)},
+        Team{.first_player = shuffled_players.at(2), .second_player = shuffled_players.at(3)},
     };
 
     return team_draw;
