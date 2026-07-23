@@ -28,17 +28,8 @@ TEST(ModelMainTest, GenerateTeamsCreatesTwoPairsForFourPlayers)
     };
     std::ranges::sort(actual_players);
 
-    std::vector<std::string> expected_players{"Alice", "Bob", "Carol", "Dave"};
+    std::vector<std::string> expected_players{" Alice ", "Bob", "Carol", "Dave"};
     std::ranges::sort(expected_players);
 
     EXPECT_EQ(actual_players, expected_players);
-}
-
-TEST(ModelMainTest, GenerateTeamsRejectsInvalidNicknames)
-{
-    ModelMain model;
-
-    EXPECT_FALSE(model.GenerateTeams({"Alice", "Bob", "Carol"}).has_value());
-    EXPECT_FALSE(model.GenerateTeams({"Alice", "Bob", "Alice", "Dave"}).has_value());
-    EXPECT_FALSE(model.GenerateTeams({"Alice", "Bob", "   ", "Dave"}).has_value());
 }

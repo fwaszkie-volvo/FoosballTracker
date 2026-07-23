@@ -10,6 +10,7 @@
 
 #include "detector.hpp"
 #include "frame_processor.hpp"
+#include "generator.hpp"
 #include "processing_config.hpp"
 #include "reader_factory.hpp"
 
@@ -57,8 +58,8 @@ void ModelMain::Calculate()
     std::cout << "Saved output to: " << config.target.output_path << "\n";
 }
 
-std::optional<TeamDraw> ModelMain::GenerateTeams(
-  const std::array<std::string, kPlayersCount>& nicknames) const
+std::optional<generator::TeamDraw> ModelMain::GenerateTeams(
+  const generator::Players& nicknames) const
 {
     return generator::GenerateTeams(nicknames);
 }
