@@ -3,17 +3,17 @@
 #include <cmath>
 #include <vector>
 
-#include "detector_config.hpp"
+#include "detector_types.hpp"
 #include "mask_utils.hpp"
 
-bool PlayfieldDetector::ChooseLargestContour(const std::vector<std::vector<cv::Point>> &contours,
-                                             std::vector<cv::Point> &largest_contour) const
+bool PlayfieldDetector::ChooseLargestContour(const std::vector<std::vector<cv::Point>>& contours,
+                                             std::vector<cv::Point>& largest_contour) const
 {
-    double best_area = 0.0;
+    double best_area{0.0};
 
-    for (const auto &contour : contours)
+    for (const auto& contour : contours)
     {
-        double area = cv::contourArea(contour);
+        const double area{cv::contourArea(contour)};
         if (area > best_area)
         {
             best_area = area;
@@ -25,20 +25,20 @@ bool PlayfieldDetector::ChooseLargestContour(const std::vector<std::vector<cv::P
 }
 
 std::vector<cv::Point> PlayfieldDetector::ApproximatePolygon(
-  const std::vector<cv::Point> &hull) const
+  const std::vector<cv::Point>& hull) const
 {
-    std::vector<cv::Point> best_polygon = hull;
-    int best_vertex_delta =
-      std::abs(static_cast<int>(hull.size()) - detector_config::kPlayfieldTargetVertices);
-    double hull_perimeter = cv::arcLength(hull, true);
-    const int epsilon_steps = static_cast<int>(
-      std::lround((detector_config::kPlayfieldApproxEnd - detector_config::kPlayfieldApproxStart) /
-                  detector_config::kPlayfieldApproxStep));
+    std::vector<cv::Point> best_polygon{hull};
+    int best_vertex_delta{
+      std::abs(static_cast<int>(hull.size()) - detector_types::kPlayfieldTargetVertices)};
+    const double hull_perimeter{cv::arcLength(hull, true)};
+    const int epsilon_steps{static_cast<int>(
+      std::lround((detector_types::kPlayfieldApproxEnd - detector_types::kPlayfieldApproxStart) /
+                  detector_types::kPlayfieldApproxStep))};
 
-    for (int epsilon_step = 0; epsilon_step <= epsilon_steps; ++epsilon_step)
+    for (int epsilon_step{0}; epsilon_step <= epsilon_steps; ++epsilon_step)
     {
-        const double epsilon_scale = detector_config::kPlayfieldApproxStart +
-                                     (epsilon_step * detector_config::kPlayfieldApproxStep);
+        const double epsilon_scale{detector_types::kPlayfieldApproxStart +
+                                   (epsilon_step * detector_types::kPlayfieldApproxStep)};
         std::vector<cv::Point> polygon;
         cv::approxPolyDP(hull, polygon, epsilon_scale * hull_perimeter, true);
 
@@ -47,15 +47,15 @@ std::vector<cv::Point> PlayfieldDetector::ApproximatePolygon(
             continue;
         }
 
-        int vertex_delta =
-          std::abs(static_cast<int>(polygon.size()) - detector_config::kPlayfieldTargetVertices);
+        const int vertex_delta{
+          std::abs(static_cast<int>(polygon.size()) - detector_types::kPlayfieldTargetVertices)};
         if (vertex_delta < best_vertex_delta)
         {
             best_vertex_delta = vertex_delta;
             best_polygon = polygon;
         }
 
-        if (polygon.size() == detector_config::kPlayfieldTargetVertices)
+        if (polygon.size() == detector_types::kPlayfieldTargetVertices)
         {
             return polygon;
         }
@@ -64,12 +64,14 @@ std::vector<cv::Point> PlayfieldDetector::ApproximatePolygon(
     return best_polygon;
 }
 
-bool PlayfieldDetector::Detect(const cv::Mat &frame,
-                               std::vector<cv::Point> &playfield_polygon,
-                               cv::Mat &playfield_mask) const
+void PlayfieldDetector::Detect(const cv::Mat& frame)
 {
-    cv::Mat green_mask =
-      MaskUtils::BuildHsvMask(frame, detector_config::kLowerGreen, detector_config::kUpperGreen);
+    detected_ = false;
+    playfield_polygon_.clear();
+    playfield_mask_.release();
+
+    cv::Mat green_mask{
+      mask_utils::build_hsv_mask(frame, detector_types::kLowerGreen, detector_types::kUpperGreen)};
     cv::Mat green_dominance_mask;
 
     std::vector<cv::Mat> bgr_channels;
@@ -84,26 +86,26 @@ bool PlayfieldDetector::Detect(const cv::Mat &frame,
     cv::Mat green_over_blue_mask;
     cv::threshold(green_minus_red,
                   green_over_red_mask,
-                  detector_config::kGreenDominanceThreshold,
+                  detector_types::kGreenDominanceThreshold,
                   255,
                   cv::THRESH_BINARY);
     cv::threshold(green_minus_blue,
                   green_over_blue_mask,
-                  detector_config::kGreenDominanceThreshold,
+                  detector_types::kGreenDominanceThreshold,
                   255,
                   cv::THRESH_BINARY);
     cv::bitwise_and(green_over_red_mask, green_over_blue_mask, green_dominance_mask);
     cv::bitwise_and(green_mask, green_dominance_mask, green_mask);
 
-    cv::Mat kernel =
-      MaskUtils::CreateKernel(detector_config::kPlayfieldKernelSize, cv::MORPH_ELLIPSE);
+    cv::Mat kernel{
+      mask_utils::create_kernel(detector_types::kPlayfieldKernelSize, cv::MORPH_ELLIPSE)};
     cv::morphologyEx(green_mask, green_mask, cv::MORPH_CLOSE, kernel);
     cv::morphologyEx(green_mask, green_mask, cv::MORPH_OPEN, kernel);
     cv::dilate(green_mask,
                green_mask,
                kernel,
                cv::Point(-1, -1),
-               detector_config::kPlayfieldDilateIterations);
+               detector_types::kPlayfieldDilateIterations);
 
     std::vector<std::vector<cv::Point>> contours;
     std::vector<cv::Vec4i> hierarchy;
@@ -112,15 +114,28 @@ bool PlayfieldDetector::Detect(const cv::Mat &frame,
     std::vector<cv::Point> largest_contour;
     if (!ChooseLargestContour(contours, largest_contour))
     {
-        return false;
+        return;
     }
 
-    std::vector<cv::Point> hull;
+    std::vector<cv::Point> hull{};
     cv::convexHull(largest_contour, hull);
 
-    playfield_mask = cv::Mat::zeros(frame.size(), CV_8UC1);
-    cv::fillConvexPoly(playfield_mask, hull, cv::Scalar(255));
-    playfield_polygon = ApproximatePolygon(hull);
+    playfield_mask_ = cv::Mat::zeros(frame.size(), CV_8UC1);
+    cv::fillConvexPoly(playfield_mask_, hull, cv::Scalar(255));
+    playfield_polygon_ = ApproximatePolygon(hull);
+    detected_ = true;
+}
 
-    return true;
+void PlayfieldDetector::Draw(cv::Mat& frame) const
+{
+    if (!detected_ || playfield_polygon_.empty())
+    {
+        return;
+    }
+
+    cv::polylines(frame,
+                  playfield_polygon_,
+                  true,
+                  detector_types::kPlayfieldDrawColor,
+                  detector_types::kDrawThickness);
 }
