@@ -51,6 +51,13 @@ constexpr int kBackgroundDiffThreshold{24};
 constexpr int kForegroundKernelSize{5};
 constexpr int kForegroundMinPixels{30};
 
+constexpr int kWhitePixelValue{255};
+constexpr int kColorChannels{3};
+constexpr double kBrightnessNormalization{255.0};
+const cv::Size kGaussianBlurKernelSize{9, 9};
+constexpr double kGaussianBlurSigma{2.0};
+constexpr int kEdgeThreshold{1};
+
 constexpr int kDrawThickness{2};
 constexpr double kLabelScale{0.6};
 constexpr int kLabelYOffset{10};

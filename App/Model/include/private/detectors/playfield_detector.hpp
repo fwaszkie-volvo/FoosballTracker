@@ -20,9 +20,9 @@ class PlayfieldDetector : public Detector
                               std::vector<cv::Point>& largest_contour) const;
     std::vector<cv::Point> ApproximatePolygon(const std::vector<cv::Point>& hull) const;
 
-    std::vector<cv::Point> playfield_polygon_;
-    cv::Mat playfield_mask_;
-    bool detected_ = false;
+    std::vector<cv::Point> playfield_polygon_{};
+    cv::Mat playfield_mask_{};
+    bool detected_{};
 };
 
 #endif  // FOOSBALL_TRACKER_APP_MODEL_INCLUDE_PRIVATE_DETECTORS_PLAYFIELD_DETECTOR_HPP_

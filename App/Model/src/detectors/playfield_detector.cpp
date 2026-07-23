@@ -71,7 +71,7 @@ void PlayfieldDetector::Detect(const cv::Mat& frame)
     playfield_mask_.release();
 
     cv::Mat green_mask{
-      MaskUtils::BuildHsvMask(frame, detector_types::kLowerGreen, detector_types::kUpperGreen)};
+      mask_utils::build_hsv_mask(frame, detector_types::kLowerGreen, detector_types::kUpperGreen)};
     cv::Mat green_dominance_mask;
 
     std::vector<cv::Mat> bgr_channels;
@@ -98,7 +98,7 @@ void PlayfieldDetector::Detect(const cv::Mat& frame)
     cv::bitwise_and(green_mask, green_dominance_mask, green_mask);
 
     cv::Mat kernel{
-      MaskUtils::CreateKernel(detector_types::kPlayfieldKernelSize, cv::MORPH_ELLIPSE)};
+      mask_utils::create_kernel(detector_types::kPlayfieldKernelSize, cv::MORPH_ELLIPSE)};
     cv::morphologyEx(green_mask, green_mask, cv::MORPH_CLOSE, kernel);
     cv::morphologyEx(green_mask, green_mask, cv::MORPH_OPEN, kernel);
     cv::dilate(green_mask,
@@ -117,7 +117,7 @@ void PlayfieldDetector::Detect(const cv::Mat& frame)
         return;
     }
 
-    std::vector<cv::Point> hull;
+    std::vector<cv::Point> hull{};
     cv::convexHull(largest_contour, hull);
 
     playfield_mask_ = cv::Mat::zeros(frame.size(), CV_8UC1);

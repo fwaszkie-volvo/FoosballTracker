@@ -2,14 +2,15 @@
 
 #include "detector_types.hpp"
 
-cv::Mat MaskUtils::CreateKernel(int size, int shape)
+namespace mask_utils
+{
+
+cv::Mat create_kernel(int size, int shape)
 {
     return cv::getStructuringElement(shape, cv::Size{size, size});
 }
 
-cv::Mat MaskUtils::BuildHsvMask(const cv::Mat& frame,
-                                const cv::Scalar& lower,
-                                const cv::Scalar& upper)
+cv::Mat build_hsv_mask(const cv::Mat& frame, const cv::Scalar& lower, const cv::Scalar& upper)
 {
     cv::Mat hsv;
     cv::Mat mask;
@@ -20,10 +21,10 @@ cv::Mat MaskUtils::BuildHsvMask(const cv::Mat& frame,
     return mask;
 }
 
-void MaskUtils::DrawLabel(cv::Mat& frame,
-                          const std::string& label,
-                          const cv::Point& anchor,
-                          const cv::Scalar& color)
+void draw_label(cv::Mat& frame,
+                const std::string& label,
+                const cv::Point& anchor,
+                const cv::Scalar& color)
 {
     cv::putText(frame,
                 label,
@@ -34,7 +35,7 @@ void MaskUtils::DrawLabel(cv::Mat& frame,
                 detector_types::kDrawThickness);
 }
 
-void MaskUtils::WriteMaskIfVerbose(const std::string& path, const cv::Mat& mask)
+void write_mask_if_verbose(const std::string& path, const cv::Mat& mask)
 {
     if (!detector_types::kVerbose)
     {
@@ -43,3 +44,5 @@ void MaskUtils::WriteMaskIfVerbose(const std::string& path, const cv::Mat& mask)
 
     cv::imwrite(path, mask);
 }
+
+}  // namespace mask_utils

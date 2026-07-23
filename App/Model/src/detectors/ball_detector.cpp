@@ -40,7 +40,8 @@ void BallDetector::CollectHoughCandidate(const cv::Mat& frame,
     }
 
     cv::Mat circle_mask{cv::Mat::zeros(mask.size(), CV_8UC1)};
-    cv::circle(circle_mask, center, radius, cv::Scalar(255), cv::FILLED);
+    cv::circle(
+      circle_mask, center, radius, cv::Scalar(detector_types::kWhitePixelValue), cv::FILLED);
 
     cv::Mat white_overlap;
     cv::bitwise_and(mask, circle_mask, white_overlap);
@@ -58,7 +59,9 @@ void BallDetector::CollectHoughCandidate(const cv::Mat& frame,
     }
 
     const cv::Scalar mean_bgr{cv::mean(frame, circle_mask)};
-    const double brightness{(mean_bgr[0] + mean_bgr[1] + mean_bgr[2]) / (3.0 * 255.0)};
+    const double brightness{
+      (mean_bgr[0] + mean_bgr[1] + mean_bgr[2]) /
+      (detector_types::kColorChannels * detector_types::kBrightnessNormalization)};
     const double score{white_ratio * detector_types::kCircleWhiteRatioWeight +
                        brightness * detector_types::kCircleBrightnessWeight};
 
@@ -95,8 +98,9 @@ void BallDetector::CollectContourCandidate(const cv::Mat& frame,
     }
 
     const cv::Rect box{cv::boundingRect(contour)};
-    if (box.x <= 1 || box.y <= 1 || box.x + box.width >= frame.cols - 1 ||
-        box.y + box.height >= frame.rows - 1)
+    if (box.x <= detector_types::kEdgeThreshold || box.y <= detector_types::kEdgeThreshold ||
+        box.x + box.width >= frame.cols - detector_types::kEdgeThreshold ||
+        box.y + box.height >= frame.rows - detector_types::kEdgeThreshold)
     {
         return;
     }
@@ -135,14 +139,17 @@ cv::Mat BallDetector::BuildForegroundMask(const cv::Mat& gray, const cv::Mat& pl
 
     cv::Mat diff;
     cv::absdiff(gray, background_u8, diff);
-    MaskUtils::WriteMaskIfVerbose(detector_types::kBackgroundDiffPath, diff);
+    mask_utils::write_mask_if_verbose(detector_types::kBackgroundDiffPath, diff);
 
     cv::Mat foreground_mask;
-    cv::threshold(
-      diff, foreground_mask, detector_types::kBackgroundDiffThreshold, 255, cv::THRESH_BINARY);
+    cv::threshold(diff,
+                  foreground_mask,
+                  detector_types::kBackgroundDiffThreshold,
+                  detector_types::kWhitePixelValue,
+                  cv::THRESH_BINARY);
 
     cv::Mat foreground_kernel =
-      MaskUtils::CreateKernel(detector_types::kForegroundKernelSize, cv::MORPH_ELLIPSE);
+      mask_utils::create_kernel(detector_types::kForegroundKernelSize, cv::MORPH_ELLIPSE);
     cv::morphologyEx(foreground_mask, foreground_mask, cv::MORPH_OPEN, foreground_kernel);
     cv::morphologyEx(foreground_mask, foreground_mask, cv::MORPH_CLOSE, foreground_kernel);
 
@@ -174,15 +181,15 @@ void BallDetector::Draw(cv::Mat& frame) const
                best_candidate_.radius,
                detector_types::kBallDrawColor,
                detector_types::kDrawThickness);
-    MaskUtils::DrawLabel(frame, "Ball", best_candidate_.center, detector_types::kBallDrawColor);
+    mask_utils::draw_label(frame, "Ball", best_candidate_.center, detector_types::kBallDrawColor);
 }
 
 void BallDetector::Detect(const cv::Mat& frame)
 {
     cv::Mat mask{
-      MaskUtils::BuildHsvMask(frame, detector_types::kLowerWhite, detector_types::kUpperWhite)};
+      mask_utils::build_hsv_mask(frame, detector_types::kLowerWhite, detector_types::kUpperWhite)};
     cv::Mat ball_kernel{
-      MaskUtils::CreateKernel(detector_types::kBallKernelSize, cv::MORPH_ELLIPSE)};
+      mask_utils::create_kernel(detector_types::kBallKernelSize, cv::MORPH_ELLIPSE)};
     cv::morphologyEx(mask, mask, cv::MORPH_OPEN, ball_kernel);
     cv::morphologyEx(mask, mask, cv::MORPH_CLOSE, ball_kernel);
 
@@ -190,7 +197,7 @@ void BallDetector::Detect(const cv::Mat& frame)
     const cv::Mat& playfield_mask{playfield_detector_.GetMask()};
     if (playfield_detector_.HasDetection())
     {
-        MaskUtils::WriteMaskIfVerbose(detector_types::kFieldMaskPath, playfield_mask);
+        mask_utils::write_mask_if_verbose(detector_types::kFieldMaskPath, playfield_mask);
         cv::bitwise_and(mask, playfield_mask, mask);
     }
 
@@ -198,7 +205,11 @@ void BallDetector::Detect(const cv::Mat& frame)
 
     cv::Mat gray;
     cv::cvtColor(frame, gray, cv::COLOR_BGR2GRAY);
-    cv::GaussianBlur(gray, gray, cv::Size(9, 9), 2.0, 2.0);
+    cv::GaussianBlur(gray,
+                     gray,
+                     detector_types::kGaussianBlurKernelSize,
+                     detector_types::kGaussianBlurSigma,
+                     detector_types::kGaussianBlurSigma);
     if (!playfield_mask.empty())
     {
         cv::bitwise_and(gray, playfield_mask, gray);
@@ -207,7 +218,7 @@ void BallDetector::Detect(const cv::Mat& frame)
     cv::Mat foreground_mask{BuildForegroundMask(gray, playfield_mask)};
     if (!foreground_mask.empty())
     {
-        MaskUtils::WriteMaskIfVerbose(detector_types::kForegroundMaskPath, foreground_mask);
+        mask_utils::write_mask_if_verbose(detector_types::kForegroundMaskPath, foreground_mask);
 
         cv::Mat motion_refined_mask;
         cv::bitwise_and(color_mask, foreground_mask, motion_refined_mask);
@@ -226,7 +237,7 @@ void BallDetector::Detect(const cv::Mat& frame)
         mask = color_mask;
     }
 
-    MaskUtils::WriteMaskIfVerbose(detector_types::kBallMaskPath, mask);
+    mask_utils::write_mask_if_verbose(detector_types::kBallMaskPath, mask);
 
     ResetBestCandidate();
 

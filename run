@@ -103,8 +103,13 @@ function build_tests() {
 }
 
 function validate_test_option() {
-  if [[ "$1" == "--verbose" || -z "$1" ]]; then
+  if [[ "$1" == "--verbose" ]]; then
+    export FOOSBALL_TEST_VERBOSE=1
     return 0
+  fi
+
+  if [[ -z "$1" ]]; then
+   return 0
   fi
 
   echo "Nieznana opcja dla test: $1"
@@ -122,11 +127,6 @@ function test() {
   fi
 
   validate_test_option "$1" || return 1
-
-  if [[ "$1" == "--verbose" ]]; then
-    FOOSBALL_TEST_VERBOSE=1 "$tests_binary" --gtest_color=yes
-    return $?
-  fi
 
   "$tests_binary" --gtest_color=yes
 }
