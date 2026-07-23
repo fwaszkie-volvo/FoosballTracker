@@ -1,7 +1,11 @@
 #ifndef FOOSBALL_TRACKER_APP_MODEL_INCLUDE_PRIVATE_DETECTORS_PLAYERS_DETECTOR_HPP_
 #define FOOSBALL_TRACKER_APP_MODEL_INCLUDE_PRIVATE_DETECTORS_PLAYERS_DETECTOR_HPP_
 
-#include <opencv2/opencv.hpp>
+#include <stdint.h>
+
+#include <opencv2/core/mat.hpp>
+#include <opencv2/core/types.hpp>
+#include <vector>
 
 struct Players
 {

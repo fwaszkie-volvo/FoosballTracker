@@ -1,5 +1,11 @@
 #include "players_detector.hpp"
 
+#include <stdint.h>
+
+#include <opencv2/core/mat.hpp>
+#include <opencv2/core/types.hpp>
+#include <vector>
+
 #include "detector_types.hpp"
 #include "mask_utils.hpp"
 
@@ -7,8 +13,8 @@ const Players& PlayersDetector::GetPlayers() const { return players_; }
 
 template <typename ColorRange>
 void PlayersDetector::DetectTeam(const cv::Mat& frame,
-                                     std::vector<std::vector<cv::Point>>& contours,
-                                     std::vector<cv::Rect>& rectangles)
+                                 std::vector<std::vector<cv::Point>>& contours,
+                                 std::vector<cv::Rect>& rectangles)
 {
     cv::Mat mask{ColorRange::CreateMask(frame)};
     cv::Mat kernel{mask_utils::create_kernel(detector_types::kPlayersKernelSize, cv::MORPH_RECT)};
@@ -66,10 +72,10 @@ void PlayersDetector::RemoveInvalidPlayers(std::vector<cv::Rect>& rectangles,
 
 void PlayersDetector::Detect(const cv::Mat& frame)
 {
-        DetectTeam<detector_types::RedColorRange>(
-            frame, players_.contours_red_, players_.rectangles_red_);
-        DetectTeam<detector_types::BlueColorRange>(
-            frame, players_.contours_blue_, players_.rectangles_blue_);
+    DetectTeam<detector_types::RedColorRange>(
+      frame, players_.contours_red_, players_.rectangles_red_);
+    DetectTeam<detector_types::BlueColorRange>(
+      frame, players_.contours_blue_, players_.rectangles_blue_);
     const cv::Size size = frame.size();
     RemoveInvalidPlayers(
       players_.rectangles_blue_, cv::Point{size.width, 0}, cv::Point{size.width, size.height});
