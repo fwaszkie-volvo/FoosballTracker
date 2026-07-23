@@ -1,6 +1,11 @@
 #ifndef FOOSBALL_TRACKER_APP_MODEL_INCLUDE_PRIVATE_READERS_VIDEO_FRAME_READER_HPP_
 #define FOOSBALL_TRACKER_APP_MODEL_INCLUDE_PRIVATE_READERS_VIDEO_FRAME_READER_HPP_
 
+#include <opencv2/core/mat.hpp>
+#include <opencv2/core/types.hpp>
+#include <opencv2/videoio.hpp>
+#include <optional>
+
 #include "frame_reader.hpp"
 
 class VideoFrameReader : public IFrameReader

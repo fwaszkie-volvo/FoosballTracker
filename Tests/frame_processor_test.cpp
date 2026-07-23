@@ -6,6 +6,8 @@
 #include <opencv2/opencv.hpp>
 #include <string>
 
+#include "processing_config.hpp"
+
 namespace
 {
 std::string TestFile(const std::string& file_name)
@@ -26,9 +28,10 @@ TEST(FrameProcessorTest, UnspecifiedReaderTypeReturnsNullopt)
     FrameProcessor processor;
 
     int processed_frames = 0;
-    const auto result = processor.ProcessFrames(TestFile("ball_unobscured.jpg"),
-                                                TestOutput("unspecified_output.jpg"),
-                                                [&](cv::Mat&) { ++processed_frames; });
+    const auto result = processor.ProcessFrames(
+      config::ProcessingTarget{.input_source = TestFile("ball_unobscured.jpg"),
+                               .output_path = TestOutput("unspecified_output.jpg")},
+      [&](cv::Mat&) { ++processed_frames; });
 
     EXPECT_FALSE(result.has_value());
     EXPECT_EQ(processed_frames, 0);
@@ -44,8 +47,8 @@ TEST(FrameProcessorTest, PhotoModeProcessesSingleFrameAndWritesImage)
     std::filesystem::remove(output_path);
 
     const auto result = processor.ProcessFrames(
-      TestFile("ball_unobscured.jpg"),
-      output_path,
+      config::ProcessingTarget{.input_source = TestFile("ball_unobscured.jpg"),
+                               .output_path = output_path},
       [&](cv::Mat& frame)
       {
           ++processed_frames;
@@ -71,8 +74,10 @@ TEST(FrameProcessorTest, RecordingModeProcessesVideoAndWritesOutput)
     const auto output_path = TestOutput("frame_processor_recording_output.mp4");
     std::filesystem::remove(output_path);
 
-    const auto result = processor.ProcessFrames(
-      TestFile("test_video.mp4"), output_path, [&](cv::Mat&) { ++processed_frames; });
+    const auto result =
+      processor.ProcessFrames(config::ProcessingTarget{.input_source = TestFile("test_video.mp4"),
+                                                       .output_path = output_path},
+                              [&](cv::Mat&) { ++processed_frames; });
 
     ASSERT_TRUE(result.has_value());
     EXPECT_FALSE(result->empty());
@@ -87,9 +92,10 @@ TEST(FrameProcessorTest, RecordingModeReturnsNulloptForInvalidInput)
     processor.SetReaderType(ReaderType::kRecording);
 
     int processed_frames = 0;
-    const auto result = processor.ProcessFrames(TestFile("missing.mp4"),
-                                                TestOutput("recording_invalid_output.mp4"),
-                                                [&](cv::Mat&) { ++processed_frames; });
+    const auto result = processor.ProcessFrames(
+      config::ProcessingTarget{.input_source = TestFile("missing.mp4"),
+                               .output_path = TestOutput("recording_invalid_output.mp4")},
+      [&](cv::Mat&) { ++processed_frames; });
 
     EXPECT_FALSE(result.has_value());
     EXPECT_EQ(processed_frames, 0);
@@ -101,9 +107,10 @@ TEST(FrameProcessorTest, OnlineModeReturnsNulloptForInvalidInput)
     processor.SetReaderType(ReaderType::kOnline);
 
     int processed_frames = 0;
-    const auto result = processor.ProcessFrames("rtsp://127.0.0.1:1/nonexistent",
-                                                TestOutput("online_invalid_output.mp4"),
-                                                [&](cv::Mat&) { ++processed_frames; });
+    const auto result = processor.ProcessFrames(
+      config::ProcessingTarget{.input_source = TestFile("missing.mp4"),
+                               .output_path = TestOutput("online_invalid_output.mp4")},
+      [&](cv::Mat&) { ++processed_frames; });
 
     EXPECT_FALSE(result.has_value());
     EXPECT_EQ(processed_frames, 0);
@@ -119,8 +126,9 @@ TEST(FrameProcessorTest, OnlineModeProcessesVideoSourceAndWritesOutput)
     const auto output_path = TestOutput("frame_processor_online_output.mp4");
     std::filesystem::remove(output_path);
 
-    const auto result =
-      processor.ProcessFrames(source, output_path, [&](cv::Mat&) { ++processed_frames; });
+    const auto result = processor.ProcessFrames(
+      config::ProcessingTarget{.input_source = source, .output_path = output_path},
+      [&](cv::Mat&) { ++processed_frames; });
 
     ASSERT_TRUE(result.has_value());
     EXPECT_FALSE(result->empty());

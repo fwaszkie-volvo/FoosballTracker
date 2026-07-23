@@ -1,12 +1,16 @@
-#ifndef FOOSBALL_TRACKER_FRAME_PROCESSOR_HPP_
-#define FOOSBALL_TRACKER_FRAME_PROCESSOR_HPP_
+#ifndef FOOSBALL_TRACKER_APP_MODEL_INCLUDE_PRIVATE_FRAME_PROCESSOR_HPP_
+#define FOOSBALL_TRACKER_APP_MODEL_INCLUDE_PRIVATE_FRAME_PROCESSOR_HPP_
 
 #include <functional>
 #include <memory>
-#include <opencv2/opencv.hpp>
+#include <opencv2/core/mat.hpp>
+#include <opencv2/core/types.hpp>
+#include <opencv2/videoio.hpp>
 #include <optional>
 #include <string>
 
+#include "frame_reader.hpp"
+#include "processing_config.hpp"
 #include "reader_factory.hpp"
 
 class FrameProcessor
@@ -15,8 +19,7 @@ class FrameProcessor
     using FrameHandler = std::function<void(cv::Mat&)>;
 
     void SetReaderType(const ReaderType reader_type);
-    std::optional<cv::Mat> ProcessFrames(const std::string& source,
-                                         const std::string& output_path,
+    std::optional<cv::Mat> ProcessFrames(const config::ProcessingTarget& target,
                                          const FrameHandler& frame_processor);
 
   private:
@@ -39,4 +42,4 @@ class FrameProcessor
     std::unique_ptr<IFrameReader> reader_;
 };
 
-#endif  // FOOSBALL_TRACKER_FRAME_PROCESSOR_HPP_
+#endif  // FOOSBALL_TRACKER_APP_MODEL_INCLUDE_PRIVATE_FRAME_PROCESSOR_HPP_

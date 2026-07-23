@@ -1,6 +1,13 @@
 #include "ball_detector.hpp"
 
+#include <opencv2/core/cvdef.h>
+#include <opencv2/core/hal/interface.h>
+
 #include <cmath>
+#include <opencv2/core.hpp>
+#include <opencv2/core/mat.inl.hpp>
+#include <opencv2/core/matx.hpp>
+#include <opencv2/imgproc.hpp>
 #include <vector>
 
 #include "detector_types.hpp"
@@ -16,17 +23,17 @@ bool BallDetector::IsCircleInsideFrame(const cv::Point& center,
 
 void BallDetector::ResetBestCandidate() { best_candidate_ = DetectionCandidate{}; }
 
-void BallDetector::UpdateCandidate(const cv::Point& center, const int radius, const double score)
+void BallDetector::UpdateCandidate(const cv::Point& center, const CandidateMetrics& metrics)
 {
-    if (score <= best_candidate_.score)
+    if (metrics.score <= best_candidate_.score)
     {
         return;
     }
 
     best_candidate_.found = true;
     best_candidate_.center = center;
-    best_candidate_.radius = radius;
-    best_candidate_.score = score;
+    best_candidate_.radius = metrics.radius;
+    best_candidate_.score = metrics.score;
 }
 
 void BallDetector::CollectHoughCandidate(const cv::Mat& frame,
@@ -65,7 +72,7 @@ void BallDetector::CollectHoughCandidate(const cv::Mat& frame,
     const double score{white_ratio * detector_types::kCircleWhiteRatioWeight +
                        brightness * detector_types::kCircleBrightnessWeight};
 
-    UpdateCandidate(center, radius, score);
+    UpdateCandidate(center, CandidateMetrics{.radius = radius, .score = score});
 }
 
 void BallDetector::CollectContourCandidate(const cv::Mat& frame,
@@ -121,7 +128,7 @@ void BallDetector::CollectContourCandidate(const cv::Mat& frame,
     const cv::Point center{static_cast<int>(std::round(center_f.x)),
                            static_cast<int>(std::round(center_f.y))};
     const int radius{static_cast<int>(std::round(radius_f))};
-    UpdateCandidate(center, radius, circularity * extent);
+    UpdateCandidate(center, CandidateMetrics{.radius = radius, .score = circularity * extent});
 }
 
 cv::Mat BallDetector::BuildForegroundMask(const cv::Mat& gray, const cv::Mat& playfield_mask)

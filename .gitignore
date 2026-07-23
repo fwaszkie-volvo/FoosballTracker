@@ -1,4 +1,5 @@
 build/
+build-iwyu/
 .vscode/
 .venv/
 .cache/

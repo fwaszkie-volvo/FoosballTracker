@@ -1,7 +1,8 @@
 #ifndef FOOSBALL_TRACKER_APP_MODEL_INCLUDE_PRIVATE_DETECTORS_BALL_DETECTOR_HPP_
 #define FOOSBALL_TRACKER_APP_MODEL_INCLUDE_PRIVATE_DETECTORS_BALL_DETECTOR_HPP_
 
-#include <opencv2/opencv.hpp>
+#include <opencv2/core/mat.hpp>
+#include <opencv2/core/types.hpp>
 #include <vector>
 
 #include "detector.hpp"
@@ -14,6 +15,12 @@ class BallDetector : public Detector
     void Draw(cv::Mat& frame) const override;
 
   private:
+    struct CandidateMetrics
+    {
+        int radius = 0;
+        double score = -1.0;
+    };
+
     struct DetectionCandidate
     {
         bool found{};
@@ -24,7 +31,7 @@ class BallDetector : public Detector
 
     bool IsCircleInsideFrame(const cv::Point& center, const int radius, const cv::Size& size) const;
     void ResetBestCandidate();
-    void UpdateCandidate(const cv::Point& center, const int radius, const double score);
+    void UpdateCandidate(const cv::Point& center, const CandidateMetrics& metrics);
     void CollectHoughCandidate(const cv::Mat& frame,
                                const cv::Mat& mask,
                                const cv::Point& center,

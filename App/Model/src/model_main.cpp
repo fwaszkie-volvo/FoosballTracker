@@ -2,11 +2,16 @@
 
 #include <cstdlib>
 #include <iostream>
-#include <opencv2/opencv.hpp>
+#include <opencv2/core/mat.hpp>
+#include <opencv2/core/mat.inl.hpp>
+#include <opencv2/highgui.hpp>
+#include <optional>
+#include <string>
 
 #include "detector.hpp"
 #include "frame_processor.hpp"
 #include "processing_config.hpp"
+#include "reader_factory.hpp"
 
 void ModelMain::Calculate()
 {
@@ -19,10 +24,13 @@ void ModelMain::Calculate()
 
     FrameProcessor frame_processor;
     frame_processor.SetReaderType(config.reader_type);
+    const config::ProcessingTarget target{
+      .input_source = config.target.input_source,
+      .output_path = config.target.output_path,
+    };
 
     const auto frame =
-      frame_processor.ProcessFrames(config.input_source,
-                                    config.output_path,
+      frame_processor.ProcessFrames(target,
                                     [&](cv::Mat& current_frame)
                                     {
                                         detect_ball(current_frame);
@@ -35,7 +43,7 @@ void ModelMain::Calculate()
                                     });
     if (!frame.has_value() || frame->empty())
     {
-        std::cerr << "Failed to process input source: " << config.input_source << "\n";
+        std::cerr << "Failed to process input source: " << config.target.input_source << "\n";
         return;
     }
 
@@ -46,5 +54,5 @@ void ModelMain::Calculate()
         cv::destroyAllWindows();
     }
 
-    std::cout << "Saved output to: " << config.output_path << "\n";
+    std::cout << "Saved output to: " << config.target.output_path << "\n";
 }

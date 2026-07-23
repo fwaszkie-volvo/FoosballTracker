@@ -1,0 +1,23 @@
+---
+Checks: >
+  -*,
+  clang-analyzer-*,
+  bugprone-*,
+  -bugprone-unchecked-optional-access,
+  performance-*,
+  -performance-avoid-endl,
+  portability-*,
+  modernize-*,
+  -modernize-use-trailing-return-type,
+  readability-misleading-indentation,
+  readability-redundant-control-flow,
+  readability-redundant-declaration,
+  readability-redundant-member-init,
+  readability-redundant-preprocessor,
+  readability-simplify-boolean-expr
+WarningsAsErrors: >
+  clang-analyzer-*,
+  bugprone-*
+HeaderFilterRegex: '^(App|Tests)/.*\.(h|hpp)$'
+FormatStyle: file
+...

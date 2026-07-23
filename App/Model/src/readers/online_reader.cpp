@@ -1,5 +1,7 @@
 #include "online_reader.hpp"
 
+#include <opencv2/videoio.hpp>
+
 bool OnlineReader::Open(const std::string& source)
 {
     capture_.release();
@@ -9,9 +11,5 @@ bool OnlineReader::Open(const std::string& source)
     }
 
     capture_.release();
-    if (capture_.open(source, cv::CAP_GSTREAMER))
-    {
-        return true;
-    }
-    return false;
+    return capture_.open(source, cv::CAP_GSTREAMER);
 }

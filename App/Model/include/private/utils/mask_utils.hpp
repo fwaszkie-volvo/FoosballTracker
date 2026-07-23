@@ -1,12 +1,13 @@
 #ifndef FOOSBALL_TRACKER_APP_MODEL_INCLUDE_PRIVATE_UTILS_MASK_UTILS_HPP_
 #define FOOSBALL_TRACKER_APP_MODEL_INCLUDE_PRIVATE_UTILS_MASK_UTILS_HPP_
 
-#include <opencv2/opencv.hpp>
+#include <opencv2/core/mat.hpp>
+#include <opencv2/core/types.hpp>
 #include <string>
 
 namespace mask_utils
 {
-cv::Mat create_kernel(int size, int shape);
+cv::Mat create_kernel(const int size, const int shape);
 cv::Mat build_hsv_mask(const cv::Mat& frame, const cv::Scalar& lower, const cv::Scalar& upper);
 void draw_label(cv::Mat& frame,
                 const std::string& label,

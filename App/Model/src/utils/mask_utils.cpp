@@ -1,11 +1,16 @@
 #include "mask_utils.hpp"
 
+#include <opencv2/core.hpp>
+#include <opencv2/core/mat.inl.hpp>
+#include <opencv2/imgcodecs.hpp>
+#include <opencv2/imgproc.hpp>
+
 #include "detector_types.hpp"
 
 namespace mask_utils
 {
 
-cv::Mat create_kernel(int size, int shape)
+cv::Mat create_kernel(const int size, const int shape)
 {
     return cv::getStructuringElement(shape, cv::Size{size, size});
 }
