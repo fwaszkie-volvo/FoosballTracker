@@ -1,8 +1,13 @@
 #include "mask_utils.hpp"
 
+#include <opencv2/core.hpp>
+#include <opencv2/core/mat.inl.hpp>
+#include <opencv2/imgcodecs.hpp>
+#include <opencv2/imgproc.hpp>
+
 #include "detector_config.hpp"
 
-cv::Mat MaskUtils::CreateKernel(int size, int shape)
+cv::Mat MaskUtils::CreateKernel(const int size, const int shape)
 {
     return cv::getStructuringElement(shape, cv::Size(size, size));
 }
@@ -21,13 +26,11 @@ cv::Mat MaskUtils::BuildHsvMask(const cv::Mat &frame,
 }
 
 cv::Mat MaskUtils::BuildDualHsvMask(const cv::Mat &frame,
-                                    const cv::Scalar &lower1,
-                                    const cv::Scalar &upper1,
-                                    const cv::Scalar &lower2,
-                                    const cv::Scalar &upper2)
+                                    const HsvRange &range1,
+                                    const HsvRange &range2)
 {
-    cv::Mat mask1 = BuildHsvMask(frame, lower1, upper1);
-    cv::Mat mask2 = BuildHsvMask(frame, lower2, upper2);
+    cv::Mat mask1 = BuildHsvMask(frame, range1.lower, range1.upper);
+    cv::Mat mask2 = BuildHsvMask(frame, range2.lower, range2.upper);
     cv::Mat mask;
 
     cv::bitwise_or(mask1, mask2, mask);

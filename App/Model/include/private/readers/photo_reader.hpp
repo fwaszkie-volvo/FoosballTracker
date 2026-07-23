@@ -1,6 +1,11 @@
 #ifndef FOOSBALL_TRACKER_APP_MODEL_INCLUDE_PRIVATE_READERS_PHOTO_READER_HPP_
 #define FOOSBALL_TRACKER_APP_MODEL_INCLUDE_PRIVATE_READERS_PHOTO_READER_HPP_
 
+#include <opencv2/core/mat.hpp>
+#include <opencv2/core/types.hpp>
+#include <optional>
+#include <string>
+
 #include "frame_reader.hpp"
 
 class PhotoReader : public IFrameReader

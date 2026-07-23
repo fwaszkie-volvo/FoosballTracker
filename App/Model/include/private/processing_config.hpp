@@ -1,35 +1,51 @@
-#ifndef FOOSBALL_TRACKER_PROCESSING_CONFIG_HPP_
-#define FOOSBALL_TRACKER_PROCESSING_CONFIG_HPP_
+#ifndef FOOSBALL_TRACKER_APP_MODEL_INCLUDE_PRIVATE_PROCESSING_CONFIG_HPP_
+#define FOOSBALL_TRACKER_APP_MODEL_INCLUDE_PRIVATE_PROCESSING_CONFIG_HPP_
+
+#include <string>
 
 #include "detector_config.hpp"
-#include "model_main.hpp"
+#include "reader_factory.hpp"
 
 namespace config
 {
-struct ProcessingConfig
+struct ProcessingTarget final
 {
-    ReaderType reader_type{ReaderType::kPhoto};
-    std::string input_source;
+    std::string source;
     std::string output_path;
 };
 
+struct ProcessingConfig final
+{
+    ReaderType reader_type{ReaderType::kUnspecified};
+    ProcessingTarget target{};
+};
+
 const ProcessingConfig kProcessingConfigPhoto{
-  ReaderType::kPhoto,
-  detector_config::kInputImagePath,
-  detector_config::kOutputImagePath,
+  .reader_type = ReaderType::kPhoto,
+  .target =
+    ProcessingTarget{
+      .source = detector_config::kInputImagePath,
+      .output_path = detector_config::kOutputImagePath,
+    },
 };
 
 const ProcessingConfig kProcessingConfigRecording{
-  ReaderType::kRecording,
-  "Tests/test_files/test_video.mp4",
-  "Tests/test_outputs/output_recording.mp4",
+  .reader_type = ReaderType::kRecording,
+  .target =
+    ProcessingTarget{
+      .source = "Tests/test_files/test_video.mp4",
+      .output_path = "Tests/test_outputs/output_recording.mp4",
+    },
 };
 
 const ProcessingConfig kProcessingConfigOnline{
-  ReaderType::kOnline,
-  "rtsp://127.0.0.1:8554/stream",
-  "Tests/test_outputs/output_online.mp4",
+  .reader_type = ReaderType::kOnline,
+  .target =
+    ProcessingTarget{
+      .source = "rtsp://127.0.0.1:8554/stream",
+      .output_path = "Tests/test_outputs/output_online.mp4",
+    },
 };
 }  // namespace config
 
-#endif  // FOOSBALL_TRACKER_PROCESSING_CONFIG_HPP_
+#endif  // FOOSBALL_TRACKER_APP_MODEL_INCLUDE_PRIVATE_PROCESSING_CONFIG_HPP_

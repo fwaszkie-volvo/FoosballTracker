@@ -1,5 +1,5 @@
-#ifndef FOOSBALL_TRACKER_DETECTOR_CONFIG_HPP_
-#define FOOSBALL_TRACKER_DETECTOR_CONFIG_HPP_
+#ifndef FOOSBALL_TRACKER_APP_MODEL_INCLUDE_PRIVATE_DETECTORS_DETECTOR_CONFIG_HPP_
+#define FOOSBALL_TRACKER_APP_MODEL_INCLUDE_PRIVATE_DETECTORS_DETECTOR_CONFIG_HPP_
 
 #include <opencv2/opencv.hpp>
 
@@ -59,4 +59,4 @@ constexpr const char* kFieldMaskPath = "Tests/test_outputs/field_mask.jpg";
 constexpr const char* kBallMaskPath = "Tests/test_outputs/ball_mask.jpg";
 }  // namespace detector_config
 
-#endif  // FOOSBALL_TRACKER_DETECTOR_CONFIG_HPP_
+#endif  // FOOSBALL_TRACKER_APP_MODEL_INCLUDE_PRIVATE_DETECTORS_DETECTOR_CONFIG_HPP_

@@ -2,24 +2,40 @@
 
 SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 APP_DIR="$SCRIPT_DIR/App"
-BUILD_DIR="$APP_DIR/build"
+BUILD_DIR="$SCRIPT_DIR/build"
 APP_BINARY="$BUILD_DIR/foosball_tracker"
-TESTS_DIR="$SCRIPT_DIR/Tests"
-TESTS_BUILD_DIR="$TESTS_DIR/build"
+TEST_BINARY="$BUILD_DIR/Tests/unit_tests"
 
 function help() {
   cat <<EOF
 Uzycie: $0 <opcja>
 
 Dostepne opcje:
-  configure  Instaluje niezbedne pakiety, np. cmake, opencv, gtest i clang-format.
-  build      Buduje projekt przy uzyciu CMake.
-  clean      Usuwa katalog build.
-  format-check  Sprawdza formatowanie plikow C++ zgodnie z .clang-format.
-  fix-format  Poprawia formatowanie plikow C++ zgodnie z .clang-format.
-  test       Builduje i uruchamia testy projektu.
-  app        Uruchamia aplikacje.
+  configure        Instaluje komplet niezbednych pakietow (build, test, clang, format).
+  build            Buduje projekt przy uzyciu CMake.
+  clang-check      Uruchamia clang-tidy na plikach C++ projektu.
+  include-check    Uruchamia include-what-you-use na plikach C++ projektu.
+  clean            Usuwa katalog build.
+  format-check     Sprawdza formatowanie C++ oraz header guardy z auto-poprawkami.
+  format-check-ci  Sprawdza formatowanie C++ oraz header guardy bez auto-poprawek.
+  format-fix       Poprawia formatowanie C++ oraz header guardy.
+  test             Builduje i uruchamia testy projektu.
+  app              Uruchamia aplikacje.
 EOF
+}
+
+function find_clang_tidy() {
+  local -a candidates=(clang-tidy-14 clang-tidy)
+
+  for candidate in "${candidates[@]}"; do
+    if command -v "$candidate" >/dev/null 2>&1; then
+      echo "$candidate"
+      return 0
+    fi
+  done
+
+  echo "Brak clang-tidy. Zainstaluj clang-tidy-14 albo clang-tidy." >&2
+  return 1
 }
 
 function find_clang_format() {
@@ -33,6 +49,34 @@ function find_clang_format() {
   done
 
   echo "Brak clang-format. Zainstaluj clang-format-14 albo clang-format." >&2
+  return 1
+}
+
+function find_iwyu_tool() {
+  local -a candidates=(iwyu_tool include-what-you-use)
+
+  for candidate in "${candidates[@]}"; do
+    if command -v "$candidate" >/dev/null 2>&1; then
+      echo "$candidate"
+      return 0
+    fi
+  done
+
+  echo "Brak iwyu_tool. Zainstaluj include-what-you-use." >&2
+  return 1
+}
+
+function find_fix_include() {
+  local -a candidates=(fix_include)
+
+  for candidate in "${candidates[@]}"; do
+    if command -v "$candidate" >/dev/null 2>&1; then
+      echo "$candidate"
+      return 0
+    fi
+  done
+
+  echo "Brak fix_include. Zainstaluj pakiet iwyu przez ./run configure." >&2
   return 1
 }
 
@@ -63,11 +107,20 @@ function configure() {
 
   if command -v apt >/dev/null 2>&1; then
     "${privilege_prefix[@]}" apt update
-    "${privilege_prefix[@]}" apt install -y cmake libopencv-dev libgtest-dev clang-format-14
+    "${privilege_prefix[@]}" apt install -y \
+      build-essential \
+      cmake \
+      libopencv-dev \
+      libgtest-dev \
+      clang-13 \
+      libclang-common-13-dev \
+      clang-format-14 \
+      clang-tidy-14 \
+      iwyu
     return $?
   fi
 
-  echo "Nieobslugiwany menedzer pakietow. Zainstaluj recznie: cmake, OpenCV, GoogleTest i clang-format."
+  echo "Nieobslugiwany menedzer pakietow. Zainstaluj recznie: build-essential, cmake, OpenCV, GoogleTest, clang-13, libclang-common-13-dev, clang-format, clang-tidy, include-what-you-use."
   return 1
 }
 
@@ -88,52 +141,274 @@ function clean() {
     return 0
   fi
 
-  rm -rf "$BUILD_DIR" "$TESTS_BUILD_DIR"
-}
-
-function build_tests() {
-  if ! command -v cmake >/dev/null 2>&1; then
-    echo "Brak pakietu cmake. Zainstaluj cmake i sprobuj ponownie."
-    return 1
-  fi
-
-  mkdir -p "$TESTS_BUILD_DIR"
-  cmake -S "$TESTS_DIR" -B "$TESTS_BUILD_DIR"
-  cmake --build "$TESTS_BUILD_DIR"
+  rm -rf "$BUILD_DIR"
 }
 
 function test() {
-  build_tests || return 1
+  build || return 1
 
-  local tests_binary="$TESTS_BUILD_DIR/unit_tests"
-  if [[ ! -x "$tests_binary" ]]; then
-    echo "Brak binarki testowej: $tests_binary"
+  if [[ ! -x "$TEST_BINARY" ]]; then
+    echo "Brak binarki testowej: $TEST_BINARY"
+    echo "Sprawdz, czy aktualny CMake nadal generuje target unit_tests."
     return 1
   fi
 
-  "$tests_binary" --gtest_color=yes
+  "$TEST_BINARY"
+}
+
+function clang_check() {
+  local clang_tidy_bin
+  local header_filter='^(.*/)?App/.*\.(h|hpp)$'
+
+  build || return 1
+  clang_tidy_bin=$(find_clang_tidy) || return 1
+
+  if [[ ! -f "$BUILD_DIR/compile_commands.json" ]]; then
+    echo "Brak compile_commands.json w $BUILD_DIR. Uruchom ./run build." >&2
+    return 1
+  fi
+
+  find "$APP_DIR" -name '*.cpp' -print0 |
+    xargs -0 "$clang_tidy_bin" -quiet -p "$BUILD_DIR" -header-filter="$header_filter" -checks=-modernize-use-nodiscard -extra-arg=-Wno-unknown-warning-option -extra-arg=-w
 }
 
 function format_targets() {
-  find "$APP_DIR" "$SCRIPT_DIR/Tests" \( -name '*.cpp' -o -name '*.hpp' -o -name '*.h' \) -print0
+  find "$APP_DIR" \( -name '*.cpp' -o -name '*.hpp' -o -name '*.h' \) -print0
 }
 
-function fix_format() {
+function header_targets() {
+  find "$APP_DIR" \( -name '*.hpp' -o -name '*.h' \) -print0
+}
+
+function source_targets() {
+  find "$APP_DIR" -name '*.cpp' -print0
+}
+
+function filter_iwyu_output_for_includes_only() {
+  local input_path=$1
+  local output_path=$2
+
+  awk '
+    /^.* should add these lines:$/ {
+      section = "add";
+      print;
+      next;
+    }
+
+    /^The full include-list for .*:$/ {
+      section = "full";
+      print;
+      next;
+    }
+
+    /^.* should remove these lines:$/ {
+      section = "remove";
+      print;
+      next;
+    }
+
+    /^---$/ {
+      section = "";
+      print;
+      next;
+    }
+
+    section == "add" || section == "full" {
+      if ($0 ~ /^[[:space:]]*$/ || $0 ~ /^[[:space:]]*#include[[:space:]]+/) {
+        print;
+      }
+      next;
+    }
+
+    {
+      print;
+    }
+  ' "$input_path" > "$output_path"
+}
+
+function run_iwyu() {
+  local apply_fixes=$1
+  local iwyu_tool_bin
+  local fix_include_bin
+  local iwyu_output
+  local filtered_iwyu_output
+  local iwyu_status=0
+  local -a source_files=()
+  local -a include_fix_files=()
+
+  build || return 1
+  iwyu_tool_bin=$(find_iwyu_tool) || return 1
+
+  if [[ ! -f "$BUILD_DIR/compile_commands.json" ]]; then
+    echo "Brak compile_commands.json w $BUILD_DIR. Uruchom ./run build." >&2
+    return 1
+  fi
+
+  iwyu_output=$(mktemp) || return 1
+  filtered_iwyu_output=$(mktemp) || {
+    rm -f "$iwyu_output"
+    return 1
+  }
+
+  while IFS= read -r -d '' source_file; do
+    source_files+=("$source_file")
+  done < <(source_targets)
+
+  "$iwyu_tool_bin" -p "$BUILD_DIR" "${source_files[@]}" -- -Xiwyu --no_fwd_decls >"$iwyu_output" 2>&1 || iwyu_status=$?
+  filter_iwyu_output_for_includes_only "$iwyu_output" "$filtered_iwyu_output"
+  cat "$filtered_iwyu_output"
+
+  if [[ "$apply_fixes" == "1" ]]; then
+    fix_include_bin=$(find_fix_include) || {
+      rm -f "$filtered_iwyu_output"
+      rm -f "$iwyu_output"
+      return 1
+    }
+
+    while IFS= read -r -d '' target_file; do
+      include_fix_files+=("$target_file")
+    done < <(format_targets)
+
+    "$fix_include_bin" "${include_fix_files[@]}" < "$filtered_iwyu_output"
+  fi
+
+  rm -f "$filtered_iwyu_output"
+  rm -f "$iwyu_output"
+  return $iwyu_status
+}
+
+function include_check() {
+  run_iwyu 0
+}
+
+function expected_guard_for_file() {
+  local file_path=$1
+  local relative_path=${file_path#"$SCRIPT_DIR/"}
+  local guard
+
+  guard=$(printf '%s' "$relative_path" | tr '[:lower:]' '[:upper:]' | sed -E 's#[^A-Z0-9]+#_#g')
+  printf 'FOOSBALL_TRACKER_%s_\n' "$guard"
+}
+
+function fix_header_guards() {
+  while IFS= read -r -d '' header; do
+    local expected_guard
+
+    expected_guard=$(expected_guard_for_file "$header")
+
+    awk -v expected="$expected_guard" '
+      BEGIN {
+        ifndef_line = 0;
+        define_line = 0;
+        endif_line = 0;
+      }
+      {
+        lines[++line_count] = $0;
+        if (ifndef_line == 0 && $0 ~ /^#ifndef[[:space:]]+[A-Z0-9_]+$/) {
+          ifndef_line = line_count;
+        }
+        if (define_line == 0 && $0 ~ /^#define[[:space:]]+[A-Z0-9_]+$/) {
+          define_line = line_count;
+        }
+        if ($0 ~ /^#endif/) {
+          endif_line = line_count;
+        }
+      }
+      END {
+        if (ifndef_line > 0 && define_line > 0 && endif_line > 0) {
+          lines[ifndef_line] = "#ifndef " expected;
+          lines[define_line] = "#define " expected;
+          lines[endif_line] = "#endif  // " expected;
+        }
+
+        for (i = 1; i <= line_count; ++i) {
+          print lines[i];
+        }
+      }
+    ' "$header" > "$header.tmp" && mv "$header.tmp" "$header"
+  done < <(header_targets)
+}
+
+function check_header_guards() {
+  local has_errors=0
+
+  while IFS= read -r -d '' header; do
+    local expected_guard
+    local ifndef_line
+    local define_line
+    local endif_line
+
+    expected_guard=$(expected_guard_for_file "$header")
+    ifndef_line=$(grep -m1 -E '^#ifndef[[:space:]]+[A-Z0-9_]+$' "$header" || true)
+    define_line=$(grep -m1 -E '^#define[[:space:]]+[A-Z0-9_]+$' "$header" || true)
+    endif_line=$(grep -E '^#endif' "$header" | tail -n1 || true)
+
+    if [[ "$ifndef_line" != "#ifndef $expected_guard" ||
+          "$define_line" != "#define $expected_guard" ||
+          "$endif_line" != "#endif  // $expected_guard" ]]; then
+      has_errors=1
+      echo "Niepoprawny header guard: $header" >&2
+      echo "  oczekiwane: $expected_guard" >&2
+    fi
+  done < <(header_targets)
+
+  return $has_errors
+}
+
+function format_fix() {
   local clang_format_bin
 
   clang_format_bin=$(find_clang_format) || return 1
 
   format_targets | xargs -0 "$clang_format_bin" -i --style=file
+  fix_header_guards
+  run_iwyu 1
 }
 
 function format_check() {
   local clang_format_bin
+  local has_format_issues=0
+  local has_guard_issues=0
 
   clang_format_bin=$(find_clang_format) || return 1
 
   if ! format_targets | xargs -0 "$clang_format_bin" --dry-run --Werror --style=file; then
-    fix_format || return 1
-    echo "Wykryto bledy formatowania. Uruchomiono ./run fix-format i poprawiono pliki." >&2
+    has_format_issues=1
+  fi
+
+  if ! check_header_guards; then
+    has_guard_issues=1
+  fi
+
+  if [[ $has_format_issues -ne 0 || $has_guard_issues -ne 0 ]]; then
+    format_fix || return 1
+    echo "Wykryto bledy formatowania lub header guardow. Uruchomiono ./run format-fix i poprawiono pliki." >&2
+    return 1
+  fi
+}
+
+function format_check_ci() {
+  local clang_format_bin
+  local has_format_issues=0
+  local has_guard_issues=0
+  local has_include_issues=0
+
+  clang_format_bin=$(find_clang_format) || return 1
+
+  if ! format_targets | xargs -0 "$clang_format_bin" --dry-run --Werror --style=file; then
+    has_format_issues=1
+  fi
+
+  if ! check_header_guards; then
+    has_guard_issues=1
+  fi
+
+  if ! run_iwyu 0; then
+    has_include_issues=1
+  fi
+
+  if [[ $has_format_issues -ne 0 || $has_guard_issues -ne 0 || $has_include_issues -ne 0 ]]; then
+    echo "Wykryto bledy formatowania, header guardow lub include'ow. CI nie wykonuje auto-poprawek." >&2
     return 1
   fi
 }
@@ -158,11 +433,20 @@ case "$1" in
   test)
     test
     ;;
+  clang-check)
+    clang_check
+    ;;
+  include-check)
+    include_check
+    ;;
   format-check)
     format_check
     ;;
-  fix-format)
-    fix_format
+  format-check-ci)
+    format_check_ci
+    ;;
+  format-fix)
+    format_fix
     ;;
   app)
     app

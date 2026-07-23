@@ -17,7 +17,6 @@ add_library(foosball_input_readers STATIC
 	src/readers/recording_reader.cpp
 	src/readers/online_reader.cpp
 	src/readers/photo_reader.cpp
-	src/readers/video_frame_reader.cpp
 )
 
 target_link_libraries(foosball_model

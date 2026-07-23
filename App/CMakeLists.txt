@@ -5,6 +5,8 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+enable_testing()
+
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/Controller/CMakeLists.txt")
 	add_subdirectory(Controller)
 endif()
@@ -22,4 +24,8 @@ target_link_libraries(foosball_tracker PRIVATE ${OpenCV_LIBS})
 
 if(TARGET foosball_controller)
 	target_link_libraries(foosball_tracker PRIVATE foosball_controller)
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../Tests/CMakeLists.txt")
+	add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../Tests ${CMAKE_BINARY_DIR}/Tests)
 endif()

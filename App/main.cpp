@@ -1,6 +1,8 @@
 #include <filesystem>
 #include <iostream>
 #include <memory>
+#include <sstream>
+#include <string>
 
 #include "controller.hpp"
 #include "model_main.hpp"

@@ -3,8 +3,6 @@
 name: CMake on a single platform
 
 on:
-  push:
-    branches: [ "**" ]
   pull_request:
     branches: [ "master" ]
 
@@ -31,7 +29,19 @@ jobs:
       run: ./run configure
 
     - name: Check formatting
-      run: ./run format-check
+      run: ./run format-check-ci
+
+  includes:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Configure
+      run: ./run configure
+
+    - name: Check includes
+      run: ./run include-check
 
   test:
     runs-on: ubuntu-latest

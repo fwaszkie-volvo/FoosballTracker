@@ -1,7 +1,8 @@
-#ifndef FOOSBALL_TRACKER_PLAYFIELD_DETECTOR_HPP_
-#define FOOSBALL_TRACKER_PLAYFIELD_DETECTOR_HPP_
+#ifndef FOOSBALL_TRACKER_APP_MODEL_INCLUDE_PRIVATE_DETECTORS_PLAYFIELD_DETECTOR_HPP_
+#define FOOSBALL_TRACKER_APP_MODEL_INCLUDE_PRIVATE_DETECTORS_PLAYFIELD_DETECTOR_HPP_
 
-#include <opencv2/opencv.hpp>
+#include <opencv2/core/mat.hpp>
+#include <opencv2/core/types.hpp>
 #include <vector>
 
 class PlayfieldDetector
@@ -17,4 +18,4 @@ class PlayfieldDetector
     std::vector<cv::Point> ApproximatePolygon(const std::vector<cv::Point> &hull) const;
 };
 
-#endif  // FOOSBALL_TRACKER_PLAYFIELD_DETECTOR_HPP_
+#endif  // FOOSBALL_TRACKER_APP_MODEL_INCLUDE_PRIVATE_DETECTORS_PLAYFIELD_DETECTOR_HPP_
