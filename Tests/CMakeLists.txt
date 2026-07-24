@@ -11,14 +11,16 @@ include(GoogleTest)
 find_package(GTest REQUIRED)
 
 add_executable(unit_tests
-    ${CMAKE_CURRENT_SOURCE_DIR}/readers_test.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/frame_processor_test.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/ball_detector_test.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/players_detector_test.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/generator_test.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/readers_test.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/frame_processor_test.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/ball_detector_test.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/players_detector_test.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/generator_test.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/utils/utils.cpp
 )
 target_include_directories(unit_tests
     PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${FOOSBALL_APP_MODEL_SOURCE_DIR}/Model/include/private
     ${FOOSBALL_APP_MODEL_SOURCE_DIR}/Model/include/private/detectors
     ${FOOSBALL_APP_MODEL_SOURCE_DIR}/Model/include/private/utils
