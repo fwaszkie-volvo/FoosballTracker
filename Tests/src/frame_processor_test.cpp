@@ -61,9 +61,8 @@ TEST_F(FrameProcessorTest, RecordingModeProcessesVideoAndWritesOutput)
     const auto output_path = test_utils::TestOutputPath("frame_processor_recording_output.mp4");
     std::filesystem::remove(output_path);
 
-    const auto video_path = test_utils::TestFilePath("test_video_trimmed.mp4");
     config::ProcessingTarget process_target{
-      .input_source = video_path,
+      .input_source = test_utils::TestFilePath("test_video_trimmed.mp4"),
       .output_path = output_path,
     };
 
