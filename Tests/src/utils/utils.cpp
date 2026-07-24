@@ -1,8 +1,10 @@
 #include "utils.hpp"
 
 #include <cmath>
+#include <cstdlib>
 #include <filesystem>
 #include <string>
+
 namespace test_utils
 {
 std::string TestFilePath(const std::string& file_name)
