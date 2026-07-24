@@ -12,7 +12,8 @@ function help() {
 Uzycie: $0 <opcja>
 
 Dostepne opcje:
-  configure        Instaluje komplet niezbednych pakietow (build, test, clang, format).
+  configure        Instaluje komplet niezbednych pakietow (build, test, clang, format) 
+                    [ui-tools] - instaluje narzędzia do implementacji UI
   build            Buduje projekt przy uzyciu CMake.
   clang-check      Uruchamia clang-tidy na plikach C++ projektu.
   include-check    Uruchamia include-what-you-use na plikach C++ projektu.
@@ -144,12 +145,19 @@ function require_install_privileges() {
 }
 
 function configure() {
+  configure_mode=$1
   privilege_prefix=()
-  clang_format_pkg=""
-  clang_tidy_pkg=""
-  libstdcpp_dev_pkg=""
-  iwyu_clang_common_pkg=""
   install_packages=()
+  additional_packages=()
+ 
+
+  if [[ "$configure_mode" == "ui-tools" ]]; then
+  echo "DUPA DUPA"
+    additional_packages=(
+      libgtk-4-1
+      libgtk-4-dev
+      )
+  fi
 
   require_install_privileges || return 1
 
@@ -192,13 +200,14 @@ function configure() {
       "$libstdcpp_dev_pkg"
       "$iwyu_clang_common_pkg"
       iwyu
+      "${additional_packages[@]}"
     )
 
     "${privilege_prefix[@]}" apt install -y "${install_packages[@]}"
     return $?
   fi
 
-  echo "Nieobslugiwany menedzer pakietow. Zainstaluj recznie: build-essential, cmake, OpenCV, GoogleTest, clang-format, clang-tidy, include-what-you-use."
+  echo "Nieobslugiwany menedzer pakietow. Zainstaluj recznie: build-essential, cmake, OpenCV, GoogleTest, GTK4, clang-format, clang-tidy, include-what-you-use."
   return 1
 }
 
@@ -264,7 +273,6 @@ function test() {
 }
 
 function clang_check() {
-  clang_tidy_bin=""
   header_filter='^(.*/)?App/.*\.(h|hpp)$'
 
   build || return 1
@@ -335,10 +343,6 @@ function filter_iwyu_output_for_includes_only() {
 
 function run_iwyu() {
   apply_fixes=$1
-  iwyu_tool_bin=""
-  fix_include_bin=""
-  iwyu_output=""
-  filtered_iwyu_output=""
   iwyu_status=0
   source_files=()
   include_fix_files=()
@@ -391,7 +395,6 @@ function include_check() {
 function expected_guard_for_file() {
   file_path=$1
   relative_path=${file_path#"$SCRIPT_DIR/"}
-  guard=""
 
   guard=$(printf '%s' "$relative_path" | tr '[:lower:]' '[:upper:]' | sed -E 's#[^A-Z0-9]+#_#g')
   printf 'FOOSBALL_TRACKER_%s_\n' "$guard"
@@ -399,7 +402,7 @@ function expected_guard_for_file() {
 
 function fix_header_guards() {
   while IFS= read -r -d '' header; do
-    expected_guard=""
+    local expected_guard=""
 
     expected_guard=$(expected_guard_for_file "$header")
 
@@ -440,10 +443,10 @@ function check_header_guards() {
   has_errors=0
 
   while IFS= read -r -d '' header; do
-    expected_guard=""
-    ifndef_line=""
-    define_line=""
-    endif_line=""
+    local expected_guard=""
+    local ifndef_line=""
+    local define_line=""
+    local endif_line=""
 
     expected_guard=$(expected_guard_for_file "$header")
     ifndef_line=$(grep -m1 -E '^#ifndef[[:space:]]+[A-Z0-9_]+$' "$header" || true)
@@ -473,10 +476,6 @@ function format_fix() {
 }
 
 function format_check() {
-  clang_format_bin=""
-  has_format_issues=0
-  has_guard_issues=0
-
   clang_format_bin=$(find_clang_format) || return 1
 
   if ! format_targets | xargs -0 "$clang_format_bin" --dry-run --Werror --style=file; then
@@ -487,7 +486,7 @@ function format_check() {
     has_guard_issues=1
   fi
 
-  if [[ $has_format_issues -ne 0 || $has_guard_issues -ne 0 ]]; then
+  if [[ $has_format_issues || $has_guard_issues ]]; then
     format_fix || return 1
     echo "Wykryto bledy formatowania lub header guardow. Uruchomiono ./run format-fix i poprawiono pliki." >&2
     return 1
@@ -495,11 +494,6 @@ function format_check() {
 }
 
 function format_check_ci() {
-  has_format_issues=""
-  has_guard_issues=""
-  has_include_issues=""
-  has_clang_issues=""
-
   clang_format_bin=$(find_clang_format) || return 1
 
   if ! format_targets | xargs -0 "$clang_format_bin" --dry-run --Werror --style=file; then
@@ -518,12 +512,12 @@ function format_check_ci() {
     has_clang_issues=1
   fi
 
-  if [[ -n "$has_format_issues" || -n "$has_guard_issues" || -n "$has_include_issues" || -n "$has_clang_issues" ]]; then
+  if [[ "$has_format_issues" || "$has_guard_issues" || "$has_include_issues" || "$has_clang_issues" ]]; then
     echo "Wykryto bledy formatowania, header guardow, include'ow lub clang-tidy." >&2
-    [[ -n "$has_format_issues" ]] && echo "  - format-check (clang-format)" >&2
-    [[ -n "$has_guard_issues" ]] && echo "  - header-guards" >&2
-    [[ -n "$has_include_issues" ]] && echo "  - include-check (iwyu)" >&2
-    [[ -n "$has_clang_issues" ]] && echo "  - clang-check (clang-tidy)" >&2
+    [[ "$has_format_issues" ]] && echo "  - format-check (clang-format)" >&2
+    [[ "$has_guard_issues" ]] && echo "  - header-guards" >&2
+    [[ "$has_include_issues" ]] && echo "  - include-check (iwyu)" >&2
+    [[ "$has_clang_issues" ]] && echo "  - clang-check (clang-tidy)" >&2
     return 1
   fi
 }
@@ -568,7 +562,8 @@ case "$1" in
     app
     ;;
   configure)
-    configure
+    shift
+    configure "$@"
     ;;
   *)
     help
