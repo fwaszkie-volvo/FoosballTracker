@@ -152,7 +152,6 @@ function configure() {
  
 
   if [[ "$configure_mode" == "ui-tools" ]]; then
-  echo "DUPA DUPA"
     additional_packages=(
       libgtk-4-1
       libgtk-4-dev
