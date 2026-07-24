@@ -7,6 +7,7 @@ find_package(OpenCV REQUIRED)
 add_library(foosball_model STATIC
 	src/model_main.cpp
 	src/frame_processor.cpp
+	src/generator.cpp
 	src/detectors/ball_detector.cpp
 	src/detectors/playfield_detector.cpp
 	src/detectors/players_detector.cpp

@@ -15,6 +15,7 @@ add_executable(unit_tests
     ${CMAKE_CURRENT_SOURCE_DIR}/frame_processor_test.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ball_detector_test.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/players_detector_test.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/generator_test.cpp
 )
 target_include_directories(unit_tests
     PRIVATE
