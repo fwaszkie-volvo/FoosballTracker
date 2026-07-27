@@ -55,7 +55,7 @@ class BallDetector : public Detector
     PlayfieldDetector playfield_detector_{};
     DetectionCandidate best_candidate_{};
     BallMeasurement measurement_{};
-    cv::Point2d previous_position_{};
+    cv::Point2d previous_position_;
     bool has_previous_position_{};
     std::deque<cv::Point2d> position_history_;
     int missed_detection_frames_{};
