@@ -7,6 +7,7 @@
 #include <opencv2/core.hpp>
 #include <opencv2/core/mat.inl.hpp>
 #include <opencv2/core/matx.hpp>
+#include <opencv2/core/traits.hpp>
 #include <opencv2/imgproc.hpp>
 #include <vector>
 

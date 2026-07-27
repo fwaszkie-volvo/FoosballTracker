@@ -14,7 +14,6 @@ Uzycie: $0 <opcja>
 Dostepne opcje:
   configure        Instaluje komplet niezbednych pakietow (build, test, clang, format)
                     [ui-tools] - instaluje narzędzia do implementacji UI
-                    [modern-iwyu] - dodaje repo LLVM 18 i instaluje nowsze include-what-you-use
   build            Buduje projekt przy uzyciu CMake.
   clang-check      Uruchamia clang-tidy na plikach C++ projektu.
   include-check    Uruchamia include-what-you-use na plikach C++ projektu.
@@ -23,7 +22,7 @@ Dostepne opcje:
   format-check-ci  Sprawdza formatowanie C++, header guardy, clang-tidy oraz include-what-you-use bez auto-poprawek.
   format-fix       Poprawia formatowanie C++ oraz header guardy.
   test             Builduje i uruchamia testy projektu [--gtest_<*>, --log-level=<*> ].
-  app              [LOG_LEVEL=<*>] Uruchamia aplikacje.
+  app              Uruchamia aplikacje [--log-level=<*>].
 EOF
 }
 
@@ -55,54 +54,8 @@ function find_clang_format() {
   return 1
 }
 
-function first_available_apt_package() {
-  package=""
-
-  for package in "$@"; do
-    if apt-cache show "$package" >/dev/null 2>&1; then
-      echo "$package"
-      return 0
-    fi
-  done
-
-  return 1
-}
-
-function latest_libstdcpp_dev_package() {
-  first_available_apt_package \
-    libstdc++-18-dev \
-    libstdc++-17-dev \
-    libstdc++-16-dev \
-    libstdc++-15-dev \
-    libstdc++-14-dev \
-    libstdc++-13-dev \
-    libstdc++-12-dev \
-    libstdc++-11-dev
-}
-
-function iwyu_clang_common_package() {
-  iwyu_depends=""
-  iwyu_libclang_package=""
-  llvm_major_version=""
-
-  iwyu_depends=$(apt-cache show iwyu 2>/dev/null | awk -F'Depends: ' '/^Depends: / { print $2; exit }')
-  iwyu_libclang_package=$(printf '%s\n' "$iwyu_depends" | grep -o 'libclang-cpp[0-9]\+' | head -n1 || true)
-
-  if [[ -z "$iwyu_libclang_package" ]]; then
-    return 1
-  fi
-
-  llvm_major_version=${iwyu_libclang_package#libclang-cpp}
-  if apt-cache show "libclang-common-${llvm_major_version}-dev" >/dev/null 2>&1; then
-    echo "libclang-common-${llvm_major_version}-dev"
-    return 0
-  fi
-
-  return 1
-}
-
 function find_iwyu_tool() {
-  candidates=(iwyu_tool include-what-you-use)
+  candidates=(iwyu_tool.py iwyu_tool)
 
   for candidate in "${candidates[@]}"; do
     if command -v "$candidate" >/dev/null 2>&1; then
@@ -112,6 +65,20 @@ function find_iwyu_tool() {
   done
 
   echo "Brak iwyu_tool. Zainstaluj include-what-you-use." >&2
+  return 1
+}
+
+function find_iwyu_binary() {
+  candidates=(include-what-you-use include-what-you-use-18)
+
+  for candidate in "${candidates[@]}"; do
+    if command -v "$candidate" >/dev/null 2>&1; then
+      command -v "$candidate"
+      return 0
+    fi
+  done
+
+  echo "Brak include-what-you-use. Zainstaluj include-what-you-use." >&2
   return 1
 }
 
@@ -145,30 +112,9 @@ function require_install_privileges() {
   fi
 }
 
-function configure_modern_iwyu_repo() {
-  local codename=""
-
-  if ! command -v lsb_release >/dev/null 2>&1; then
-    echo "Brak lsb_release. Zainstaluj lsb-release." >&2
-    return 1
-  fi
-
-  codename=$(lsb_release -cs)
-
-  if [[ ! -d /usr/share/keyrings ]]; then
-    mkdir -p /usr/share/keyrings
-  fi
-
-  wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | gpg --dearmor > /usr/share/keyrings/llvm-archive-keyring.gpg
-  cat > /etc/apt/sources.list.d/llvm-toolchain-18.list <<EOF
-deb [signed-by=/usr/share/keyrings/llvm-archive-keyring.gpg] http://apt.llvm.org/${codename}/ llvm-toolchain-${codename}-18 main
-EOF
-}
-
 function verify_min_iwyu_version() {
   local min_minor=$1
   local version_line=""
-  local major=""
   local minor=""
 
   if ! command -v include-what-you-use >/dev/null 2>&1; then
@@ -198,6 +144,8 @@ function configure() {
   privilege_prefix=()
   install_packages=()
   additional_packages=()
+  llvm_major=18
+  codename=""
 
 
   if [[ "$configure_mode" == "ui-tools" ]]; then
@@ -207,14 +155,6 @@ function configure() {
       )
   fi
 
-  if [[ "$configure_mode" == "modern-iwyu" ]]; then
-    additional_packages=(
-      wget
-      gpg
-      lsb-release
-    )
-  fi
-
   require_install_privileges || return 1
 
   if [[ "$EUID" -ne 0 ]]; then
@@ -222,35 +162,20 @@ function configure() {
   fi
 
   if command -v apt >/dev/null 2>&1; then
-    if [[ "$configure_mode" == "modern-iwyu" ]]; then
-      "${privilege_prefix[@]}" apt update
-      "${privilege_prefix[@]}" apt install -y wget gpg lsb-release ca-certificates
-      "${privilege_prefix[@]}" bash -c "$(declare -f configure_modern_iwyu_repo); configure_modern_iwyu_repo"
+    if ! command -v lsb_release >/dev/null 2>&1; then
+      echo "Brak lsb_release. Zainstaluj lsb-release." >&2
+      return 1
     fi
 
+    codename=$(lsb_release -cs)
+
     "${privilege_prefix[@]}" apt update
+    "${privilege_prefix[@]}" apt install -y wget gpg lsb-release ca-certificates
+    "${privilege_prefix[@]}" mkdir -p /usr/share/keyrings
+    wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | "${privilege_prefix[@]}" gpg --yes --dearmor -o /usr/share/keyrings/llvm-archive-keyring.gpg
+    printf 'deb [signed-by=/usr/share/keyrings/llvm-archive-keyring.gpg] http://apt.llvm.org/%s/ llvm-toolchain-%s-%s main\n' "$codename" "$codename" "$llvm_major" | "${privilege_prefix[@]}" tee /etc/apt/sources.list.d/llvm-toolchain-${llvm_major}.list >/dev/null
 
-    clang_format_pkg=$(first_available_apt_package \
-      clang-format-18 clang-format-17 clang-format-16 clang-format-15 clang-format-14 clang-format) || {
-      echo "Brak dostepnego pakietu clang-format w repozytoriach apt." >&2
-      return 1
-    }
-
-    clang_tidy_pkg=$(first_available_apt_package \
-      clang-tidy-18 clang-tidy-17 clang-tidy-16 clang-tidy-15 clang-tidy-14 clang-tidy) || {
-      echo "Brak dostepnego pakietu clang-tidy w repozytoriach apt." >&2
-      return 1
-    }
-
-    libstdcpp_dev_pkg=$(latest_libstdcpp_dev_package) || {
-      echo "Brak dostepnego pakietu libstdc++-dev w repozytoriach apt." >&2
-      return 1
-    }
-
-    iwyu_clang_common_pkg=$(iwyu_clang_common_package) || {
-      echo "Brak pakietu libclang-common-dev zgodnego z include-what-you-use." >&2
-      return 1
-    }
+    "${privilege_prefix[@]}" apt update
 
     install_packages=(
       build-essential
@@ -259,18 +184,43 @@ function configure() {
       libgtest-dev
       libspdlog-dev
       libfmt-dev
-      "$clang_format_pkg"
-      "$clang_tidy_pkg"
-      "$libstdcpp_dev_pkg"
-      "$iwyu_clang_common_pkg"
+      clang-format-18
+      clang-tidy-18
       iwyu
       "${additional_packages[@]}"
     )
 
     "${privilege_prefix[@]}" apt install -y "${install_packages[@]}"
 
-    if [[ "$configure_mode" == "modern-iwyu" ]]; then
-      verify_min_iwyu_version 18 || return 1
+    if ! verify_min_iwyu_version "$llvm_major"; then
+      echo "Pakiet iwyu z apt jest za stary. Budowanie IWYU zrodlowo dla clang_${llvm_major}."
+      "${privilege_prefix[@]}" apt install -y git ninja-build "clang-${llvm_major}" "llvm-${llvm_major}-dev" "libclang-${llvm_major}-dev"
+
+      iwyu_src_dir=$(mktemp -d) || return 1
+
+      if ! git clone --depth 1 --branch "clang_${llvm_major}" https://github.com/include-what-you-use/include-what-you-use.git "$iwyu_src_dir"; then
+        rm -rf "$iwyu_src_dir"
+        return 1
+      fi
+
+      if ! cmake -S "$iwyu_src_dir" -B "$iwyu_src_dir/build" -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="/usr/lib/llvm-${llvm_major}"; then
+        rm -rf "$iwyu_src_dir"
+        return 1
+      fi
+
+      if ! cmake --build "$iwyu_src_dir/build"; then
+        rm -rf "$iwyu_src_dir"
+        return 1
+      fi
+
+      if ! "${privilege_prefix[@]}" cmake --install "$iwyu_src_dir/build"; then
+        rm -rf "$iwyu_src_dir"
+        return 1
+      fi
+
+      rm -rf "$iwyu_src_dir"
+
+      verify_min_iwyu_version "$llvm_major" || return 1
     fi
 
     return $?
@@ -416,6 +366,7 @@ function run_iwyu() {
 
   build || return 1
   iwyu_tool_bin=$(find_iwyu_tool) || return 1
+  iwyu_binary=$(find_iwyu_binary) || return 1
 
   if [[ ! -f "$BUILD_DIR/compile_commands.json" ]]; then
     echo "Brak compile_commands.json w $BUILD_DIR. Uruchom ./run build." >&2
@@ -432,7 +383,7 @@ function run_iwyu() {
     source_files+=("$source_file")
   done < <(source_targets)
 
-  "$iwyu_tool_bin" -p "$BUILD_DIR" "${source_files[@]}" -- -Xiwyu --no_fwd_decls >"$iwyu_output" 2>&1 || iwyu_status=$?
+  IWYU_BINARY="$iwyu_binary" "$iwyu_tool_bin" -p "$BUILD_DIR" "${source_files[@]}" -- -Xiwyu --no_fwd_decls >"$iwyu_output" 2>&1 || iwyu_status=$?
   filter_iwyu_output_for_includes_only "$iwyu_output" "$filtered_iwyu_output"
   cat "$filtered_iwyu_output"
 
@@ -596,7 +547,22 @@ function app() {
     return 1
   fi
 
-  "$APP_BINARY"
+  local log_level=""
+  local args_for_app=()
+
+  for arg in "$@"; do
+    if [[ "$arg" == --log-level=* ]]; then
+      log_level="${arg#--log-level=}"
+    else
+      args_for_app+=("$arg")
+    fi
+  done
+
+  if [[ -n "$log_level" ]]; then
+    export LOG_LEVEL="$log_level"
+  fi
+
+  "$APP_BINARY" "${args_for_app[@]}"
 }
 
 case "$1" in
@@ -626,7 +592,8 @@ case "$1" in
     format_fix
     ;;
   app)
-    app
+    shift
+    app "$@"
     ;;
   configure)
     shift
