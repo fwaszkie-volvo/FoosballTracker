@@ -57,7 +57,7 @@ void ModelMain::Calculate()
         cv::destroyAllWindows();
     }
 
-    spdlog::info("Saved output to: {}", config.target.output_path);
+    spdlog::info(std::string("Saved output to: ") + config.target.output_path);
 }
 
 std::optional<generator::TeamDrawResult> ModelMain::GenerateTeams(

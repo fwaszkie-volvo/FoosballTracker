@@ -6,6 +6,12 @@ add_library(foosball_view STATIC
 	src/view_main.cpp
 )
 
+target_link_libraries(foosball_view
+	PUBLIC
+		spdlog::spdlog
+		fmt::fmt
+)
+
 target_include_directories(foosball_view
 	PUBLIC
 		${CMAKE_CURRENT_SOURCE_DIR}/include/public

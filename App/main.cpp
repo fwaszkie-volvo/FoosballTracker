@@ -1,9 +1,7 @@
 #include <spdlog/spdlog.h>
 
 #include <filesystem>
-#include <iostream>
 #include <memory>
-#include <sstream>
 #include <string>
 
 #include "controller.hpp"
@@ -18,7 +16,7 @@ int main(int argc, char* argv[])
 
     const auto executable_path =
       argc > 0 ? std::filesystem::path{argv[0]}.lexically_normal() : std::filesystem::path{};
-    spdlog::info("Path: {}", executable_path.string());
+    spdlog::info(std::string("Path: ") + executable_path.string());
 
     Controller controller{std::make_unique<ModelMain>(), std::make_unique<ViewMain>()};
     return controller.Run();
