@@ -14,6 +14,7 @@ Uzycie: $0 <opcja>
 Dostepne opcje:
   configure        Instaluje komplet niezbednych pakietow (build, test, clang, format)
                     [ui-tools] - instaluje narzędzia do implementacji UI
+                    [modern-iwyu] - dodaje repo LLVM 18 i instaluje nowsze include-what-you-use
   build            Buduje projekt przy uzyciu CMake.
   clang-check      Uruchamia clang-tidy na plikach C++ projektu.
   include-check    Uruchamia include-what-you-use na plikach C++ projektu.
@@ -144,6 +145,54 @@ function require_install_privileges() {
   fi
 }
 
+function configure_modern_iwyu_repo() {
+  local codename=""
+
+  if ! command -v lsb_release >/dev/null 2>&1; then
+    echo "Brak lsb_release. Zainstaluj lsb-release." >&2
+    return 1
+  fi
+
+  codename=$(lsb_release -cs)
+
+  if [[ ! -d /usr/share/keyrings ]]; then
+    mkdir -p /usr/share/keyrings
+  fi
+
+  wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | gpg --dearmor > /usr/share/keyrings/llvm-archive-keyring.gpg
+  cat > /etc/apt/sources.list.d/llvm-toolchain-18.list <<EOF
+deb [signed-by=/usr/share/keyrings/llvm-archive-keyring.gpg] http://apt.llvm.org/${codename}/ llvm-toolchain-${codename}-18 main
+EOF
+}
+
+function verify_min_iwyu_version() {
+  local min_minor=$1
+  local version_line=""
+  local major=""
+  local minor=""
+
+  if ! command -v include-what-you-use >/dev/null 2>&1; then
+    echo "Brak include-what-you-use po konfiguracji." >&2
+    return 1
+  fi
+
+  version_line=$(include-what-you-use --version 2>/dev/null | head -n1)
+
+  if [[ ! "$version_line" =~ include-what-you-use[[:space:]]+0\.([0-9]+) ]]; then
+    echo "Nie mozna odczytac wersji include-what-you-use: $version_line" >&2
+    return 1
+  fi
+
+  minor=${BASH_REMATCH[1]}
+  if (( minor < min_minor )); then
+    echo "Wersja include-what-you-use jest za stara: $version_line" >&2
+    echo "Wymagane minimum: 0.${min_minor}" >&2
+    return 1
+  fi
+
+  return 0
+}
+
 function configure() {
   configure_mode=$1
   privilege_prefix=()
@@ -158,6 +207,14 @@ function configure() {
       )
   fi
 
+  if [[ "$configure_mode" == "modern-iwyu" ]]; then
+    additional_packages=(
+      wget
+      gpg
+      lsb-release
+    )
+  fi
+
   require_install_privileges || return 1
 
   if [[ "$EUID" -ne 0 ]]; then
@@ -165,6 +222,12 @@ function configure() {
   fi
 
   if command -v apt >/dev/null 2>&1; then
+    if [[ "$configure_mode" == "modern-iwyu" ]]; then
+      "${privilege_prefix[@]}" apt update
+      "${privilege_prefix[@]}" apt install -y wget gpg lsb-release ca-certificates
+      "${privilege_prefix[@]}" bash -c "$(declare -f configure_modern_iwyu_repo); configure_modern_iwyu_repo"
+    fi
+
     "${privilege_prefix[@]}" apt update
 
     clang_format_pkg=$(first_available_apt_package \
@@ -205,6 +268,11 @@ function configure() {
     )
 
     "${privilege_prefix[@]}" apt install -y "${install_packages[@]}"
+
+    if [[ "$configure_mode" == "modern-iwyu" ]]; then
+      verify_min_iwyu_version 18 || return 1
+    fi
+
     return $?
   fi
 
