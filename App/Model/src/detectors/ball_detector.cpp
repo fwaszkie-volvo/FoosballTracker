@@ -3,8 +3,12 @@
 #include <opencv2/core/cvdef.h>
 #include <opencv2/core/hal/interface.h>
 
+#include <algorithm>
 #include <cmath>
+#include <cstddef>
+#include <ext/alloc_traits.h>
 #include <opencv2/core.hpp>
+#include <opencv2/core/fast_math.hpp>
 #include <opencv2/core/mat.inl.hpp>
 #include <opencv2/core/matx.hpp>
 #include <opencv2/core/traits.hpp>
@@ -24,17 +28,184 @@ bool BallDetector::IsCircleInsideFrame(const cv::Point& center,
 
 void BallDetector::ResetBestCandidate() { best_candidate_ = DetectionCandidate{}; }
 
-void BallDetector::UpdateCandidate(const cv::Point& center, const CandidateMetrics& metrics)
+void BallDetector::UpdateCandidate(const cv::Point& center, const double score)
 {
-    if (metrics.score <= best_candidate_.score)
+    if (score <= best_candidate_.score)
     {
         return;
     }
 
     best_candidate_.found = true;
     best_candidate_.center = center;
-    best_candidate_.radius = metrics.radius;
-    best_candidate_.score = metrics.score;
+    best_candidate_.score = score;
+}
+
+cv::Point2d BallDetector::ComputeWindowSpeed() const
+{
+    if (position_history_.size() < 2)
+    {
+        return cv::Point2d{};
+    }
+
+    const std::size_t latest_index{position_history_.size() - 1};
+    const std::size_t frame_span{std::min<std::size_t>(
+      static_cast<std::size_t>(detector_types::kBallSpeedWindowFrames), latest_index)};
+    const std::size_t reference_index{latest_index - frame_span};
+    return (position_history_[latest_index] - position_history_[reference_index]) /
+           static_cast<double>(frame_span);
+}
+
+void BallDetector::UpdateMeasurement(const cv::Point& center)
+{
+    BallMeasurement updated_measurement{};
+    updated_measurement.found = true;
+    const cv::Point2d raw_position{static_cast<double>(center.x), static_cast<double>(center.y)};
+    if (has_previous_position_)
+    {
+        const cv::Point2d frame_delta{raw_position - previous_position_};
+        const double frame_displacement{cv::norm(frame_delta)};
+        double smoothing_factor{detector_types::kBallPositionSmoothingFactor};
+        if (frame_displacement >= detector_types::kBallPositionFastMotionThreshold)
+        {
+            smoothing_factor = detector_types::kBallPositionFastSmoothingFactor;
+        }
+
+        updated_measurement.position = previous_position_ + frame_delta * smoothing_factor;
+    }
+    else
+    {
+        updated_measurement.position = raw_position;
+    }
+
+    position_history_.push_back(updated_measurement.position);
+    const std::size_t max_history_size{
+      static_cast<std::size_t>(detector_types::kBallSpeedWindowFrames + 1)};
+    if (position_history_.size() > max_history_size)
+    {
+        position_history_.pop_front();
+    }
+
+    updated_measurement.speed = ComputeWindowSpeed();
+
+    if (cv::norm(updated_measurement.speed) < detector_types::kBallVelocityDeadbandPixels)
+    {
+        updated_measurement.speed = cv::Point2d{};
+    }
+
+    updated_measurement.size = detector_types::kBallFixedRadius;
+
+    previous_position_ = updated_measurement.position;
+    has_previous_position_ = true;
+    measurement_ = updated_measurement;
+}
+
+cv::Mat BallDetector::BuildColorMask(const cv::Mat& frame) const
+{
+    cv::Mat mask{
+      mask_utils::build_hsv_mask(frame, detector_types::kLowerWhite, detector_types::kUpperWhite)};
+    cv::Mat ball_kernel{
+      mask_utils::create_kernel(detector_types::kBallKernelSize, cv::MORPH_ELLIPSE)};
+    cv::morphologyEx(mask, mask, cv::MORPH_OPEN, ball_kernel);
+    cv::morphologyEx(mask, mask, cv::MORPH_CLOSE, ball_kernel);
+    return mask;
+}
+
+cv::Mat BallDetector::BuildGrayFrame(const cv::Mat& frame, const cv::Mat& playfield_mask) const
+{
+    cv::Mat gray;
+    cv::cvtColor(frame, gray, cv::COLOR_BGR2GRAY);
+    cv::GaussianBlur(gray,
+                     gray,
+                     detector_types::kGaussianBlurKernelSize,
+                     detector_types::kGaussianBlurSigma,
+                     detector_types::kGaussianBlurSigma);
+    if (!playfield_mask.empty())
+    {
+        cv::bitwise_and(gray, playfield_mask, gray);
+    }
+
+    return gray;
+}
+
+cv::Mat BallDetector::BuildDetectionMask(const cv::Mat& color_mask,
+                                         const cv::Mat& gray,
+                                         const cv::Mat& playfield_mask)
+{
+    cv::Mat mask{color_mask.clone()};
+    cv::Mat foreground_mask{BuildForegroundMask(gray, playfield_mask)};
+    if (!foreground_mask.empty())
+    {
+        mask_utils::write_mask_if_verbose(detector_types::kForegroundMaskPath, foreground_mask);
+
+        cv::bitwise_and(color_mask, foreground_mask, mask);
+
+        if (cv::countNonZero(mask) < detector_types::kForegroundMinPixels)
+        {
+            mask = color_mask;
+        }
+    }
+
+    return mask;
+}
+
+void BallDetector::ScoreHoughCandidates(const cv::Mat& frame,
+                                        const cv::Mat& gray,
+                                        const cv::Mat& mask)
+{
+    std::vector<cv::Vec3f> circles;
+    cv::HoughCircles(gray,
+                     circles,
+                     cv::HOUGH_GRADIENT,
+                     detector_types::kHoughDp,
+                     detector_types::kHoughMinDist,
+                     detector_types::kHoughParam1,
+                     detector_types::kHoughParam2,
+                     detector_types::kHoughMinRadius,
+                     detector_types::kHoughMaxRadius);
+
+    for (const auto& circle : circles)
+    {
+        const cv::Point center{static_cast<int>(std::round(circle[0])),
+                               static_cast<int>(std::round(circle[1]))};
+        const int radius{static_cast<int>(std::round(circle[2]))};
+        CollectHoughCandidate(frame, mask, center, radius);
+    }
+}
+
+void BallDetector::UpdateTrackingState()
+{
+    if (best_candidate_.found)
+    {
+        missed_detection_frames_ = 0;
+        UpdateMeasurement(best_candidate_.center);
+        return;
+    }
+
+    ++missed_detection_frames_;
+
+    if (has_previous_position_ &&
+        missed_detection_frames_ < detector_types::kBallTrackingResetMissFrames)
+    {
+        BallMeasurement predicted_measurement{};
+        predicted_measurement.found = false;
+        predicted_measurement.speed = ComputeWindowSpeed();
+        if (cv::norm(predicted_measurement.speed) < detector_types::kBallVelocityDeadbandPixels)
+        {
+            predicted_measurement.speed = cv::Point2d{};
+        }
+        predicted_measurement.position = previous_position_ + predicted_measurement.speed;
+        predicted_measurement.size = detector_types::kBallFixedRadius;
+
+        previous_position_ = predicted_measurement.position;
+        measurement_ = predicted_measurement;
+    }
+
+    if (missed_detection_frames_ >= detector_types::kBallTrackingResetMissFrames)
+    {
+        previous_position_ = cv::Point2d{};
+        has_previous_position_ = false;
+        position_history_.clear();
+    }
 }
 
 void BallDetector::CollectHoughCandidate(const cv::Mat& frame,
@@ -73,62 +244,7 @@ void BallDetector::CollectHoughCandidate(const cv::Mat& frame,
     const double score{white_ratio * detector_types::kCircleWhiteRatioWeight +
                        brightness * detector_types::kCircleBrightnessWeight};
 
-    UpdateCandidate(center, CandidateMetrics{.radius = radius, .score = score});
-}
-
-void BallDetector::CollectContourCandidate(const cv::Mat& frame, const Contour& contour)
-{
-    const double area{cv::contourArea(contour)};
-    if (area < detector_types::kBallMinArea || area > detector_types::kBallMaxArea)
-    {
-        return;
-    }
-
-    const double perimeter{cv::arcLength(contour, true)};
-    if (perimeter <= 0.0)
-    {
-        return;
-    }
-
-    const double circularity{4.0 * CV_PI * area / (perimeter * perimeter)};
-    if (circularity < detector_types::kBallMinCircularity)
-    {
-        return;
-    }
-
-    cv::Point2f center_f;
-    float radius_f;
-    cv::minEnclosingCircle(contour, center_f, radius_f);
-    if (radius_f < detector_types::kBallMinRadius || radius_f > detector_types::kBallMaxRadius)
-    {
-        return;
-    }
-
-    const cv::Rect box{cv::boundingRect(contour)};
-    if (box.x <= detector_types::kEdgeThreshold || box.y <= detector_types::kEdgeThreshold ||
-        box.x + box.width >= frame.cols - detector_types::kEdgeThreshold ||
-        box.y + box.height >= frame.rows - detector_types::kEdgeThreshold)
-    {
-        return;
-    }
-
-    const double aspect_ratio{static_cast<double>(box.width) / static_cast<double>(box.height)};
-    if (aspect_ratio < detector_types::kBallMinAspectRatio ||
-        aspect_ratio > detector_types::kBallMaxAspectRatio)
-    {
-        return;
-    }
-
-    const double extent{area / static_cast<double>(box.area())};
-    if (extent < detector_types::kBallMinExtent || extent > detector_types::kBallMaxExtent)
-    {
-        return;
-    }
-
-    const cv::Point center{static_cast<int>(std::round(center_f.x)),
-                           static_cast<int>(std::round(center_f.y))};
-    const int radius{static_cast<int>(std::round(radius_f))};
-    UpdateCandidate(center, CandidateMetrics{.radius = radius, .score = circularity * extent});
+    UpdateCandidate(center, score);
 }
 
 cv::Mat BallDetector::BuildForegroundMask(const cv::Mat& gray, const cv::Mat& playfield_mask)
@@ -178,103 +294,41 @@ void BallDetector::Draw(cv::Mat& frame) const
 {
     playfield_detector_.Draw(frame);
 
-    if (!best_candidate_.found)
+    if (!measurement_.found)
     {
         return;
     }
 
-    cv::circle(frame,
-               best_candidate_.center,
-               best_candidate_.radius,
-               detector_types::kBallDrawColor,
-               detector_types::kDrawThickness);
-    mask_utils::draw_label(frame, "Ball", best_candidate_.center, detector_types::kBallDrawColor);
+    const cv::Point center{cvRound(measurement_.position.x), cvRound(measurement_.position.y)};
+    const int radius{cvRound(measurement_.size)};
+
+    cv::circle(
+      frame, center, radius, detector_types::kBallDrawColor, detector_types::kDrawThickness);
+    mask_utils::draw_label(frame, "Ball", center, detector_types::kBallDrawColor);
 }
 
 void BallDetector::Detect(const cv::Mat& frame)
 {
-    cv::Mat mask{
-      mask_utils::build_hsv_mask(frame, detector_types::kLowerWhite, detector_types::kUpperWhite)};
-    cv::Mat ball_kernel{
-      mask_utils::create_kernel(detector_types::kBallKernelSize, cv::MORPH_ELLIPSE)};
-    cv::morphologyEx(mask, mask, cv::MORPH_OPEN, ball_kernel);
-    cv::morphologyEx(mask, mask, cv::MORPH_CLOSE, ball_kernel);
+    measurement_ = BallMeasurement{};
+
+    cv::Mat color_mask{BuildColorMask(frame)};
 
     playfield_detector_.Detect(frame);
     const cv::Mat& playfield_mask{playfield_detector_.GetMask()};
     if (playfield_detector_.HasDetection())
     {
         mask_utils::write_mask_if_verbose(detector_types::kFieldMaskPath, playfield_mask);
-        cv::bitwise_and(mask, playfield_mask, mask);
+        cv::bitwise_and(color_mask, playfield_mask, color_mask);
     }
 
-    cv::Mat color_mask{mask.clone()};
-
-    cv::Mat gray;
-    cv::cvtColor(frame, gray, cv::COLOR_BGR2GRAY);
-    cv::GaussianBlur(gray,
-                     gray,
-                     detector_types::kGaussianBlurKernelSize,
-                     detector_types::kGaussianBlurSigma,
-                     detector_types::kGaussianBlurSigma);
-    if (!playfield_mask.empty())
-    {
-        cv::bitwise_and(gray, playfield_mask, gray);
-    }
-
-    cv::Mat foreground_mask{BuildForegroundMask(gray, playfield_mask)};
-    if (!foreground_mask.empty())
-    {
-        mask_utils::write_mask_if_verbose(detector_types::kForegroundMaskPath, foreground_mask);
-
-        cv::Mat motion_refined_mask;
-        cv::bitwise_and(color_mask, foreground_mask, motion_refined_mask);
-
-        if (cv::countNonZero(motion_refined_mask) >= detector_types::kForegroundMinPixels)
-        {
-            mask = motion_refined_mask;
-        }
-        else
-        {
-            mask = color_mask;
-        }
-    }
-    else
-    {
-        mask = color_mask;
-    }
-
+    cv::Mat gray{BuildGrayFrame(frame, playfield_mask)};
+    mask_utils::write_mask_if_verbose(detector_types::kGrayMaskPath, gray);
+    cv::Mat mask{BuildDetectionMask(color_mask, gray, playfield_mask)};
     mask_utils::write_mask_if_verbose(detector_types::kBallMaskPath, mask);
 
     ResetBestCandidate();
-
-    std::vector<cv::Vec3f> circles;
-    cv::HoughCircles(gray,
-                     circles,
-                     cv::HOUGH_GRADIENT,
-                     detector_types::kHoughDp,
-                     detector_types::kHoughMinDist,
-                     detector_types::kHoughParam1,
-                     detector_types::kHoughParam2,
-                     detector_types::kHoughMinRadius,
-                     detector_types::kHoughMaxRadius);
-
-    for (const auto& circle : circles)
-    {
-        cv::Point center{static_cast<int>(std::round(circle[0])),
-                         static_cast<int>(std::round(circle[1]))};
-        int radius{static_cast<int>(std::round(circle[2]))};
-        CollectHoughCandidate(frame, mask, center, radius);
-    }
-
-    std::vector<std::vector<cv::Point>> contours;
-    std::vector<cv::Vec4i> hierarchy;
-    cv::findContours(mask, contours, hierarchy, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
-
-    for (const auto& contour : contours)
-    {
-        CollectContourCandidate(frame, contour);
-    }
+    ScoreHoughCandidates(frame, gray, mask);
+    UpdateTrackingState();
 }
 
 cv::Mat detect_ball(cv::Mat& frame)
