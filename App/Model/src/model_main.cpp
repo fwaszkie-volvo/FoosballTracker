@@ -33,8 +33,8 @@ std::optional<cv::Mat> ModelMain::Calculate()
         return std::nullopt;
     }
 
-    spdlog::info("Saved output to: {}", config.target.output_path);
-    return frame->clone();
+  spdlog::info(std::string("Saved output to: ") + config.target.output_path);
+  return frame->clone();
 }
 
 std::optional<generator::TeamDrawResult> ModelMain::GenerateTeams(
