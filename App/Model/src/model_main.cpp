@@ -1,5 +1,7 @@
 #include "model_main.hpp"
 
+#include <spdlog/spdlog.h>
+
 #include <cstdlib>
 #include <iostream>
 #include <opencv2/core/mat.hpp>
@@ -55,7 +57,7 @@ void ModelMain::Calculate()
         cv::destroyAllWindows();
     }
 
-    std::cout << "Saved output to: " << config.target.output_path << "\n";
+    spdlog::info("Saved output to: {}", config.target.output_path);
 }
 
 std::optional<generator::TeamDrawResult> ModelMain::GenerateTeams(

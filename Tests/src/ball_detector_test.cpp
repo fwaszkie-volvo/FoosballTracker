@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+#include <spdlog/spdlog.h>
 
 #include <cmath>
 #include <opencv2/opencv.hpp>
@@ -42,9 +43,8 @@ TEST_F(BallDetectorTest, BallDetectionRuns)
 
 TEST_F(BallDetectorTest, VideoReadAndAnnotatedWrite)
 {
-    const auto video_path = test_utils::TestFilePath("test_video_trimmed.mp4");
     config::ProcessingTarget process_target{
-      .input_source = video_path,
+      .input_source = test_utils::TestFilePath("test_video_trimmed.mp4"),
       .output_path = detector_types::kOutputVideoPath,
     };
 
@@ -55,23 +55,20 @@ TEST_F(BallDetectorTest, VideoReadAndAnnotatedWrite)
       static_cast<int>(std::ceil(kDefaultFps * kDefaultShortVideoDurationSeconds));
     int frame_count = 0;
 
-    const auto result = processor_.ProcessFrames(
-      process_target,
-      [&](cv::Mat& frame) -> void
-      {
-          if (frame_count >= max_frames)
-          {
-              return;
-          }
+    const auto result =
+      processor_.ProcessFrames(process_target,
+                               [&](cv::Mat& frame) -> void
+                               {
+                                   if (frame_count >= max_frames)
+                                   {
+                                       return;
+                                   }
 
-          if (test_utils::IsVerboseTestRun() && (processed_frame_count % 10 == 0))
-          {
-              std::cout << "Processing frame " << processed_frame_count << std::endl;
-          }
-          detect_ball(frame);
-          ++processed_frame_count;
-          ++frame_count;
-      });
+                                   spdlog::debug("Processing frame {}", processed_frame_count);
+                                   detect_ball(frame);
+                                   ++processed_frame_count;
+                                   ++frame_count;
+                               });
 
     ASSERT_TRUE(result.has_value()) << "Failed to process video";
     EXPECT_GT(processed_frame_count, 0)

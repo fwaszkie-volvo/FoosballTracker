@@ -5,8 +5,6 @@
 
 namespace test_utils
 {
-bool IsVerboseTestRun();
-
 std::string TestFilePath(const std::string& file_name);
 std::string TestOutputPath(const std::string& file_name);
 

@@ -12,7 +12,7 @@ function help() {
 Uzycie: $0 <opcja>
 
 Dostepne opcje:
-  configure        Instaluje komplet niezbednych pakietow (build, test, clang, format) 
+  configure        Instaluje komplet niezbednych pakietow (build, test, clang, format)
                     [ui-tools] - instaluje narzędzia do implementacji UI
   build            Buduje projekt przy uzyciu CMake.
   clang-check      Uruchamia clang-tidy na plikach C++ projektu.
@@ -21,8 +21,8 @@ Dostepne opcje:
   format-check     Sprawdza formatowanie C++ oraz header guardy z auto-poprawkami.
   format-check-ci  Sprawdza formatowanie C++, header guardy, clang-tidy oraz include-what-you-use bez auto-poprawek.
   format-fix       Poprawia formatowanie C++ oraz header guardy.
-  test             Builduje i uruchamia testy projektu [flagi gtest].
-  app              Uruchamia aplikacje.
+  test             Builduje i uruchamia testy projektu [--gtest_<*>, --log-level=<*> ].
+  app              [LOG_LEVEL=<*>] Uruchamia aplikacje.
 EOF
 }
 
@@ -149,7 +149,7 @@ function configure() {
   privilege_prefix=()
   install_packages=()
   additional_packages=()
- 
+
 
   if [[ "$configure_mode" == "ui-tools" ]]; then
     additional_packages=(
@@ -194,6 +194,8 @@ function configure() {
       cmake
       libopencv-dev
       libgtest-dev
+      libspdlog-dev
+      libfmt-dev
       "$clang_format_pkg"
       "$clang_tidy_pkg"
       "$libstdcpp_dev_pkg"
@@ -206,7 +208,7 @@ function configure() {
     return $?
   fi
 
-  echo "Nieobslugiwany menedzer pakietow. Zainstaluj recznie: build-essential, cmake, OpenCV, GoogleTest, GTK4, clang-format, clang-tidy, include-what-you-use."
+  echo "Nieobslugiwany menedzer pakietow. Zainstaluj recznie: build-essential, cmake, OpenCV, GoogleTest, spdlog, fmt, GTK4, clang-format, clang-tidy, include-what-you-use."
   return 1
 }
 
@@ -241,13 +243,6 @@ function build_tests() {
   cmake --build "$TESTS_BUILD_DIR"
 }
 
-function validate_test_option() {
-  if [[ "$1" == "--verbose" ]]; then
-    export FOOSBALL_TEST_VERBOSE=1
-  fi
-  return 0
-}
-
 function test() {
   build_tests || return 1
 
@@ -258,13 +253,22 @@ function test() {
     return 1
   fi
 
-  # Process all arguments
+  local log_level=""
+  local args_for_gtest=()
+
   for arg in "$@"; do
-    validate_test_option "$arg" || return 1
+    if [[ "$arg" == --log-level=* ]]; then
+      log_level="${arg#--log-level=}"
+    else
+      args_for_gtest+=("$arg")
+    fi
   done
 
-  # Run tests with all provided arguments plus color
-  "$tests_binary" --gtest_color=yes "$@"
+  if [[ -n "$log_level" ]]; then
+    export LOG_LEVEL="$log_level"
+  fi
+
+  "$tests_binary" --gtest_color=yes "${args_for_gtest[@]}"
 }
 
 function clang_check() {
