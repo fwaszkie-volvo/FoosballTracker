@@ -44,13 +44,13 @@ TEST_F(BallDetectorTest, BallDetectionRuns)
 TEST_F(BallDetectorTest, VideoReadAndAnnotatedWrite)
 {
     config::ProcessingTarget process_target{
-      .input_source = test_utils::TestFilePath("test_video_trimmed.mp4"),
+      .input_source = test_utils::TestFilePath("test_video.mp4"),
       .output_path = detector_types::kOutputVideoPath,
     };
 
     int processed_frame_count = 0;
     constexpr double kDefaultFps{30.0};
-    constexpr double kDefaultShortVideoDurationSeconds{1.0};
+    constexpr double kDefaultShortVideoDurationSeconds{75.0};
     const int max_frames =
       static_cast<int>(std::ceil(kDefaultFps * kDefaultShortVideoDurationSeconds));
     int frame_count = 0;

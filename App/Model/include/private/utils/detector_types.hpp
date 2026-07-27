@@ -1,5 +1,5 @@
-#ifndef FOOSBALL_TRACKER_APP_MODEL_INCLUDE_PRIVATE_UTILS_DETECTOR_TYPES_HPP_
-#define FOOSBALL_TRACKER_APP_MODEL_INCLUDE_PRIVATE_UTILS_DETECTOR_TYPES_HPP_
+#ifndef DETECTOR_TYPES_HPP_
+#define DETECTOR_TYPES_HPP_
 
 #include <opencv2/opencv.hpp>
 #include <string>
@@ -58,6 +58,7 @@ constexpr double kBackgroundLearningRate{0.02};
 constexpr int kBackgroundDiffThreshold{24};
 constexpr int kForegroundKernelSize{5};
 constexpr int kForegroundMinPixels{30};
+constexpr int kBallStartupForegroundWarmupFrames{3};
 
 constexpr double kBallPositionSmoothingFactor{0.35};
 constexpr double kBallPositionFastSmoothingFactor{0.75};
@@ -83,13 +84,17 @@ inline const std::string kTestOutputsDir{"Tests/test_outputs/"};
 inline const std::string kInputImagePath{kTestFilesDir + "ball_unobscured.jpg"};
 inline const std::string kInputVideoPath{kTestFilesDir + "test_video.mp4"};
 inline const std::string kOutputImagePath{kTestOutputsDir + "output.jpg"};
+inline const std::string kOutputVideoPath{kTestOutputsDir + "output.mp4"};
 inline const std::string kFieldMaskPath{kTestOutputsDir + "field_mask.jpg"};
 inline const std::string kBallMaskPath{kTestOutputsDir + "ball_mask.jpg"};
 inline const std::string kGrayMaskPath{kTestOutputsDir + "gray_mask.jpg"};
 inline const std::string kForegroundMaskPath{kTestOutputsDir + "foreground_mask.jpg"};
 inline const std::string kBackgroundDiffPath{kTestOutputsDir + "background_diff.jpg"};
-inline const std::string kBallMeasurementOverlayOutputPath{kTestOutputsDir +
-                                                           "/ball_measurements_overlay.mp4"};
+
+const cv::Scalar kVelocityArrowColor{0, 0, 255};
+constexpr double kVelocityArrowScale{8.0};
+constexpr int kVelocityArrowThickness{2};
+constexpr double kVelocityArrowTipLength{0.25};
 
 struct BlueColorRange
 {
@@ -112,4 +117,4 @@ struct RedColorRange
 };
 }  // namespace detector_types
 
-#endif  // FOOSBALL_TRACKER_APP_MODEL_INCLUDE_PRIVATE_UTILS_DETECTOR_TYPES_HPP_
+#endif /* DETECTOR_TYPES_HPP_ */

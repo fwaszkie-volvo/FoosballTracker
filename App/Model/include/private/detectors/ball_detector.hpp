@@ -41,9 +41,11 @@ class BallDetector : public Detector
     cv::Mat BuildGrayFrame(const cv::Mat& frame, const cv::Mat& playfield_mask) const;
     cv::Mat BuildDetectionMask(const cv::Mat& color_mask,
                                const cv::Mat& gray,
-                               const cv::Mat& playfield_mask);
+                               const cv::Mat& playfield_mask,
+                               bool& has_reliable_foreground);
     void ScoreHoughCandidates(const cv::Mat& frame, const cv::Mat& gray, const cv::Mat& mask);
     void UpdateTrackingState();
+    void ResetTrackingState();
     void CollectHoughCandidate(const cv::Mat& frame,
                                const cv::Mat& mask,
                                const cv::Point& center,
@@ -57,6 +59,7 @@ class BallDetector : public Detector
     bool has_previous_position_{};
     std::deque<cv::Point2d> position_history_{};
     int missed_detection_frames_{};
+    int foreground_confirmed_frames_{};
     cv::Mat background_model_{};
     bool background_initialized_{};
 };
