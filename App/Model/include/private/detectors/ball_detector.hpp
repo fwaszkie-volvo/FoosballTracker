@@ -6,7 +6,6 @@
 #include <opencv2/core/types.hpp>
 
 #include "detector.hpp"
-#include "detector_types.hpp"
 #include "playfield_detector.hpp"
 
 class BallDetector : public Detector
