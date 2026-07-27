@@ -14,8 +14,8 @@ class BallDetector : public Detector
     struct BallMeasurement
     {
         bool found{};
-        cv::Point2d position{};
-        cv::Point2d speed{};
+        cv::Point2d position;
+        cv::Point2d speed;
         double size{0.0};
     };
 
@@ -28,7 +28,7 @@ class BallDetector : public Detector
     struct DetectionCandidate
     {
         bool found{};
-        cv::Point center{};
+        cv::Point center;
         double score{-1.0};
     };
 
@@ -57,10 +57,10 @@ class BallDetector : public Detector
     BallMeasurement measurement_{};
     cv::Point2d previous_position_{};
     bool has_previous_position_{};
-    std::deque<cv::Point2d> position_history_{};
+    std::deque<cv::Point2d> position_history_;
     int missed_detection_frames_{};
     int foreground_confirmed_frames_{};
-    cv::Mat background_model_{};
+    cv::Mat background_model_;
     bool background_initialized_{};
 };
 

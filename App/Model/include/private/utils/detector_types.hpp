@@ -1,5 +1,5 @@
-#ifndef DETECTOR_TYPES_HPP_
-#define DETECTOR_TYPES_HPP_
+#ifndef FOOSBALL_TRACKER_APP_MODEL_INCLUDE_PRIVATE_UTILS_DETECTOR_TYPES_HPP_
+#define FOOSBALL_TRACKER_APP_MODEL_INCLUDE_PRIVATE_UTILS_DETECTOR_TYPES_HPP_
 
 #include <opencv2/opencv.hpp>
 #include <string>
@@ -117,4 +117,4 @@ struct RedColorRange
 };
 }  // namespace detector_types
 
-#endif /* DETECTOR_TYPES_HPP_ */
+#endif  // FOOSBALL_TRACKER_APP_MODEL_INCLUDE_PRIVATE_UTILS_DETECTOR_TYPES_HPP_
