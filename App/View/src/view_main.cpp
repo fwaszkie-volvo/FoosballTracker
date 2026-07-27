@@ -1,5 +1,5 @@
 #include "view_main.hpp"
 
-#include <iostream>
+#include <spdlog/spdlog.h>
 
-void ViewMain::Draw() { std::cout << "Galaktyka kurvix została..." << std::endl; }
+void ViewMain::Draw() { spdlog::info("Galaktyka kurvix została..."); }

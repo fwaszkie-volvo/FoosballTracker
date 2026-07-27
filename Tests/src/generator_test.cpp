@@ -14,7 +14,7 @@ TEST(ModelMainTest, GenerateTeamsCreatesTwoPairsForFourPlayers)
     ModelMain model;
 
     const generator::Players input_players{
-      Player{" Alice "},
+      Player{"Alice"},
       Player{"Bob"},
       Player{"Carol"},
       Player{"Dave"},

@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.14)
 
 project(FoosballTrackerModel LANGUAGES CXX)
 
+add_compile_definitions(SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_TRACE)
+
 find_package(OpenCV REQUIRED)
 
 add_library(foosball_model STATIC
@@ -25,6 +27,8 @@ add_library(foosball_input_readers STATIC
 target_link_libraries(foosball_model
 	PUBLIC
 		${OpenCV_LIBS}
+		spdlog::spdlog
+		fmt::fmt
 )
 
 target_link_libraries(foosball_input_readers

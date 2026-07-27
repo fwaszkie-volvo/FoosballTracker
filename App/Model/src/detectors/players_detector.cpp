@@ -1,13 +1,12 @@
 #include "players_detector.hpp"
 
-#include <algorithm>
 #include <limits>
 #include <opencv2/core/mat.hpp>
 #include <opencv2/core/mat.inl.hpp>
 #include <opencv2/core/matx.hpp>
+#include <opencv2/core/traits.hpp>
 #include <opencv2/core/types.hpp>
 #include <opencv2/imgproc.hpp>
-#include <string>
 #include <vector>
 
 #include "detector_types.hpp"
@@ -96,9 +95,6 @@ void PlayersDetector::Draw(const cv::Mat& frame)
 
     for (const auto& rectangle : players_.rectangles_blue_)
     {
-        std::string coord_box =
-          "(" + std::to_string(rectangle.x) + ", " + std::to_string(rectangle.y) + ")";
-
         cv::rectangle(
           frame, rectangle, detector_types::kPlayersDrawBlueColor, detector_types::kDrawThickness);
     }
