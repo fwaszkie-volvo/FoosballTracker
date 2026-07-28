@@ -2,7 +2,7 @@
 
 int Controller::Run()
 {
-    model_->Calculate();
-    view_->Draw();
+    const auto frame = model_->Calculate();
+    view_->Draw(frame);
     return 0;
 }

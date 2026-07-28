@@ -4,7 +4,7 @@ project(FoosballTrackerModel LANGUAGES CXX)
 
 add_compile_definitions(SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_TRACE)
 
-find_package(OpenCV REQUIRED)
+find_package(OpenCV REQUIRED COMPONENTS core imgproc imgcodecs videoio)
 
 add_library(foosball_model STATIC
 	src/model_main.cpp

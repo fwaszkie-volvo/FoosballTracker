@@ -3,12 +3,14 @@
 
 #include <optional>
 
+#include <opencv2/core/mat.hpp>
+
 #include "generator_types.hpp"
 
 class ModelMain
 {
   public:
-    void Calculate();
+    std::optional<cv::Mat> Calculate();
     std::optional<generator::TeamDrawResult> GenerateTeams(const generator::Players& players) const;
 };
 
