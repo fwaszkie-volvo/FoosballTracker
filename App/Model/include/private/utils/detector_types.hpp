@@ -40,16 +40,8 @@ constexpr double kPlayfieldApproxEnd{0.08};
 constexpr double kPlayfieldApproxStep{0.005};
 constexpr int kPlayfieldTargetVertices{8};
 
-constexpr int kBallMinArea{700};
-constexpr int kBallMaxArea{2300};
 constexpr int kPlayersMinArea{500};
-constexpr double kBallMinCircularity{0.75};
-constexpr float kBallMinRadius{16.0f};
-constexpr float kBallMaxRadius{24.0f};
-constexpr double kBallMinAspectRatio{0.75};
-constexpr double kBallMaxAspectRatio{1.33};
-constexpr double kBallMinExtent{0.55};
-constexpr double kBallMaxExtent{0.95};
+constexpr float kBallFixedRadius{19.0f};
 
 constexpr double kCircleWhiteRatioWeight{0.7};
 constexpr double kCircleBrightnessWeight{0.3};
@@ -59,20 +51,27 @@ constexpr double kHoughDp{1.2};
 constexpr double kHoughMinDist{20.0};
 constexpr double kHoughParam1{120.0};
 constexpr double kHoughParam2{12.0};
-constexpr int kHoughMinRadius{16};
-constexpr int kHoughMaxRadius{24};
+constexpr int kHoughMinRadius{19};
+constexpr int kHoughMaxRadius{21};
 
 constexpr double kBackgroundLearningRate{0.02};
 constexpr int kBackgroundDiffThreshold{24};
 constexpr int kForegroundKernelSize{5};
 constexpr int kForegroundMinPixels{30};
+constexpr int kBallStartupForegroundWarmupFrames{3};
+
+constexpr double kBallPositionSmoothingFactor{0.35};
+constexpr double kBallPositionFastSmoothingFactor{0.75};
+constexpr double kBallPositionFastMotionThreshold{6.0};
+constexpr int kBallSpeedWindowFrames{5};
+constexpr double kBallVelocityDeadbandPixels{0.5};
+constexpr int kBallTrackingResetMissFrames{5};
 
 constexpr int kWhitePixelValue{255};
 constexpr int kColorChannels{3};
 constexpr double kBrightnessNormalization{255.0};
 const cv::Size kGaussianBlurKernelSize{9, 9};
 constexpr double kGaussianBlurSigma{2.0};
-constexpr int kEdgeThreshold{1};
 
 constexpr int kDrawThickness{2};
 constexpr double kLabelScale{0.6};
@@ -88,8 +87,14 @@ inline const std::string kOutputImagePath{kTestOutputsDir + "output.jpg"};
 inline const std::string kOutputVideoPath{kTestOutputsDir + "output.mp4"};
 inline const std::string kFieldMaskPath{kTestOutputsDir + "field_mask.jpg"};
 inline const std::string kBallMaskPath{kTestOutputsDir + "ball_mask.jpg"};
+inline const std::string kGrayMaskPath{kTestOutputsDir + "gray_mask.jpg"};
 inline const std::string kForegroundMaskPath{kTestOutputsDir + "foreground_mask.jpg"};
 inline const std::string kBackgroundDiffPath{kTestOutputsDir + "background_diff.jpg"};
+
+const cv::Scalar kVelocityArrowColor{0, 0, 255};
+constexpr double kVelocityArrowScale{8.0};
+constexpr int kVelocityArrowThickness{2};
+constexpr double kVelocityArrowTipLength{0.25};
 
 struct BlueColorRange
 {
