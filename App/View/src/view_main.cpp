@@ -12,6 +12,11 @@ struct WindowState
     std::optional<cv::Mat> frame_bgr;
 };
 
+GtkWindow* ToGtkWindow(GtkWidget* widget)
+{
+    return GTK_WINDOW(widget);  // NOLINT(bugprone-casting-through-void)
+}
+
 GtkWidget* CreateImageWidget(const cv::Mat& frame)
 {
     if (frame.empty())
@@ -64,9 +69,9 @@ void on_activate(GtkApplication* app, gpointer user_data)
 {
     const auto* state = static_cast<const WindowState*>(user_data);
 
-    GtkWidget* window = gtk_application_window_new(app);
-    gtk_window_set_title(GTK_WINDOW(window), "Foosball Tracker");
-    gtk_window_set_default_size(GTK_WINDOW(window), 800, 600);
+    GtkWindow* gtk_window = ToGtkWindow(gtk_application_window_new(app));
+    gtk_window_set_title(gtk_window, "Foosball Tracker");
+    gtk_window_set_default_size(gtk_window, 800, 600);
 
     GtkWidget* content = nullptr;
     if (state != nullptr && state->frame_bgr.has_value())
@@ -78,9 +83,9 @@ void on_activate(GtkApplication* app, gpointer user_data)
         content = gtk_label_new("Model nie zwrocil zadnej ramki.");
     }
 
-    gtk_window_set_child(GTK_WINDOW(window), content);
+    gtk_window_set_child(gtk_window, content);
 
-    gtk_window_present(GTK_WINDOW(window));
+    gtk_window_present(gtk_window);
 }
 
 }  // namespace
@@ -89,8 +94,11 @@ void ViewMain::Draw(const std::optional<cv::Mat>& frame)
 {
     WindowState state{frame};
     GtkApplication* app = gtk_application_new("com.foosballtracker.app", G_APPLICATION_FLAGS_NONE);
+
+    // NOLINTNEXTLINE(clang-analyzer-optin.core.EnumCastOutOfRange,bugprone-casting-through-void)
     g_signal_connect(app, "activate", G_CALLBACK(on_activate), &state);
 
+    // NOLINTNEXTLINE(bugprone-casting-through-void)
     g_application_run(G_APPLICATION(app), 0, nullptr);
     g_object_unref(app);
 }
