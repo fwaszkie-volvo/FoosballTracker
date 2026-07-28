@@ -1,9 +1,8 @@
 #ifndef FOOSBALL_TRACKER_APP_VIEW_INCLUDE_PUBLIC_VIEW_MAIN_HPP_
 #define FOOSBALL_TRACKER_APP_VIEW_INCLUDE_PUBLIC_VIEW_MAIN_HPP_
 
-#include <optional>
-
 #include <opencv2/core/mat.hpp>
+#include <optional>
 
 class ViewMain
 {
