@@ -14,6 +14,7 @@ class PlayfieldDetector : public Detector
     void Draw(cv::Mat& frame) const override;
 
     const cv::Mat& GetMask() const { return playfield_mask_; }
+    const Contour& GetPolygon() const { return playfield_polygon_; }
     bool HasDetection() const { return detected_; }
 
   private:

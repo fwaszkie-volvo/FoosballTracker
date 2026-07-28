@@ -1,13 +1,18 @@
+#include "ball_detector.hpp"
+
 #include <gtest/gtest.h>
 #include <spdlog/spdlog.h>
 
 #include <cmath>
+#include <iomanip>
 #include <opencv2/opencv.hpp>
+#include <sstream>
 #include <string>
 
 #include "detector.hpp"
 #include "detector_types.hpp"
 #include "frame_processor.hpp"
+#include "goal_detector.hpp"
 #include "processing_config.hpp"
 #include "utils.hpp"
 
@@ -54,6 +59,8 @@ TEST_F(BallDetectorTest, VideoReadAndAnnotatedWrite)
     const int max_frames =
       static_cast<int>(std::ceil(kDefaultFps * kDefaultShortVideoDurationSeconds));
     int frame_count = 0;
+    BallDetector ball_detector{};
+    GoalDetector goal_detector{};
 
     const auto result =
       processor_.ProcessFrames(process_target,
@@ -65,7 +72,12 @@ TEST_F(BallDetectorTest, VideoReadAndAnnotatedWrite)
                                    }
 
                                    spdlog::debug("Processing frame {}", processed_frame_count);
-                                   detect_ball(frame);
+                                   ball_detector.Detect(frame);
+                                   goal_detector.Detect(frame);
+
+                                   ball_detector.Draw(frame);
+                                   goal_detector.Draw(frame);
+
                                    ++processed_frame_count;
                                    ++frame_count;
                                });
