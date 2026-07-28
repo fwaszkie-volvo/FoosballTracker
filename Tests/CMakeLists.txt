@@ -21,6 +21,7 @@ add_executable(unit_tests
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ball_detector_test.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/players_detector_test.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/generator_test.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/player_ratings_test.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../App/log_level_manager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/utils/utils.cpp
 )

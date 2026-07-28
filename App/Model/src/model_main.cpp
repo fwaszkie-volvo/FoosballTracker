@@ -42,3 +42,18 @@ std::optional<generator::TeamDrawResult> ModelMain::GenerateTeams(
 {
     return generator::GenerateTeams(players);
 }
+
+void ModelMain::RecordMatch(const ratings::MatchInput& match)
+{
+    ratings_service_.RecordMatch(match);
+}
+
+std::optional<Player> ModelMain::GetPlayer(const ratings::Nickname& nickname) const
+{
+    return ratings_service_.GetPlayer(nickname);
+}
+
+const std::vector<ratings::MatchInput>& ModelMain::GetMatchHistory() const
+{
+    return ratings_service_.GetMatchHistory();
+}
