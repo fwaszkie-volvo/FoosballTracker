@@ -1,17 +1,16 @@
 #ifndef FOOSBALL_TRACKER_APP_MODEL_INCLUDE_PRIVATE_DETECTORS_GOAL_DETECTOR_HPP_
 #define FOOSBALL_TRACKER_APP_MODEL_INCLUDE_PRIVATE_DETECTORS_GOAL_DETECTOR_HPP_
 
+#include <cstddef>
+#include <cstdint>
 #include <opencv2/core/mat.hpp>
 #include <opencv2/core/matx.hpp>
 #include <opencv2/core/types.hpp>
-#include <cstddef>
-#include <cstdint>
-#include <vector>
 
 #include "ball_detector.hpp"
 #include "detector.hpp"
-#include "playfield_detector.hpp"
 #include "detector_types.hpp"
+#include "playfield_detector.hpp"
 
 class GoalDetector : public Detector
 {
