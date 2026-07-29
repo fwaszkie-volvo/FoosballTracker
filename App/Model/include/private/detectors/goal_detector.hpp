@@ -4,10 +4,14 @@
 #include <opencv2/core/mat.hpp>
 #include <opencv2/core/matx.hpp>
 #include <opencv2/core/types.hpp>
+#include <cstddef>
+#include <cstdint>
+#include <vector>
 
 #include "ball_detector.hpp"
 #include "detector.hpp"
 #include "playfield_detector.hpp"
+#include "detector_types.hpp"
 
 class GoalDetector : public Detector
 {
@@ -38,14 +42,9 @@ class GoalDetector : public Detector
     void ConfirmGoal(const GoalSide scored_side);
     void ClearPendingGoal();
     void ArmPendingGoal(GoalSide side);
-    bool BuildGoalLineFromEdge(const cv::Point& edge_start,
-                               const cv::Point& edge_end,
-                               int frame_height,
-                               const cv::Size& frame_size,
-                               cv::Point& line_start,
-                               cv::Point& line_end) const;
+    cv::Vec4f BuildGoalLineFromEdge(const cv::Vec4f& edge) const;
     cv::Vec4f BuildGoalLine(const cv::Mat& frame,
-                            const std::vector<cv::Point>& playfield_polygon,
+                            const Contour& playfield_polygon,
                             std::size_t edge_index) const;
     void DrawGoalLine(cv::Mat& frame, const cv::Vec4f& goal_line) const;
     bool SegmentsIntersect(const cv::Vec4f& segment1, const cv::Vec4f& segment2) const;

@@ -2,15 +2,16 @@
 
 #include <spdlog/spdlog.h>
 
-#include <algorithm>
 #include <cstddef>
 #include <limits>
+#include <opencv2/core/mat.inl.hpp>
 #include <opencv2/imgproc.hpp>
 #include <string>
 
 #include "detector_types.hpp"
 
 constexpr float kMinSegmentLength{1.0f};
+constexpr float kGoalLineLengthRatio{0.8f};
 constexpr float kGoalIntersectionEpsilon{1e-3F};
 constexpr float kCrossingVelocityThreshold{0.2F};
 constexpr int kGoalMissConfirmFrames{10};
@@ -44,33 +45,25 @@ bool GoalDetector::SegmentsIntersect(const cv::Vec4f& segment1, const cv::Vec4f&
              (d3 < -kGoalIntersectionEpsilon && d4 > kGoalIntersectionEpsilon)));
 }
 
-bool GoalDetector::BuildGoalLineFromEdge(const cv::Point& edge_start,
-                                         const cv::Point& edge_end,
-                                         int frame_height,
-                                         const cv::Size& frame_size,
-                                         cv::Point& line_start,
-                                         cv::Point& line_end) const
+cv::Vec4f GoalDetector::BuildGoalLineFromEdge(const cv::Vec4f& edge) const
 {
-    const cv::Point2f edge_vector{static_cast<float>(edge_end.x - edge_start.x),
-                                  static_cast<float>(edge_end.y - edge_start.y)};
+    const cv::Point2f edge_vector{edge[2] - edge[0], edge[3] - edge[1]};
     const float edge_length{static_cast<float>(cv::norm(edge_vector))};
     if (edge_length < kMinSegmentLength)
     {
-        return false;
+        return cv::Vec4f{};
     }
 
-    const float requested_half_length{static_cast<float>(std::max(1, frame_height / 4)) / 2.0f};
-    const float half_length{std::min(requested_half_length, edge_length / 2.0f)};
+    const float half_new_length{(edge_length * kGoalLineLengthRatio) / 2.0f};
     const cv::Point2f unit_vector{edge_vector.x / edge_length, edge_vector.y / edge_length};
-    const cv::Point2f center{(static_cast<float>(edge_start.x + edge_end.x) / 2.0f),
-                             (static_cast<float>(edge_start.y + edge_end.y) / 2.0f)};
+    const cv::Point2f center{(edge[0] + edge[2]) / 2.0f, (edge[1] + edge[3]) / 2.0f};
 
-    line_start = cv::Point{cvRound(center.x - (unit_vector.x * half_length)),
-                           cvRound(center.y - (unit_vector.y * half_length))};
-    line_end = cv::Point{cvRound(center.x + (unit_vector.x * half_length)),
-                         cvRound(center.y + (unit_vector.y * half_length))};
+    const cv::Point2f line_start{center.x - (unit_vector.x * half_new_length),
+                                 center.y - (unit_vector.y * half_new_length)};
+    const cv::Point2f line_end{center.x + (unit_vector.x * half_new_length),
+                               center.y + (unit_vector.y * half_new_length)};
 
-    return cv::clipLine(frame_size, line_start, line_end);
+    return cv::Vec4f{line_start.x, line_start.y, line_end.x, line_end.y};
 }
 
 void GoalDetector::ClearPendingGoal()
@@ -88,18 +81,16 @@ void GoalDetector::ArmPendingGoal(GoalSide side)
 }
 
 cv::Vec4f GoalDetector::BuildGoalLine(const cv::Mat& frame,
-                                      const std::vector<cv::Point>& playfield_polygon,
+                                      const Contour& playfield_polygon,
                                       std::size_t edge_index) const
 {
     const cv::Point& edge_start{playfield_polygon[edge_index]};
     const cv::Point& edge_end{playfield_polygon[(edge_index + 1) % playfield_polygon.size()]};
-    cv::Point goal_start, goal_end;
-    if (BuildGoalLineFromEdge(edge_start, edge_end, frame.rows, frame.size(), goal_start, goal_end))
-    {
-        return cv::Vec4f{static_cast<float>(goal_start.x), static_cast<float>(goal_start.y),
-                         static_cast<float>(goal_end.x), static_cast<float>(goal_end.y)};
-    }
-    return cv::Vec4f{};
+    const cv::Vec4f edge{static_cast<float>(edge_start.x),
+                         static_cast<float>(edge_start.y),
+                         static_cast<float>(edge_end.x),
+                         static_cast<float>(edge_end.y)};
+    return BuildGoalLineFromEdge(edge);
 }
 
 void GoalDetector::DrawGoalLine(cv::Mat& frame, const cv::Vec4f& goal_line) const
@@ -122,8 +113,8 @@ bool GoalDetector::DidCrossGoalLine(const cv::Point2f& previous_position,
                                     const cv::Point2f& current_position,
                                     const cv::Vec4f& goal_line) const
 {
-    const cv::Vec4f ball_trajectory{previous_position.x, previous_position.y,
-                                     current_position.x, current_position.y};
+    const cv::Vec4f ball_trajectory{
+      previous_position.x, previous_position.y, current_position.x, current_position.y};
     return SegmentsIntersect(ball_trajectory, goal_line);
 }
 

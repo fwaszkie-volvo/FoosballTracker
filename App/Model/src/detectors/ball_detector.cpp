@@ -60,7 +60,7 @@ void BallDetector::UpdateMeasurement(const cv::Point& center)
     if (has_previous_position_)
     {
         const cv::Point2f frame_delta{raw_position - previous_position_};
-        const float frame_displacement{cv::norm(frame_delta)};
+        const float frame_displacement{static_cast<float>(cv::norm(frame_delta))};
         float smoothing_factor{detector_types::kBallPositionSmoothingFactor};
         if (frame_displacement >= detector_types::kBallPositionFastMotionThreshold)
         {
@@ -214,7 +214,7 @@ void BallDetector::UpdateTrackingState()
 void BallDetector::ResetTrackingState()
 {
     ResetBestCandidate();
-    previous_position_ = cv::Point2d{};
+    previous_position_ = cv::Point2f{};
     has_previous_position_ = false;
     position_history_.clear();
     missed_detection_frames_ = 0;
