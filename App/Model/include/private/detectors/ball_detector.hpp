@@ -14,8 +14,8 @@ class BallDetector : public Detector
     struct BallMeasurement
     {
         bool found{};
-        cv::Point2d position;
-        cv::Point2d speed;
+        cv::Point2f position;
+        cv::Point2f speed;
         double size{0.0};
     };
 
@@ -35,7 +35,7 @@ class BallDetector : public Detector
     bool IsCircleInsideFrame(const cv::Point& center, const int radius, const cv::Size& size) const;
     void ResetBestCandidate();
     void UpdateCandidate(const cv::Point& center, double score);
-    cv::Point2d ComputeWindowSpeed() const;
+    cv::Point2f ComputeWindowSpeed() const;
     void UpdateMeasurement(const cv::Point& center);
     cv::Mat BuildColorMask(const cv::Mat& frame) const;
     cv::Mat BuildGrayFrame(const cv::Mat& frame, const cv::Mat& playfield_mask) const;
@@ -55,9 +55,9 @@ class BallDetector : public Detector
     PlayfieldDetector playfield_detector_{};
     DetectionCandidate best_candidate_{};
     BallMeasurement measurement_{};
-    cv::Point2d previous_position_;
+    cv::Point2f previous_position_;
     bool has_previous_position_{};
-    std::deque<cv::Point2d> position_history_;
+    std::deque<cv::Point2f> position_history_;
     int missed_detection_frames_{};
     int foreground_confirmed_frames_{};
     cv::Mat background_model_;

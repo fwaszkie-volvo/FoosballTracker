@@ -26,22 +26,35 @@ class GoalDetector : public Detector
     GoalSide GetScoredSide() const { return scored_side_; }
     bool HasLeftGoal() const { return has_left_goal_; }
     bool HasRightGoal() const { return has_right_goal_; }
-    const cv::Vec4i& GetLeftGoalLine() const { return left_goal_line_; }
-    const cv::Vec4i& GetRightGoalLine() const { return right_goal_line_; }
+    const cv::Vec4f& GetLeftGoalLine() const { return left_goal_line_; }
+    const cv::Vec4f& GetRightGoalLine() const { return right_goal_line_; }
 
   private:
     void DetectGoals(const cv::Mat& frame);
     void DetectGoalScored(const BallDetector::BallMeasurement& ball_measurement);
     bool DidCrossGoalLine(const cv::Point2f& previous_position,
                           const cv::Point2f& current_position,
-                          const cv::Point& line_start,
-                          const cv::Point& line_end) const;
+                          const cv::Vec4f& goal_line) const;
     void ConfirmGoal(const GoalSide scored_side);
+    void ClearPendingGoal();
+    void ArmPendingGoal(GoalSide side);
+    bool BuildGoalLineFromEdge(const cv::Point& edge_start,
+                               const cv::Point& edge_end,
+                               int frame_height,
+                               const cv::Size& frame_size,
+                               cv::Point& line_start,
+                               cv::Point& line_end) const;
+    cv::Vec4f BuildGoalLine(const cv::Mat& frame,
+                            const std::vector<cv::Point>& playfield_polygon,
+                            std::size_t edge_index) const;
+    void DrawGoalLine(cv::Mat& frame, const cv::Vec4f& goal_line) const;
+    bool SegmentsIntersect(const cv::Vec4f& segment1, const cv::Vec4f& segment2) const;
+    float Cross(const cv::Vec4f& segment, const cv::Point2f& point) const;
 
     BallDetector ball_detector_{};
     PlayfieldDetector playfield_detector_{};
-    cv::Vec4i left_goal_line_;
-    cv::Vec4i right_goal_line_;
+    cv::Vec4f left_goal_line_;
+    cv::Vec4f right_goal_line_;
     bool has_left_goal_{false};
     bool has_right_goal_{false};
     bool waiting_for_goal_confirmation_{false};

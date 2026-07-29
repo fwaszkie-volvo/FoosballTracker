@@ -1,32 +1,55 @@
 #include "goal_detector.hpp"
 
-#include <bits/std_abs.h>
 #include <spdlog/spdlog.h>
 
 #include <algorithm>
 #include <cstddef>
 #include <limits>
-#include <opencv2/core/fast_math.hpp>
-#include <opencv2/core/mat.inl.hpp>
 #include <opencv2/imgproc.hpp>
 #include <string>
 
 #include "detector_types.hpp"
 
-namespace
-{
 constexpr float kMinSegmentLength{1.0f};
 constexpr float kGoalIntersectionEpsilon{1e-3F};
 constexpr float kCrossingVelocityThreshold{0.2F};
 constexpr int kGoalMissConfirmFrames{10};
 constexpr int kGoalOverlayFrames{60};  // 2 seconds at 30 FPS.
 
-bool BuildGoalLineFromEdge(const cv::Point& edge_start,
-                           const cv::Point& edge_end,
-                           const int frame_height,
-                           const cv::Size& frame_size,
-                           cv::Point& line_start,
-                           cv::Point& line_end)
+float GoalDetector::Cross(const cv::Vec4f& segment, const cv::Point2f& point) const
+{
+    const cv::Point2f origin{segment[0], segment[1]};
+    const cv::Point2f a{segment[2], segment[3]};
+    const cv::Point2f oa{a - origin};
+    const cv::Point2f ob{point - origin};
+    return (oa.x * ob.y) - (oa.y * ob.x);
+}
+
+bool GoalDetector::SegmentsIntersect(const cv::Vec4f& segment1, const cv::Vec4f& segment2) const
+{
+    const cv::Point2f p1{segment1[0], segment1[1]};
+    const cv::Point2f p2{segment1[2], segment1[3]};
+    const cv::Point2f q1{segment2[0], segment2[1]};
+    const cv::Point2f q2{segment2[2], segment2[3]};
+
+    const float d1{Cross(segment1, q1)};
+    const float d2{Cross(segment1, q2)};
+    const float d3{Cross(segment2, p1)};
+    const float d4{Cross(segment2, p2)};
+
+    // Check proper intersection (opposite sides)
+    return (((d1 > kGoalIntersectionEpsilon && d2 < -kGoalIntersectionEpsilon) ||
+             (d1 < -kGoalIntersectionEpsilon && d2 > kGoalIntersectionEpsilon)) &&
+            ((d3 > kGoalIntersectionEpsilon && d4 < -kGoalIntersectionEpsilon) ||
+             (d3 < -kGoalIntersectionEpsilon && d4 > kGoalIntersectionEpsilon)));
+}
+
+bool GoalDetector::BuildGoalLineFromEdge(const cv::Point& edge_start,
+                                         const cv::Point& edge_end,
+                                         int frame_height,
+                                         const cv::Size& frame_size,
+                                         cv::Point& line_start,
+                                         cv::Point& line_end) const
 {
     const cv::Point2f edge_vector{static_cast<float>(edge_end.x - edge_start.x),
                                   static_cast<float>(edge_end.y - edge_start.y)};
@@ -50,108 +73,66 @@ bool BuildGoalLineFromEdge(const cv::Point& edge_start,
     return cv::clipLine(frame_size, line_start, line_end);
 }
 
-float Cross(const cv::Point2f& origin, const cv::Point2f& a, const cv::Point2f& b)
+void GoalDetector::ClearPendingGoal()
 {
-    const cv::Point2f oa{a - origin};
-    const cv::Point2f ob{b - origin};
-    return (oa.x * ob.y) - (oa.y * ob.x);
+    waiting_for_goal_confirmation_ = false;
+    pending_goal_side_ = GoalSide::kNone;
+    missed_ball_frames_ = 0;
 }
 
-bool IsOnSegment(const cv::Point2f& a, const cv::Point2f& b, const cv::Point2f& p)
+void GoalDetector::ArmPendingGoal(GoalSide side)
 {
-    return p.x >= std::min(a.x, b.x) - kGoalIntersectionEpsilon &&
-           p.x <= std::max(a.x, b.x) + kGoalIntersectionEpsilon &&
-           p.y >= std::min(a.y, b.y) - kGoalIntersectionEpsilon &&
-           p.y <= std::max(a.y, b.y) + kGoalIntersectionEpsilon;
+    waiting_for_goal_confirmation_ = true;
+    pending_goal_side_ = side;
+    missed_ball_frames_ = 0;
 }
 
-bool SegmentsIntersect(const cv::Point2f& p1,
-                       const cv::Point2f& p2,
-                       const cv::Point2f& q1,
-                       const cv::Point2f& q2)
+cv::Vec4f GoalDetector::BuildGoalLine(const cv::Mat& frame,
+                                      const std::vector<cv::Point>& playfield_polygon,
+                                      std::size_t edge_index) const
 {
-    const float d1{Cross(p1, p2, q1)};
-    const float d2{Cross(p1, p2, q2)};
-    const float d3{Cross(q1, q2, p1)};
-    const float d4{Cross(q1, q2, p2)};
-
-    if (((d1 > kGoalIntersectionEpsilon && d2 < -kGoalIntersectionEpsilon) ||
-         (d1 < -kGoalIntersectionEpsilon && d2 > kGoalIntersectionEpsilon)) &&
-        ((d3 > kGoalIntersectionEpsilon && d4 < -kGoalIntersectionEpsilon) ||
-         (d3 < -kGoalIntersectionEpsilon && d4 > kGoalIntersectionEpsilon)))
+    const cv::Point& edge_start{playfield_polygon[edge_index]};
+    const cv::Point& edge_end{playfield_polygon[(edge_index + 1) % playfield_polygon.size()]};
+    cv::Point goal_start, goal_end;
+    if (BuildGoalLineFromEdge(edge_start, edge_end, frame.rows, frame.size(), goal_start, goal_end))
     {
-        return true;
+        return cv::Vec4f{static_cast<float>(goal_start.x), static_cast<float>(goal_start.y),
+                         static_cast<float>(goal_end.x), static_cast<float>(goal_end.y)};
     }
-
-    if (std::abs(d1) <= kGoalIntersectionEpsilon && IsOnSegment(p1, p2, q1))
-    {
-        return true;
-    }
-
-    if (std::abs(d2) <= kGoalIntersectionEpsilon && IsOnSegment(p1, p2, q2))
-    {
-        return true;
-    }
-
-    if (std::abs(d3) <= kGoalIntersectionEpsilon && IsOnSegment(q1, q2, p1))
-    {
-        return true;
-    }
-
-    return std::abs(d4) <= kGoalIntersectionEpsilon && IsOnSegment(q1, q2, p2);
+    return cv::Vec4f{};
 }
 
-float SignedSideOfLine(const cv::Point2f& line_start,
-                       const cv::Point2f& line_end,
-                       const cv::Point2f& point)
+void GoalDetector::DrawGoalLine(cv::Mat& frame, const cv::Vec4f& goal_line) const
 {
-    return Cross(line_start, line_end, point);
+    const cv::Scalar goal_color{0, 255, 255};
+    const cv::Point start{static_cast<int>(goal_line[0]), static_cast<int>(goal_line[1])};
+    const cv::Point end{static_cast<int>(goal_line[2]), static_cast<int>(goal_line[3])};
+    cv::line(frame, start, end, goal_color, detector_types::kGoalDrawThickness, cv::LINE_AA);
 }
-}  // namespace
 
 void GoalDetector::ConfirmGoal(const GoalSide scored_side)
 {
     goal_scored_ = true;
     scored_side_ = scored_side;
     goal_overlay_frames_remaining_ = kGoalOverlayFrames;
-    waiting_for_goal_confirmation_ = false;
-    pending_goal_side_ = GoalSide::kNone;
-    missed_ball_frames_ = 0;
+    ClearPendingGoal();
 }
 
 bool GoalDetector::DidCrossGoalLine(const cv::Point2f& previous_position,
                                     const cv::Point2f& current_position,
-                                    const cv::Point& line_start,
-                                    const cv::Point& line_end) const
+                                    const cv::Vec4f& goal_line) const
 {
-    const cv::Point2f line_start_f{static_cast<float>(line_start.x),
-                                   static_cast<float>(line_start.y)};
-    const cv::Point2f line_end_f{static_cast<float>(line_end.x), static_cast<float>(line_end.y)};
-
-    if (SegmentsIntersect(previous_position, current_position, line_start_f, line_end_f))
-    {
-        return true;
-    }
-
-    const float previous_side{SignedSideOfLine(line_start_f, line_end_f, previous_position)};
-    const float current_side{SignedSideOfLine(line_start_f, line_end_f, current_position)};
-
-    if (std::abs(previous_side) <= kGoalIntersectionEpsilon ||
-        std::abs(current_side) <= kGoalIntersectionEpsilon)
-    {
-        return true;
-    }
-
-    return (previous_side < -kGoalIntersectionEpsilon && current_side > kGoalIntersectionEpsilon) ||
-           (previous_side > kGoalIntersectionEpsilon && current_side < -kGoalIntersectionEpsilon);
+    const cv::Vec4f ball_trajectory{previous_position.x, previous_position.y,
+                                     current_position.x, current_position.y};
+    return SegmentsIntersect(ball_trajectory, goal_line);
 }
 
 void GoalDetector::DetectGoals(const cv::Mat& frame)
 {
     has_left_goal_ = false;
     has_right_goal_ = false;
-    left_goal_line_ = cv::Vec4i{};
-    right_goal_line_ = cv::Vec4i{};
+    left_goal_line_ = cv::Vec4f{};
+    right_goal_line_ = cv::Vec4f{};
 
     playfield_detector_.Detect(frame);
     if (!playfield_detector_.HasDetection())
@@ -189,52 +170,17 @@ void GoalDetector::DetectGoals(const cv::Mat& frame)
         }
     }
 
-    const cv::Point& left_edge_start{playfield_polygon[left_edge_index]};
-    const cv::Point& left_edge_end{
-      playfield_polygon[(left_edge_index + 1) % playfield_polygon.size()]};
-    cv::Point left_goal_start;
-    cv::Point left_goal_end;
-    has_left_goal_ = BuildGoalLineFromEdge(
-      left_edge_start, left_edge_end, frame.rows, frame.size(), left_goal_start, left_goal_end);
-    if (has_left_goal_)
-    {
-        left_goal_line_ =
-          cv::Vec4i{left_goal_start.x, left_goal_start.y, left_goal_end.x, left_goal_end.y};
-    }
-
-    const cv::Point& right_edge_start{playfield_polygon[right_edge_index]};
-    const cv::Point& right_edge_end{
-      playfield_polygon[(right_edge_index + 1) % playfield_polygon.size()]};
-    cv::Point right_goal_start;
-    cv::Point right_goal_end;
-    has_right_goal_ = BuildGoalLineFromEdge(
-      right_edge_start, right_edge_end, frame.rows, frame.size(), right_goal_start, right_goal_end);
-    if (has_right_goal_)
-    {
-        right_goal_line_ =
-          cv::Vec4i{right_goal_start.x, right_goal_start.y, right_goal_end.x, right_goal_end.y};
-    }
+    left_goal_line_ = BuildGoalLine(frame, playfield_polygon, left_edge_index);
+    has_left_goal_ = (left_goal_line_ != cv::Vec4f{});
+    right_goal_line_ = BuildGoalLine(frame, playfield_polygon, right_edge_index);
+    has_right_goal_ = (right_goal_line_ != cv::Vec4f{});
 }
 
 void GoalDetector::DetectGoalScored(const BallDetector::BallMeasurement& ball_measurement)
 {
-    const auto clear_pending_goal = [&]()
-    {
-        waiting_for_goal_confirmation_ = false;
-        pending_goal_side_ = GoalSide::kNone;
-        missed_ball_frames_ = 0;
-    };
-
-    const auto arm_pending_goal = [&](const GoalSide side)
-    {
-        waiting_for_goal_confirmation_ = true;
-        pending_goal_side_ = side;
-        missed_ball_frames_ = 0;
-    };
-
     if (!has_left_goal_ && !has_right_goal_)
     {
-        clear_pending_goal();
+        ClearPendingGoal();
         return;
     }
 
@@ -251,15 +197,13 @@ void GoalDetector::DetectGoalScored(const BallDetector::BallMeasurement& ball_me
         return;
     }
 
-    const cv::Point2f current_ball_position{static_cast<float>(ball_measurement.position.x),
-                                            static_cast<float>(ball_measurement.position.y)};
-    const cv::Point2f current_ball_speed{static_cast<float>(ball_measurement.speed.x),
-                                         static_cast<float>(ball_measurement.speed.y)};
+    const cv::Point2f current_ball_position{ball_measurement.position};
+    const cv::Point2f current_ball_speed{ball_measurement.speed};
 
     if (waiting_for_goal_confirmation_)
     {
         // Ball was detected before reaching the missing-frame threshold, so cancel pending goal.
-        clear_pending_goal();
+        ClearPendingGoal();
     }
 
     if (cv::norm(current_ball_speed) >= kCrossingVelocityThreshold)
@@ -267,23 +211,16 @@ void GoalDetector::DetectGoalScored(const BallDetector::BallMeasurement& ball_me
         const cv::Point2f projected_ball_position{
           current_ball_position +
           (current_ball_speed * static_cast<float>(detector_types::kVelocityArrowScale))};
-        const cv::Point left_goal_start{left_goal_line_[0], left_goal_line_[1]};
-        const cv::Point left_goal_end{left_goal_line_[2], left_goal_line_[3]};
-        const cv::Point right_goal_start{right_goal_line_[0], right_goal_line_[1]};
-        const cv::Point right_goal_end{right_goal_line_[2], right_goal_line_[3]};
 
         if (has_left_goal_ &&
-            DidCrossGoalLine(
-              current_ball_position, projected_ball_position, left_goal_start, left_goal_end))
+            DidCrossGoalLine(current_ball_position, projected_ball_position, left_goal_line_))
         {
-            arm_pending_goal(GoalSide::kLeft);
+            ArmPendingGoal(GoalSide::kLeft);
         }
-        else if (has_right_goal_ && DidCrossGoalLine(current_ball_position,
-                                                     projected_ball_position,
-                                                     right_goal_start,
-                                                     right_goal_end))
+        else if (has_right_goal_ &&
+                 DidCrossGoalLine(current_ball_position, projected_ball_position, right_goal_line_))
         {
-            arm_pending_goal(GoalSide::kRight);
+            ArmPendingGoal(GoalSide::kRight);
         }
     }
 }
@@ -322,28 +259,9 @@ void GoalDetector::Draw(cv::Mat& frame) const
     const cv::Scalar goal_color{0, 255, 255};
 
     if (has_left_goal_)
-    {
-        const cv::Point left_goal_start{left_goal_line_[0], left_goal_line_[1]};
-        const cv::Point left_goal_end{left_goal_line_[2], left_goal_line_[3]};
-        cv::line(frame,
-                 left_goal_start,
-                 left_goal_end,
-                 goal_color,
-                 detector_types::kGoalDrawThickness,
-                 cv::LINE_AA);
-    }
-
+        DrawGoalLine(frame, left_goal_line_);
     if (has_right_goal_)
-    {
-        const cv::Point right_goal_start{right_goal_line_[0], right_goal_line_[1]};
-        const cv::Point right_goal_end{right_goal_line_[2], right_goal_line_[3]};
-        cv::line(frame,
-                 right_goal_start,
-                 right_goal_end,
-                 goal_color,
-                 detector_types::kGoalDrawThickness,
-                 cv::LINE_AA);
-    }
+        DrawGoalLine(frame, right_goal_line_);
 
     if (goal_scored_)
     {
