@@ -17,7 +17,7 @@ Dostepne opcje:
   build            Buduje projekt przy uzyciu CMake.
   clang-check      Uruchamia clang-tidy na plikach C++ projektu.
   include-check    Uruchamia include-what-you-use na plikach C++ projektu.
-  clean            Usuwa katalog build.
+  clean            Usuwa katalog build, katalog build testow i katalog test_outputs.
   format-check     Sprawdza formatowanie C++ oraz header guardy z auto-poprawkami.
   format-check-ci  Sprawdza formatowanie C++, header guardy, clang-tidy oraz include-what-you-use bez auto-poprawek.
   format-fix       Poprawia formatowanie C++ oraz header guardy.
@@ -172,12 +172,12 @@ function build() {
 }
 
 function clean() {
-  if [[ ! -d "$BUILD_DIR" && ! -d "$TESTS_BUILD_DIR" ]]; then
-    echo "Katalogi build nie istnieja: $BUILD_DIR, $TESTS_BUILD_DIR"
+  if [[ ! -d "$BUILD_DIR" && ! -d "$TESTS_BUILD_DIR" && ! -d "$TESTS_DIR/test_outputs" ]]; then
+    echo "Katalogi build nie istnieja: $BUILD_DIR, $TESTS_BUILD_DIR, $TESTS_DIR/test_outputs"
     return 0
   fi
 
-  rm -rf "$BUILD_DIR" "$TESTS_BUILD_DIR"
+  rm -rf "$BUILD_DIR" "$TESTS_BUILD_DIR" "$TESTS_DIR/test_outputs"
 }
 
 function build_tests() {
