@@ -14,7 +14,7 @@ jobs:
     - uses: actions/checkout@v4
 
     - name: Configure
-      run: ./run configure ui-tools
+      run: ./run configure
 
     - name: Build
       run: ./run build
@@ -26,7 +26,7 @@ jobs:
     - uses: actions/checkout@v4
 
     - name: Configure
-      run: ./run configure ui-tools
+      run: ./run configure
 
     - name: Check formatting
       run: ./run format-check-ci
@@ -38,7 +38,7 @@ jobs:
     - uses: actions/checkout@v4
 
     - name: Configure
-      run: ./run configure
+      run: ./run configure --no-ui-tool
 
     - name: Test
       run: ./run test
