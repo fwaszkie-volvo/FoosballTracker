@@ -13,7 +13,7 @@ Uzycie: $0 <opcja>
 
 Dostepne opcje:
   configure        Instaluje komplet niezbednych pakietow (build, test, clang, format)
-                    [ui-tools] - instaluje narzędzia do implementacji UI
+                    [--no-ui-tools] - nie instaluje narzędzi do implementacji UI
   build            Buduje projekt przy uzyciu CMake.
   clang-check      Uruchamia clang-tidy na plikach C++ projektu.
   include-check    Uruchamia include-what-you-use na plikach C++ projektu.
@@ -73,16 +73,15 @@ function configure() {
   configure_mode=$1
   privilege_prefix=()
   install_packages=()
-  additional_packages=()
+  additional_packages=(
+    libgtk-4-1
+    libgtk-4-dev
+  )
   llvm_major=18
   codename=""
 
-
-  if [[ "$configure_mode" == "ui-tools" ]]; then
-    additional_packages=(
-      libgtk-4-1
-      libgtk-4-dev
-      )
+  if [[ "$configure_mode" == "--no-ui-tools" ]]; then
+    additional_packages=()
   fi
 
   require_install_privileges || return 1
