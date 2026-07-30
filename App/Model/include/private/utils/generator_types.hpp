@@ -2,6 +2,7 @@
 #define FOOSBALL_TRACKER_APP_MODEL_INCLUDE_PRIVATE_UTILS_GENERATOR_TYPES_HPP_
 
 #include <array>
+#include <cstddef>
 #include <utility>
 
 #include "model_types.hpp"

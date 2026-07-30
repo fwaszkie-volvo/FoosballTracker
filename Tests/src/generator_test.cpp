@@ -43,3 +43,35 @@ TEST(ModelMainTest, GenerateTeamsCreatesTwoPairsForFourPlayers)
                                     expected_players.begin(),
                                     expected_players.end()));
 }
+
+TEST(ModelMainTest, GenerateTeamsBalancesByElo)
+{
+    const std::array<Player, generator::kPlayersCount> input_players{
+      Player{"Top", 1600},
+      Player{"MidHigh", 1400},
+      Player{"MidLow", 1200},
+      Player{"Low", 1000},
+    };
+
+    const auto draw = generator::GenerateTeams(input_players);
+
+    ASSERT_TRUE(draw.has_value());
+
+    const auto first_team_average = draw->first.GetAverageElo();
+    const auto second_team_average = draw->second.GetAverageElo();
+    EXPECT_DOUBLE_EQ(first_team_average, second_team_average);
+
+    const bool first_team_is_top_low =
+      (draw->first.players.first.GetNickname() == "Top" &&
+       draw->first.players.second.GetNickname() == "Low") ||
+      (draw->first.players.first.GetNickname() == "Low" &&
+       draw->first.players.second.GetNickname() == "Top");
+
+    const bool second_team_is_top_low =
+      (draw->second.players.first.GetNickname() == "Top" &&
+       draw->second.players.second.GetNickname() == "Low") ||
+      (draw->second.players.first.GetNickname() == "Low" &&
+       draw->second.players.second.GetNickname() == "Top");
+
+    EXPECT_TRUE(first_team_is_top_low || second_team_is_top_low);
+}

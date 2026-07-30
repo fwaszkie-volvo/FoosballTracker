@@ -1,9 +1,17 @@
 #include "view_main.hpp"
 
+#include <gdk-pixbuf/gdk-pixbuf.h>
+#include <gdk/gdk.h>
+#include <gio/gio.h>
+#include <glib-object.h>
+#include <glib.h>
 #include <gtk/gtk.h>
-#include <spdlog/spdlog.h>
 
+#include <cstddef>
+#include <opencv2/core/mat.inl.hpp>
 #include <opencv2/imgproc.hpp>
+
+#include "gobject/gclosure.h"
 
 namespace
 {

@@ -2,17 +2,15 @@
 
 #include <spdlog/spdlog.h>
 
-#include <cstdlib>
-#include <iostream>
+#include <array>
 #include <opencv2/core/mat.hpp>
-#include <opencv2/core/mat.inl.hpp>
 #include <optional>
+#include <string>
 
 #include "detector.hpp"
 #include "frame_processor.hpp"
 #include "generator.hpp"
 #include "processing_config.hpp"
-#include "reader_factory.hpp"
 
 std::optional<cv::Mat> ModelMain::Calculate()
 {
