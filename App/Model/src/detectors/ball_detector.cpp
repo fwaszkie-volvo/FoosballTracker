@@ -37,11 +37,11 @@ void BallDetector::UpdateCandidate(const cv::Point& center, const double score)
     best_candidate_.score = score;
 }
 
-cv::Point2d BallDetector::ComputeWindowSpeed() const
+cv::Point2f BallDetector::ComputeWindowSpeed() const
 {
     if (position_history_.size() < 2)
     {
-        return cv::Point2d{};
+        return cv::Point2f{};
     }
 
     const std::size_t latest_index{position_history_.size() - 1};
@@ -49,19 +49,19 @@ cv::Point2d BallDetector::ComputeWindowSpeed() const
       static_cast<std::size_t>(detector_types::kBallSpeedWindowFrames), latest_index)};
     const std::size_t reference_index{latest_index - frame_span};
     return (position_history_[latest_index] - position_history_[reference_index]) /
-           static_cast<double>(frame_span);
+           static_cast<float>(frame_span);
 }
 
 void BallDetector::UpdateMeasurement(const cv::Point& center)
 {
     BallMeasurement updated_measurement{};
     updated_measurement.found = true;
-    const cv::Point2d raw_position{static_cast<double>(center.x), static_cast<double>(center.y)};
+    const cv::Point2f raw_position{static_cast<float>(center.x), static_cast<float>(center.y)};
     if (has_previous_position_)
     {
-        const cv::Point2d frame_delta{raw_position - previous_position_};
-        const double frame_displacement{cv::norm(frame_delta)};
-        double smoothing_factor{detector_types::kBallPositionSmoothingFactor};
+        const cv::Point2f frame_delta{raw_position - previous_position_};
+        const float frame_displacement{static_cast<float>(cv::norm(frame_delta))};
+        float smoothing_factor{detector_types::kBallPositionSmoothingFactor};
         if (frame_displacement >= detector_types::kBallPositionFastMotionThreshold)
         {
             smoothing_factor = detector_types::kBallPositionFastSmoothingFactor;
@@ -86,7 +86,7 @@ void BallDetector::UpdateMeasurement(const cv::Point& center)
 
     if (cv::norm(updated_measurement.speed) < detector_types::kBallVelocityDeadbandPixels)
     {
-        updated_measurement.speed = cv::Point2d{};
+        updated_measurement.speed = cv::Point2f{};
     }
 
     updated_measurement.size = detector_types::kBallFixedRadius;
@@ -194,7 +194,7 @@ void BallDetector::UpdateTrackingState()
         predicted_measurement.speed = ComputeWindowSpeed();
         if (cv::norm(predicted_measurement.speed) < detector_types::kBallVelocityDeadbandPixels)
         {
-            predicted_measurement.speed = cv::Point2d{};
+            predicted_measurement.speed = cv::Point2f{};
         }
         predicted_measurement.position = previous_position_ + predicted_measurement.speed;
         predicted_measurement.size = detector_types::kBallFixedRadius;
@@ -205,7 +205,7 @@ void BallDetector::UpdateTrackingState()
 
     if (missed_detection_frames_ >= detector_types::kBallTrackingResetMissFrames)
     {
-        previous_position_ = cv::Point2d{};
+        previous_position_ = cv::Point2f{};
         has_previous_position_ = false;
         position_history_.clear();
     }
@@ -214,7 +214,7 @@ void BallDetector::UpdateTrackingState()
 void BallDetector::ResetTrackingState()
 {
     ResetBestCandidate();
-    previous_position_ = cv::Point2d{};
+    previous_position_ = cv::Point2f{};
     has_previous_position_ = false;
     position_history_.clear();
     missed_detection_frames_ = 0;

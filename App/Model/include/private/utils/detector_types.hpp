@@ -74,6 +74,7 @@ const cv::Size kGaussianBlurKernelSize{9, 9};
 constexpr double kGaussianBlurSigma{2.0};
 
 constexpr int kDrawThickness{2};
+constexpr int kGoalDrawThickness{10};
 constexpr double kLabelScale{0.6};
 constexpr int kLabelYOffset{10};
 constexpr bool kVerbose{false};
