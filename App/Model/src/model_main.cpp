@@ -2,7 +2,6 @@
 
 #include <spdlog/spdlog.h>
 
-#include <array>
 #include <opencv2/core/mat.hpp>
 #include <optional>
 #include <string>
@@ -36,7 +35,7 @@ std::optional<cv::Mat> ModelMain::Calculate()
 }
 
 std::optional<generator::TeamDrawResult> ModelMain::GenerateTeams(
-  const std::array<Player, generator::kPlayersCount>& players) const
+  const generator::Players& players) const
 {
     return generator::GenerateTeams(players);
 }

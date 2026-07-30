@@ -50,7 +50,7 @@ TEST_F(BallDetectorTest, VideoReadAndAnnotatedWrite)
 {
     config::ProcessingTarget process_target{
       .input_source = test_utils::TestFilePath("test_video_trimmed.mp4"),
-      .output_path = detector_types::kOutputVideoPath,
+      .output_path = test_utils::TestOutputPath("output_annotated_video.mp4"),
     };
 
     int processed_frame_count = 0;
