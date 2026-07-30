@@ -1,16 +1,19 @@
 #include "controller.hpp"
 
+#include <spdlog/spdlog.h>
+
 #include <functional>
 #include <opencv2/core/mat.hpp>
 #include <optional>
+#include <thread>
 
-void Controller::SetUp()
+int Controller::Run(int argc, char* argv[])
 {
     view_->SetOnFileLoaded([this](const std::string& path) { LoadFileToAnalysis(path); });
     view_->SetOnAnalyseClicked([this]() { AnalyseOfflineFile(); });
     view_->SetOnLiveClicked([this]() { StartLive(); });
     view_->SetOnSave([this](const std::string& path) { SaveResult(path); });
-    view_->Draw(std::nullopt);
+    return view_->CreateAndRunMain(argc, argv);
 }
 
 void Controller::LoadFileToAnalysis(const std::string& path)
@@ -21,16 +24,21 @@ void Controller::LoadFileToAnalysis(const std::string& path)
 
 void Controller::AnalyseOfflineFile()
 {
-    view_->RunWithProgress(
-      "ANAL IN PROGRESS",
-      [this]() { model_->CalculateFromFile(); },
-      [this]() { view_->DrawVideo(model_->GetTempOutputPath()); });
+    // anal_thread_ = std::thread(
+    //   [this, work = [this]() { model_->CalculateFromFile(); }]()
+    //   {
+    //       work();
+    //       view_->CreateAnalWindowInProgress([this]()
+    //                                         { view_->DrawVideo(model_->GetTempOutputPath()); });
+    //   });
+
+    // anal_thread_.detach();
 }
 
 void Controller::StartLive()
 {
     model_->CalculateFromStream();
-    // tu trzeba pwymyśleć jak stream na żywo przekazać
+    // tu trzeba pomyśleć jak stream na żywo przekazać
 }
 
 void Controller::SaveResult(const std::string& path) { model_->SaveResult(path); }

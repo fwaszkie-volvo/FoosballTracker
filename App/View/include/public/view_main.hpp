@@ -9,11 +9,9 @@
 class ViewMain
 {
   public:
-    void Draw(const std::optional<cv::Mat>& frame);
+    int CreateAndRunMain(int argc, char* argv[]);
     void DrawVideo(const std::string& path);
-    void RunWithProgress(const std::string& message,
-                         std::function<void()> background_work,
-                         std::function<void()> on_done);
+    void CreateAnalWindowInProgress(std::function<void()> on_done);
     void SetOnFileLoaded(std::function<void(const std::string&)> callback);
     void SetOnAnalyseClicked(std::function<void()> callback);
     void SetOnLiveClicked(std::function<void()> callback);

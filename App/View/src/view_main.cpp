@@ -13,7 +13,6 @@
 #include <opencv2/core/mat.inl.hpp>
 #include <opencv2/imgproc.hpp>
 #include <string>
-#include <thread>
 #include <type_traits>
 #include <utility>
 
@@ -25,9 +24,10 @@
 
 namespace
 {
+const std::string kAnalInProgress = "ANAL IN PROGRESS";
+
 struct WindowState
 {
-    std::optional<cv::Mat> frame_bgr;
     std::function<void(const std::string&)> on_file_loaded;
     std::function<void()> on_analyse_clicked;
     std::function<void()> on_live_clicked;
@@ -116,6 +116,7 @@ GtkWidget* CreateVideoWidget(const std::string& path)
 
 void on_activate(GtkApplication* app, gpointer user_data)
 {
+    spdlog::info("on_activate: START");
     auto* state = static_cast<WindowState*>(user_data);  // NOLINT(bugprone-casting-through-void)
 
     GtkWindow* gtk_window = ToGtkWindow(gtk_application_window_new(app));
@@ -167,9 +168,7 @@ void on_activate(GtkApplication* app, gpointer user_data)
 
     gtk_box_append(GTK_BOX(vbox), button_bar);
 
-    GtkWidget* content = state != nullptr && state->frame_bgr.has_value()
-                           ? CreateImageWidget(state->frame_bgr.value())
-                           : gtk_label_new("Model nie zwrocil zadnej ramki.");
+    GtkWidget* content = gtk_label_new("Przygotuj i załaduj do ANALA.");
     gtk_widget_set_vexpand(content, TRUE);
     gtk_box_append(GTK_BOX(vbox), content);
 
@@ -181,6 +180,7 @@ void on_activate(GtkApplication* app, gpointer user_data)
     }
 
     gtk_window_present(gtk_window);
+    spdlog::info("on_activate: END");
 }
 
 }  // namespace
@@ -226,37 +226,28 @@ void ViewMain::HideProgressDialog()
     }
 }
 
-void ViewMain::RunWithProgress(const std::string& message,
-                               std::function<void()> background_work,
-                               std::function<void()> on_done)
+void ViewMain::CreateAnalWindowInProgress(std::function<void()> on_done)
 {
-    ShowProgressDialog(message);
+    ShowProgressDialog(kAnalInProgress);
 
     struct Context
     {
         ViewMain* view;
         std::function<void()> on_done;
     };
-
     auto* ctx = new Context{this, std::move(on_done)};
 
-    std::thread(
-      [work = std::move(background_work), ctx]()
-      {
-          work();
-          g_idle_add(  // NOLINT(bugprone-casting-through-void)
-            G_SOURCE_FUNC(+[](gpointer data) -> gboolean
-                          {
-                              auto* c = static_cast<Context*>(
-                                data);  // NOLINT(bugprone-casting-through-void)
-                              c->view->HideProgressDialog();
-                              c->on_done();
-                              delete c;
-                              return G_SOURCE_REMOVE;
-                          }),
-            ctx);
-      })
-      .detach();
+    g_idle_add(  // NOLINT(bugprone-casting-through-void)
+      G_SOURCE_FUNC(+[](gpointer data) -> gboolean
+                    {
+                        auto* local_ctx =
+                          static_cast<Context*>(data);  // NOLINT(bugprone-casting-through-void)
+                        local_ctx->view->HideProgressDialog();
+                        local_ctx->on_done();
+                        delete local_ctx;
+                        return G_SOURCE_REMOVE;
+                    }),
+      ctx);
 }
 
 void ViewMain::SetOnFileLoaded(std::function<void(const std::string&)> callback)
@@ -333,25 +324,31 @@ void ViewMain::DrawVideo(const std::string& path)
     UpdateContentWithVideo(path);
 }
 
-void ViewMain::Draw(const std::optional<cv::Mat>& frame)
+int ViewMain::CreateAndRunMain(int argc, char* argv[])
 {
-    if (gtk_app_ != nullptr)
-    {
-        UpdateContent(frame);
-        return;
-    }
-
+    spdlog::info("DrawInitial: start");
     WindowState state{
-      frame, on_file_loaded_, on_analyse_clicked_, on_live_clicked_, on_save_, {}, {}, this};
-    auto* app = gtk_application_new("com.foosballtracker.app", G_APPLICATION_FLAGS_NONE);  // NOLINT
+      on_file_loaded_, on_analyse_clicked_, on_live_clicked_, on_save_, {}, {}, this};
+    spdlog::info("DrawInitial: 1");
+    auto* app = gtk_application_new("foosballtracker.app", G_APPLICATION_FLAGS_NONE);  // NOLINT
+    spdlog::info("DrawInitial: 2");
     gtk_app_ = app;
+    spdlog::info("DrawInitial: gtk_app_ == nullptr {}", gtk_app_ == nullptr ? "true" : "false");
+    spdlog::info("DrawInitial: 3");
 
     // NOLINTNEXTLINE(clang-analyzer-optin.core.EnumCastOutOfRange,bugprone-casting-through-void)
     g_signal_connect(app, "activate", G_CALLBACK(on_activate), &state);
+    spdlog::info("DrawInitial: signal connected");
 
     // NOLINTNEXTLINE(bugprone-casting-through-void)
-    g_application_run(G_APPLICATION(app), 0, nullptr);
+    spdlog::info("DrawInitial: 4");
+    int ret_val = g_application_run(G_APPLICATION(app), argc, argv);
+    spdlog::info("DrawInitial: 5");
     g_object_unref(app);
+    spdlog::info("DrawInitial: 6");
     gtk_app_ = nullptr;
+    spdlog::info("DrawInitial: 7");
     gtk_content_vbox_ = nullptr;
+    spdlog::info("DrawInitial: stop");
+    return ret_val;
 }

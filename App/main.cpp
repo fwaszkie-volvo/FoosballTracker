@@ -19,8 +19,5 @@ int main(int argc, char* argv[])
     spdlog::info("Path: {}", executable_path.string());
 
     Controller controller{std::make_unique<ModelMain>(), std::make_unique<ViewMain>()};
-    controller.SetUp();
-
-    // Tutaj jest magia GTK, która trzyma aplikację. Zrób ją tak, aby nie było domysłów :)
-    return 0;
+    return controller.Run(argc, argv);
 }
