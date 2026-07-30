@@ -6,7 +6,7 @@
 
 namespace calculator
 {
-model::TeamScores<int> ComputeMatchElos(const ratings::MatchInput& match);
+model::TeamsArray<int> ComputeMatchElos(const ratings::MatchInput& match);
 }  // namespace calculator
 
 #endif  // FOOSBALL_TRACKER_APP_MODEL_INCLUDE_PRIVATE_RATINGS_MATCH_ELO_CALCULATOR_HPP_

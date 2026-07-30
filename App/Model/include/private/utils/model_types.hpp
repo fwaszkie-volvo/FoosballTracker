@@ -30,7 +30,7 @@ struct Team final
 };
 
 template <typename T>
-using TeamScores = std::array<T, kTeamsNumber>;
+using TeamsArray = std::array<T, kTeamsNumber>;
 
 using TeamSetScores = std::array<std::uint8_t, kSetsPerMatch>;
 }  // namespace model
