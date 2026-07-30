@@ -2,8 +2,8 @@
 
 #include <gtest/gtest.h>
 
-#include <array>
 #include <initializer_list>
+#include <utility>
 
 static constexpr int kInitialElo{1000};
 static constexpr int kEloAfterWin{1018};
@@ -48,18 +48,14 @@ class MatchStorageTest : public ::testing::Test
             EXPECT_TRUE(storage_.RecordMatch(ratings::MatchInput{
               .teams_ =
                 strong_opponents
-                  ? std::array<model::Team, model::kTeamsNumber>{model::Team{
-                                                                   .players = {Player{"Carol"},
-                                                                               Player{"Dave"}}},
-                                                                 model::Team{
-                                                                   .players = {Player{"Eve"},
-                                                                               Player{"Frank"}}}}
-                  : std::array<model::Team, model::kTeamsNumber>{model::Team{
-                                                                   .players = {Player{"Eve"},
-                                                                               Player{"Frank"}}},
-                                                                 model::Team{
-                                                                   .players = {Player{"Carol"},
-                                                                               Player{"Dave"}}}},
+                  ? std::pair<model::Team, model::Team>{model::Team{.players = {Player{"Carol"},
+                                                                                Player{"Dave"}}},
+                                                        model::Team{.players = {Player{"Eve"},
+                                                                                Player{"Frank"}}}}
+                  : std::pair<model::Team, model::Team>{model::Team{.players = {Player{"Eve"},
+                                                                                Player{"Frank"}}},
+                                                        model::Team{.players = {Player{"Carol"},
+                                                                                Player{"Dave"}}}},
               .set_scores_ = {{{8, 8, 8, 8}, {0, 0, 0, 0}}},
             }));
         }
@@ -155,10 +151,10 @@ TEST_F(MatchStorageTest, StoresMatchHistory)
     ASSERT_EQ(storage_.GetMatchHistory().size(), 1U);
     const auto& match = storage_.GetMatchHistory().front();
 
-    EXPECT_EQ(match.teams_.at(0).players.first.GetNickname(), "Alice");
-    EXPECT_EQ(match.teams_.at(0).players.second.GetNickname(), "Bob");
-    EXPECT_EQ(match.teams_.at(1).players.first.GetNickname(), "Carol");
-    EXPECT_EQ(match.teams_.at(1).players.second.GetNickname(), "Dave");
+    EXPECT_EQ(match.teams_.first.players.first.GetNickname(), "Alice");
+    EXPECT_EQ(match.teams_.first.players.second.GetNickname(), "Bob");
+    EXPECT_EQ(match.teams_.second.players.first.GetNickname(), "Carol");
+    EXPECT_EQ(match.teams_.second.players.second.GetNickname(), "Dave");
     EXPECT_EQ(match.set_scores_.at(0).at(0), kFirstTeamGoals);
     EXPECT_EQ(match.set_scores_.at(1).at(0), kSecondTeamGoals);
 }

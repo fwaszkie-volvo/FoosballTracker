@@ -1,6 +1,5 @@
 #include "match_storage.hpp"
 
-#include <cstddef>
 #include <utility>
 
 #include "match_elo_calculator.hpp"
@@ -35,16 +34,14 @@ bool MatchStorage::RecordMatch(const MatchInput& match)
 
 bool MatchStorage::HasAllPlayersRegistered(const MatchInput& match) const
 {
-    for (const auto& team : match.teams_)
+    const auto has_team_players_registered = [this](const model::Team& team)
     {
-        if (!players_.contains(team.players.first.GetNickname()) ||
-            !players_.contains(team.players.second.GetNickname()))
-        {
-            return false;
-        }
-    }
+        return players_.contains(team.players.first.GetNickname()) &&
+               players_.contains(team.players.second.GetNickname());
+    };
 
-    return true;
+    return has_team_players_registered(match.teams_.first) &&
+           has_team_players_registered(match.teams_.second);
 }
 
 MatchInput MatchStorage::BuildMatchWithCurrentRatings(const MatchInput& match) const
@@ -52,10 +49,10 @@ MatchInput MatchStorage::BuildMatchWithCurrentRatings(const MatchInput& match) c
     return MatchInput{
       .teams_ =
         {
-          model::Team{.players = {players_.at(match.teams_.at(0).players.first.GetNickname()),
-                                  players_.at(match.teams_.at(0).players.second.GetNickname())}},
-          model::Team{.players = {players_.at(match.teams_.at(1).players.first.GetNickname()),
-                                  players_.at(match.teams_.at(1).players.second.GetNickname())}},
+          model::Team{.players = {players_.at(match.teams_.first.players.first.GetNickname()),
+                                  players_.at(match.teams_.first.players.second.GetNickname())}},
+          model::Team{.players = {players_.at(match.teams_.second.players.first.GetNickname()),
+                                  players_.at(match.teams_.second.players.second.GetNickname())}},
         },
       .set_scores_ = match.set_scores_,
     };
@@ -63,17 +60,18 @@ MatchInput MatchStorage::BuildMatchWithCurrentRatings(const MatchInput& match) c
 
 void MatchStorage::ApplyMatchDeltas(const MatchInput& match)
 {
-    const auto deltas = calculator::ComputeMatchElos(match);
+    const auto first_team_delta = calculator::ComputeFirstTeamEloDelta(match);
 
-    for (std::size_t team_index{0U}; team_index < model::kTeamsNumber; ++team_index)
+    const auto apply_team_delta = [this](const model::Team& team, const int delta)
     {
-        const int delta = deltas.at(team_index);
-
-        auto& first_player = players_.at(match.teams_.at(team_index).players.first.GetNickname());
+        auto& first_player = players_.at(team.players.first.GetNickname());
         first_player.SetElo(first_player.GetElo() + delta);
 
-        auto& second_player = players_.at(match.teams_.at(team_index).players.second.GetNickname());
+        auto& second_player = players_.at(team.players.second.GetNickname());
         second_player.SetElo(second_player.GetElo() + delta);
-    }
+    };
+
+    apply_team_delta(match.teams_.first, first_team_delta);
+    apply_team_delta(match.teams_.second, -first_team_delta);
 }
 }  // namespace ratings

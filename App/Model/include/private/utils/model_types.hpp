@@ -28,10 +28,6 @@ struct Team final
                static_cast<double>(kTeamSize);
     }
 };
-
-template <typename T>
-using TeamsArray = std::array<T, kTeamsNumber>;
-
 using TeamSetScores = std::array<std::uint8_t, kSetsPerMatch>;
 }  // namespace model
 

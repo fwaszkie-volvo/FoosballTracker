@@ -6,7 +6,7 @@
 #include <string>
 #include <vector>
 
-TEST(ModelMainTest, GenerateTeamsCreatesTwoPairsForFourPlayers)
+TEST(ModelMainTest, GenerateTeamsByEloCreatesTwoPairsForFourPlayers)
 {
     const std::array<Player, generator::kPlayersCount> input_players{
       Player{"Alice"},

@@ -3,6 +3,7 @@
 
 #include <opencv2/core/mat.hpp>
 #include <optional>
+#include <utility>
 #include <vector>
 
 #include "generator_types.hpp"
@@ -15,9 +16,9 @@ class ModelMain
 {
   public:
     std::optional<cv::Mat> Calculate();
-    std::optional<generator::TeamDrawResult> GenerateTeamsRandom(
+    std::optional<std::pair<model::Team, model::Team>> GenerateTeamsRandom(
       const generator::Players& players) const;
-    std::optional<generator::TeamDrawResult> GenerateTeamsByElo(
+    std::optional<std::pair<model::Team, model::Team>> GenerateTeamsByElo(
       const generator::Players& players) const;
 
     bool CreatePlayer(const model::Nickname& nickname);

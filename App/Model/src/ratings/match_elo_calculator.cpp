@@ -5,6 +5,9 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdlib>
+#include <utility>
+
+#include "model_types.hpp"
 
 namespace
 {
@@ -73,27 +76,20 @@ ratings::SetAverages ComputeAverageSetScoreAndMultiplier(const model::TeamSetSco
 
 namespace calculator
 {
-model::TeamsArray<int> ComputeMatchElos(const ratings::MatchInput& match)
+int ComputeFirstTeamEloDelta(const ratings::MatchInput& match)
 {
-    model::TeamsArray<int> deltas{};
-
     static constexpr double kFactor{32.0};
     static constexpr std::size_t kFirstTeamIndex{0U};
     static constexpr std::size_t kSecondTeamIndex{1U};
 
-    const double first_team_elo = match.teams_.at(kFirstTeamIndex).GetAverageElo();
-    const double second_team_elo = match.teams_.at(kSecondTeamIndex).GetAverageElo();
+    const double first_team_elo = match.teams_.first.GetAverageElo();
+    const double second_team_elo = match.teams_.second.GetAverageElo();
 
     const double expected_first_team = ExpectedScore(first_team_elo, second_team_elo);
     const ratings::SetAverages first_team_averages = ComputeAverageSetScoreAndMultiplier(
       match.set_scores_.at(kFirstTeamIndex), match.set_scores_.at(kSecondTeamIndex));
 
-    const auto first_team_delta = std::round(kFactor * first_team_averages.goal_margin_multiplier *
-                                             (first_team_averages.set_score - expected_first_team));
-
-    deltas.at(kFirstTeamIndex) = static_cast<int>(first_team_delta);
-    deltas.at(kSecondTeamIndex) = static_cast<int>(-first_team_delta);
-
-    return deltas;
+    return static_cast<int>(std::round(kFactor * first_team_averages.goal_margin_multiplier *
+                                       (first_team_averages.set_score - expected_first_team)));
 }
 }  // namespace calculator
