@@ -43,20 +43,20 @@ std::optional<generator::TeamDrawResult> ModelMain::GenerateTeams(
 
 bool ModelMain::CreatePlayer(const model::Nickname& nickname)
 {
-    return ratings_service_.CreatePlayer(nickname);
+    return storage_.CreatePlayer(nickname);
 }
 
 bool ModelMain::RecordMatch(const ratings::MatchInput& match)
 {
-    return ratings_service_.RecordMatch(match);
+    return storage_.RecordMatch(match);
 }
 
 std::optional<Player> ModelMain::GetPlayer(const model::Nickname& nickname) const
 {
-    return ratings_service_.GetPlayer(nickname);
+    return storage_.GetPlayer(nickname);
 }
 
 const std::vector<ratings::MatchInput>& ModelMain::GetMatchHistory() const
 {
-    return ratings_service_.GetMatchHistory();
+    return storage_.GetMatchHistory();
 }

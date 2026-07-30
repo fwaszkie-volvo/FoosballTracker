@@ -23,7 +23,7 @@ class ModelMain
     const std::vector<ratings::MatchInput>& GetMatchHistory() const;
 
   private:
-    ratings::MatchStorage ratings_service_{};
+    ratings::MatchStorage storage_{};
 };
 
 #endif  // FOOSBALL_TRACKER_APP_MODEL_INCLUDE_PUBLIC_MODEL_MAIN_HPP_
