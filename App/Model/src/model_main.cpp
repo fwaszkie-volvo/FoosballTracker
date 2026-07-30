@@ -38,17 +38,22 @@ std::optional<cv::Mat> ModelMain::Calculate()
 }
 
 std::optional<generator::TeamDrawResult> ModelMain::GenerateTeams(
-  const generator::Players& players) const
+  const std::array<Player, generator::kPlayersCount>& players) const
 {
     return generator::GenerateTeams(players);
 }
 
-void ModelMain::RecordMatch(const ratings::MatchInput& match)
+bool ModelMain::CreatePlayer(const model::Nickname& nickname)
 {
-    ratings_service_.RecordMatch(match);
+    return ratings_service_.CreatePlayer(nickname);
 }
 
-std::optional<Player> ModelMain::GetPlayer(const ratings::Nickname& nickname) const
+bool ModelMain::RecordMatch(const ratings::MatchInput& match)
+{
+    return ratings_service_.RecordMatch(match);
+}
+
+std::optional<Player> ModelMain::GetPlayer(const model::Nickname& nickname) const
 {
     return ratings_service_.GetPlayer(nickname);
 }

@@ -4,12 +4,12 @@
 #include <string>
 #include <utility>
 
-#include "ratings_types.hpp"
+static constexpr int kDefaultElo{1000};
 
 class Player
 {
   public:
-    Player(std::string nickname, const int elo = ratings::kDefaultElo)
+    Player(std::string nickname, const int elo = kDefaultElo)
         : nickname_(std::move(nickname)), elo_(elo)
     {
     }
@@ -19,7 +19,7 @@ class Player
     void SetElo(const int elo) { elo_ = elo; }
 
   private:
-    std::string nickname_;
+    const std::string nickname_;
     int elo_;
 };
 
