@@ -5,6 +5,7 @@
 #include <utility>
 
 #include "generator_types.hpp"
+#include "model_types.hpp"
 
 namespace generator
 {
