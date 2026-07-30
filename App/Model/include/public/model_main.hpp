@@ -16,10 +16,8 @@ class ModelMain
 {
   public:
     std::optional<cv::Mat> Calculate();
-    std::optional<std::pair<model::Team, model::Team>> GenerateTeamsRandom(
-      const generator::Players& players) const;
-    std::optional<std::pair<model::Team, model::Team>> GenerateTeamsByElo(
-      const generator::Players& players) const;
+    std::optional<model::Teams> GenerateTeamsRandom(const generator::Players& players) const;
+    std::optional<model::Teams> GenerateTeamsByElo(const generator::Players& players) const;
 
     bool CreatePlayer(const model::Nickname& nickname);
     bool RecordMatch(const ratings::MatchInput& match);

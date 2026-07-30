@@ -28,6 +28,8 @@ struct Team final
                static_cast<double>(kTeamSize);
     }
 };
+
+using Teams = std::pair<model::Team, model::Team>;
 using TeamSetScores = std::array<std::uint8_t, kSetsPerMatch>;
 }  // namespace model
 

@@ -46,16 +46,11 @@ class MatchStorageTest : public ::testing::Test
         for (int index{0}; index < kPreparationMatches; ++index)
         {
             EXPECT_TRUE(storage_.RecordMatch(ratings::MatchInput{
-              .teams_ =
-                strong_opponents
-                  ? std::pair<model::Team, model::Team>{model::Team{.players = {Player{"Carol"},
-                                                                                Player{"Dave"}}},
-                                                        model::Team{.players = {Player{"Eve"},
-                                                                                Player{"Frank"}}}}
-                  : std::pair<model::Team, model::Team>{model::Team{.players = {Player{"Eve"},
-                                                                                Player{"Frank"}}},
-                                                        model::Team{.players = {Player{"Carol"},
-                                                                                Player{"Dave"}}}},
+              .teams_ = strong_opponents
+                          ? model::Teams{model::Team{.players = {Player{"Carol"}, Player{"Dave"}}},
+                                         model::Team{.players = {Player{"Eve"}, Player{"Frank"}}}}
+                          : model::Teams{model::Team{.players = {Player{"Eve"}, Player{"Frank"}}},
+                                         model::Team{.players = {Player{"Carol"}, Player{"Dave"}}}},
               .set_scores_ = {{{8, 8, 8, 8}, {0, 0, 0, 0}}},
             }));
         }
