@@ -1,5 +1,8 @@
 #include "frame_processor.hpp"
 
+#include <unistd.h>
+
+#include <chrono>
 #include <filesystem>
 #include <opencv2/core/mat.hpp>
 #include <opencv2/core/mat.inl.hpp>
@@ -17,43 +20,42 @@ void FrameProcessor::SetReaderType(const ReaderType reader_type)
     reader_.reset();
 }
 
-std::optional<cv::Mat> FrameProcessor::ProcessFrames(const config::ProcessingTarget& target,
-                                                     const FrameHandler& frame_processor)
+std::string FrameProcessor::GenerateTempPath()
+{
+    const auto now = std::chrono::steady_clock::now().time_since_epoch().count();
+    const std::string filename =
+      "foosball_" + std::to_string(getpid()) + "_" + std::to_string(now) + ".mp4";
+    return (std::filesystem::temp_directory_path() / filename).string();
+}
+
+void FrameProcessor::ProcessFrames(const config::ProcessingTarget& target,
+                                   const FrameHandler& frame_processor)
 {
     reader_ = CreateReader(reader_type_);
     if (!reader_)
     {
-        return std::nullopt;
+        return;
     }
 
     if (!reader_->Open(target.input_source))
     {
-        return std::nullopt;
+        return;
     }
 
-    cv::VideoWriter output_writer;
-
-    std::error_code error;
-    const auto output_directory = std::filesystem::path(target.output_path).parent_path();
-    if (!output_directory.empty())
+    // Remove previous temp file if present
+    if (!temp_output_path_.empty())
     {
-        std::filesystem::create_directories(output_directory, error);
+        std::error_code ec;
+        std::filesystem::remove(temp_output_path_, ec);
     }
+    temp_output_path_ = GenerateTempPath();
 
-    auto last_frame = ProcessInputFrames(output_writer, target.output_path, frame_processor);
-
-    if (reader_type_ == ReaderType::kPhoto && HasValidFrame(last_frame))
-    {
-        cv::imwrite(target.output_path, last_frame.value());
-    }
-    return last_frame;
+    ProcessInputFrames(frame_processor);
 }
 
-std::optional<cv::Mat> FrameProcessor::ProcessInputFrames(cv::VideoWriter& output_writer,
-                                                          const std::string& output_path,
-                                                          const FrameHandler& frame_processor)
+void FrameProcessor::ProcessInputFrames(const FrameHandler& frame_processor)
 {
-    std::optional<cv::Mat> last_frame;
+    cv::VideoWriter output_writer;
 
     while (true)
     {
@@ -65,15 +67,11 @@ std::optional<cv::Mat> FrameProcessor::ProcessInputFrames(cv::VideoWriter& outpu
 
         frame_processor(frame.value());
 
-        if (!TryWriteOutputFrame(output_writer, output_path, frame.value()))
+        if (!TryWriteOutputFrame(output_writer, temp_output_path_, frame.value()))
         {
-            return std::nullopt;
+            return;
         }
-
-        last_frame = std::move(frame);
     }
-
-    return last_frame;
 }
 
 bool FrameProcessor::HasValidFrame(const std::optional<cv::Mat>& frame)

@@ -10,6 +10,10 @@ pkg_check_modules(GTK REQUIRED gtk4>=4.1)
 
 add_library(foosball_view STATIC
 	src/view_main.cpp
+	src/buttons/load_button.cpp
+	src/buttons/live_button.cpp
+	src/buttons/anal_button.cpp
+	src/buttons/save_button.cpp
 )
 
 target_link_libraries(foosball_view
