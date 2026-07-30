@@ -7,7 +7,8 @@
 
 namespace generator
 {
-std::optional<TeamDrawResult> GenerateTeams(const Players& players);
+std::optional<TeamDrawResult> GenerateTeamsRandom(const Players& players);
+std::optional<TeamDrawResult> GenerateTeamsByElo(const Players& players);
 }  // namespace generator
 
 #endif  // FOOSBALL_TRACKER_APP_MODEL_INCLUDE_PRIVATE_GENERATOR_HPP_

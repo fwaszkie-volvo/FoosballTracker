@@ -15,7 +15,7 @@ TEST(ModelMainTest, GenerateTeamsCreatesTwoPairsForFourPlayers)
       Player{"Dave"},
     };
 
-    const auto draw = generator::GenerateTeams(input_players);
+    const auto draw = generator::GenerateTeamsByElo(input_players);
 
     ASSERT_TRUE(draw.has_value());
     EXPECT_FALSE(draw->first.players.first.GetNickname().empty());
@@ -44,7 +44,40 @@ TEST(ModelMainTest, GenerateTeamsCreatesTwoPairsForFourPlayers)
                                     expected_players.end()));
 }
 
-TEST(ModelMainTest, GenerateTeamsBalancesByElo)
+TEST(ModelMainTest, GenerateTeamsRandomCreatesTwoPairsForFourPlayers)
+{
+    const std::array<Player, generator::kPlayersCount> input_players{
+      Player{"Alice"},
+      Player{"Bob"},
+      Player{"Carol"},
+      Player{"Dave"},
+    };
+
+    const auto draw = generator::GenerateTeamsRandom(input_players);
+
+    ASSERT_TRUE(draw.has_value());
+
+    std::vector<std::string> actual_players{
+      draw->first.players.first.GetNickname(),
+      draw->first.players.second.GetNickname(),
+      draw->second.players.first.GetNickname(),
+      draw->second.players.second.GetNickname(),
+    };
+
+    std::vector<std::string> expected_players;
+    expected_players.reserve(input_players.size());
+    for (const auto& player : input_players)
+    {
+        expected_players.push_back(player.GetNickname());
+    }
+
+    EXPECT_TRUE(std::is_permutation(actual_players.begin(),
+                                    actual_players.end(),
+                                    expected_players.begin(),
+                                    expected_players.end()));
+}
+
+TEST(ModelMainTest, GenerateTeamsByEloBalancesByElo)
 {
     const std::array<Player, generator::kPlayersCount> input_players{
       Player{"Top", 1600},
@@ -53,7 +86,7 @@ TEST(ModelMainTest, GenerateTeamsBalancesByElo)
       Player{"Low", 1000},
     };
 
-    const auto draw = generator::GenerateTeams(input_players);
+    const auto draw = generator::GenerateTeamsByElo(input_players);
 
     ASSERT_TRUE(draw.has_value());
 
@@ -61,17 +94,15 @@ TEST(ModelMainTest, GenerateTeamsBalancesByElo)
     const auto second_team_average = draw->second.GetAverageElo();
     EXPECT_DOUBLE_EQ(first_team_average, second_team_average);
 
-    const bool first_team_is_top_low =
-      (draw->first.players.first.GetNickname() == "Top" &&
-       draw->first.players.second.GetNickname() == "Low") ||
-      (draw->first.players.first.GetNickname() == "Low" &&
-       draw->first.players.second.GetNickname() == "Top");
+    const bool first_team_is_top_low = (draw->first.players.first.GetNickname() == "Top" &&
+                                        draw->first.players.second.GetNickname() == "Low") ||
+                                       (draw->first.players.first.GetNickname() == "Low" &&
+                                        draw->first.players.second.GetNickname() == "Top");
 
-    const bool second_team_is_top_low =
-      (draw->second.players.first.GetNickname() == "Top" &&
-       draw->second.players.second.GetNickname() == "Low") ||
-      (draw->second.players.first.GetNickname() == "Low" &&
-       draw->second.players.second.GetNickname() == "Top");
+    const bool second_team_is_top_low = (draw->second.players.first.GetNickname() == "Top" &&
+                                         draw->second.players.second.GetNickname() == "Low") ||
+                                        (draw->second.players.first.GetNickname() == "Low" &&
+                                         draw->second.players.second.GetNickname() == "Top");
 
     EXPECT_TRUE(first_team_is_top_low || second_team_is_top_low);
 }

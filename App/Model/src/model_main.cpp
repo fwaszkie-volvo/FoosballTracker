@@ -34,10 +34,16 @@ std::optional<cv::Mat> ModelMain::Calculate()
     return frame->clone();
 }
 
-std::optional<generator::TeamDrawResult> ModelMain::GenerateTeams(
+std::optional<generator::TeamDrawResult> ModelMain::GenerateTeamsRandom(
   const generator::Players& players) const
 {
-    return generator::GenerateTeams(players);
+    return generator::GenerateTeamsRandom(players);
+}
+
+std::optional<generator::TeamDrawResult> ModelMain::GenerateTeamsByElo(
+  const generator::Players& players) const
+{
+    return generator::GenerateTeamsByElo(players);
 }
 
 bool ModelMain::CreatePlayer(const model::Nickname& nickname)
