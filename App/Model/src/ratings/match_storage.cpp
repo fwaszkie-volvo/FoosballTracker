@@ -8,8 +8,11 @@ namespace ratings
 {
 std::optional<Player> MatchStorage::GetPlayer(const model::Nickname& nickname) const
 {
-    const auto it = players_.find(nickname);
-    return (it == players_.end()) ? std::nullopt : std::optional<Player>{it->second};
+    if (!players_.contains(nickname))
+    {
+        return std::nullopt;
+    }
+    return players_.at(nickname);
 }
 
 bool MatchStorage::CreatePlayer(const model::Nickname& nickname)

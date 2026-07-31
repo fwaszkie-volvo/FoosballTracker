@@ -2,7 +2,6 @@
 #define FOOSBALL_TRACKER_APP_MODEL_INCLUDE_PRIVATE_GENERATOR_HPP_
 
 #include <optional>
-#include <utility>
 
 #include "generator_types.hpp"
 #include "model_types.hpp"

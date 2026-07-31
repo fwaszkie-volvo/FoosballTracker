@@ -3,7 +3,6 @@
 
 #include <opencv2/core/mat.hpp>
 #include <optional>
-#include <utility>
 #include <vector>
 
 #include "generator_types.hpp"

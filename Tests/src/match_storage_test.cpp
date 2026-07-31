@@ -5,16 +5,16 @@
 #include <initializer_list>
 #include <utility>
 
-static constexpr int kInitialElo{1000};
-static constexpr int kEloAfterWin{1018};
-static constexpr int kEloAfterLoss{982};
-static constexpr int kEloAfterHighMarginWin{1019};
-static constexpr int kEloAfterHighMarginLoss{981};
+constexpr int kInitialElo{1000};
+constexpr int kEloAfterWin{1018};
+constexpr int kEloAfterLoss{982};
+constexpr int kEloAfterHighMarginWin{1019};
+constexpr int kEloAfterHighMarginLoss{981};
 
-static constexpr bool kStrongOpponents{true};
-static constexpr bool kWeakOpponents{false};
+constexpr bool kStrongOpponents{true};
+constexpr bool kWeakOpponents{false};
 
-static constexpr int kPreparationMatches{8};
+constexpr int kPreparationMatches{8};
 
 class MatchStorageTest : public ::testing::Test
 {
