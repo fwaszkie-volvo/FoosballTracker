@@ -116,7 +116,6 @@ GtkWidget* CreateVideoWidget(const std::string& path)
 
 void on_activate(GtkApplication* app, gpointer user_data)
 {
-    spdlog::info("on_activate: START");
     auto* state = static_cast<WindowState*>(user_data);  // NOLINT(bugprone-casting-through-void)
 
     GtkWindow* gtk_window = ToGtkWindow(gtk_application_window_new(app));
@@ -180,12 +179,11 @@ void on_activate(GtkApplication* app, gpointer user_data)
     }
 
     gtk_window_present(gtk_window);
-    spdlog::info("on_activate: END");
 }
 
 }  // namespace
 
-void ViewMain::ShowProgressDialog(const std::string& message)
+void ViewMain::ShowAnalProgressDialog()
 {
     auto* dialog = gtk_window_new();
     gtk_window_set_title(GTK_WINDOW(dialog), "");         // NOLINT(bugprone-casting-through-void)
@@ -205,7 +203,7 @@ void ViewMain::ShowProgressDialog(const std::string& message)
         }
     }
 
-    GtkWidget* label = gtk_label_new(message.c_str());
+    GtkWidget* label = gtk_label_new(kAnalInProgress.c_str());
     gtk_widget_set_margin_start(label, 32);
     gtk_widget_set_margin_end(label, 32);
     gtk_widget_set_margin_top(label, 24);
@@ -216,7 +214,7 @@ void ViewMain::ShowProgressDialog(const std::string& message)
     gtk_widget_set_visible(dialog, TRUE);
 }
 
-void ViewMain::HideProgressDialog()
+void ViewMain::HideAnalProgressDialog()
 {
     if (progress_dialog_ != nullptr)
     {
@@ -226,28 +224,21 @@ void ViewMain::HideProgressDialog()
     }
 }
 
-void ViewMain::CreateAnalWindowInProgress(std::function<void()> on_done)
+void ViewMain::ShowModalCannotAnalyzeOfflineFile()
 {
-    ShowProgressDialog(kAnalInProgress);
-
-    struct Context
-    {
-        ViewMain* view;
-        std::function<void()> on_done;
-    };
-    auto* ctx = new Context{this, std::move(on_done)};
-
-    g_idle_add(  // NOLINT(bugprone-casting-through-void)
-      G_SOURCE_FUNC(+[](gpointer data) -> gboolean
-                    {
-                        auto* local_ctx =
-                          static_cast<Context*>(data);  // NOLINT(bugprone-casting-through-void)
-                        local_ctx->view->HideProgressDialog();
-                        local_ctx->on_done();
-                        delete local_ctx;
-                        return G_SOURCE_REMOVE;
-                    }),
-      ctx);
+    GtkWidget* dialog = gtk_message_dialog_new(
+      nullptr,  // parent window
+      static_cast<GtkDialogFlags>(GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT),
+      GTK_MESSAGE_ERROR,
+      GTK_BUTTONS_OK,
+      "Nie można analizować pliku offline. Załaduj plik i spróbuj ponownie.");
+    gtk_window_set_title(GTK_WINDOW(dialog), "Błąd");  // NOLINT(bugprone-casting-through-void)
+    g_signal_connect(
+      dialog,
+      "response",  // gtk_dialog_run removed in GTK4
+      G_CALLBACK(+[](GtkDialog* d, int, gpointer) { gtk_window_destroy(GTK_WINDOW(d)); }),
+      nullptr);
+    gtk_widget_show(dialog);
 }
 
 void ViewMain::SetOnFileLoaded(std::function<void(const std::string&)> callback)
@@ -299,6 +290,16 @@ void ViewMain::UpdateContentWithVideo(const std::string& path)
     GtkWidget* button_bar = gtk_widget_get_first_child(vbox);
     GtkWidget* old_content =
       button_bar != nullptr ? gtk_widget_get_next_sibling(button_bar) : nullptr;
+
+    // Reuse an existing GtkVideo to avoid destroying a widget with active async media I/O.
+    if (old_content != nullptr &&
+        GTK_IS_VIDEO(old_content))  // NOLINT(bugprone-casting-through-void)
+    {
+        gtk_video_set_filename(GTK_VIDEO(old_content),
+                               path.c_str());  // NOLINT(bugprone-casting-through-void)
+        return;
+    }
+
     if (old_content != nullptr)
     {
         gtk_box_remove(GTK_BOX(vbox), old_content);
@@ -324,31 +325,21 @@ void ViewMain::DrawVideo(const std::string& path)
     UpdateContentWithVideo(path);
 }
 
-int ViewMain::CreateAndRunMain(int argc, char* argv[])
+int ViewMain::CreateAndRunMain()
 {
-    spdlog::info("DrawInitial: start");
     WindowState state{
       on_file_loaded_, on_analyse_clicked_, on_live_clicked_, on_save_, {}, {}, this};
-    spdlog::info("DrawInitial: 1");
-    auto* app = gtk_application_new("foosballtracker.app", G_APPLICATION_FLAGS_NONE);  // NOLINT
-    spdlog::info("DrawInitial: 2");
+    GtkApplication* app =
+      gtk_application_new("foosballtracker.app", G_APPLICATION_FLAGS_NONE);  // NOLINT
     gtk_app_ = app;
-    spdlog::info("DrawInitial: gtk_app_ == nullptr {}", gtk_app_ == nullptr ? "true" : "false");
-    spdlog::info("DrawInitial: 3");
 
     // NOLINTNEXTLINE(clang-analyzer-optin.core.EnumCastOutOfRange,bugprone-casting-through-void)
     g_signal_connect(app, "activate", G_CALLBACK(on_activate), &state);
-    spdlog::info("DrawInitial: signal connected");
 
     // NOLINTNEXTLINE(bugprone-casting-through-void)
-    spdlog::info("DrawInitial: 4");
-    int ret_val = g_application_run(G_APPLICATION(app), argc, argv);
-    spdlog::info("DrawInitial: 5");
+    int ret_val = g_application_run(G_APPLICATION(app), 0, nullptr);
     g_object_unref(app);
-    spdlog::info("DrawInitial: 6");
     gtk_app_ = nullptr;
-    spdlog::info("DrawInitial: 7");
     gtk_content_vbox_ = nullptr;
-    spdlog::info("DrawInitial: stop");
     return ret_val;
 }

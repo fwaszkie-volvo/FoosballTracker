@@ -7,13 +7,13 @@
 #include <optional>
 #include <thread>
 
-int Controller::Run(int argc, char* argv[])
+int Controller::Run()
 {
     view_->SetOnFileLoaded([this](const std::string& path) { LoadFileToAnalysis(path); });
     view_->SetOnAnalyseClicked([this]() { AnalyseOfflineFile(); });
     view_->SetOnLiveClicked([this]() { StartLive(); });
     view_->SetOnSave([this](const std::string& path) { SaveResult(path); });
-    return view_->CreateAndRunMain(argc, argv);
+    return view_->CreateAndRunMain();
 }
 
 void Controller::LoadFileToAnalysis(const std::string& path)
@@ -24,15 +24,25 @@ void Controller::LoadFileToAnalysis(const std::string& path)
 
 void Controller::AnalyseOfflineFile()
 {
-    // anal_thread_ = std::thread(
-    //   [this, work = [this]() { model_->CalculateFromFile(); }]()
-    //   {
-    //       work();
-    //       view_->CreateAnalWindowInProgress([this]()
-    //                                         { view_->DrawVideo(model_->GetTempOutputPath()); });
-    //   });
+    if (!model_->CanAnalyzeOfflineFile())
+    {
+        view_->ShowModalCannotAnalyzeOfflineFile();
+        return;
+    }
 
-    // anal_thread_.detach();
+    spdlog::info("AnalyseOfflineFile: start");
+    anal_thread_ = std::thread(
+      [this, work = [this]() { model_->CalculateFromFile(); }]()
+      {
+          work();
+          view_->HideAnalProgressDialog();
+          view_->DrawVideo(model_->GetTempOutputPath());
+      });
+
+    anal_thread_.detach();
+    view_->ShowAnalProgressDialog();
+
+    spdlog::info("AnalyseOfflineFile: stop");
 }
 
 void Controller::StartLive()

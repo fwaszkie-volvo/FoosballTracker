@@ -25,7 +25,7 @@ class Controller
         }
     }
 
-    int Run(int argc, char* argv[]);
+    int Run();
     void LoadFileToAnalysis(const std::string& path);
     void AnalyseOfflineFile();
     void StartLive();

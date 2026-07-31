@@ -9,9 +9,11 @@
 class ViewMain
 {
   public:
-    int CreateAndRunMain(int argc, char* argv[]);
+    int CreateAndRunMain();
     void DrawVideo(const std::string& path);
-    void CreateAnalWindowInProgress(std::function<void()> on_done);
+    void ShowAnalProgressDialog();
+    void HideAnalProgressDialog();
+    void ShowModalCannotAnalyzeOfflineFile();
     void SetOnFileLoaded(std::function<void(const std::string&)> callback);
     void SetOnAnalyseClicked(std::function<void()> callback);
     void SetOnLiveClicked(std::function<void()> callback);
@@ -22,8 +24,6 @@ class ViewMain
   private:
     void UpdateContent(const std::optional<cv::Mat>& frame);
     void UpdateContentWithVideo(const std::string& path);
-    void ShowProgressDialog(const std::string& message);
-    void HideProgressDialog();
 
     std::function<void(const std::string&)> on_file_loaded_;
     std::function<void()> on_analyse_clicked_;

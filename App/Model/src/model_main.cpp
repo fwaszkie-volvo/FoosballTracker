@@ -33,12 +33,14 @@ void ModelMain::CalculateFromStream()
 
 void ModelMain::LoadFile(const std::string& path)
 {
+    can_analyze_offline_file_ = true;
     loaded_file_path_ = path;
     spdlog::info("Model: zaladowano plik: {}", loaded_file_path_);
 }
 
 void ModelMain::CalculateFromFile()
 {
+    spdlog::info("Calculate from file: {}", loaded_file_path_);
     if (loaded_file_path_.empty())
     {
         spdlog::error("CalculateFromFile: brak zaladowanego pliku");
@@ -56,6 +58,8 @@ void ModelMain::CalculateFromFile()
                                   [&](cv::Mat& current_frame) { detect_ball(current_frame); });
 
     temp_output_path_ = frame_processor.GetTempOutputPath();
+    can_analyze_offline_file_ = false;
+
     spdlog::info("CalculateFromFile: zapisano tymczasowo do: {}", temp_output_path_);
 }
 
