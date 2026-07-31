@@ -2,17 +2,14 @@
 
 #include <spdlog/spdlog.h>
 
-#include <cstdlib>
-#include <iostream>
 #include <opencv2/core/mat.hpp>
-#include <opencv2/core/mat.inl.hpp>
 #include <optional>
+#include <string>
 
 #include "detector.hpp"
 #include "frame_processor.hpp"
 #include "generator.hpp"
 #include "processing_config.hpp"
-#include "reader_factory.hpp"
 
 std::optional<cv::Mat> ModelMain::Calculate()
 {
@@ -37,8 +34,32 @@ std::optional<cv::Mat> ModelMain::Calculate()
     return frame->clone();
 }
 
-std::optional<generator::TeamDrawResult> ModelMain::GenerateTeams(
-  const generator::Players& players) const
+std::optional<model::Teams> ModelMain::GenerateTeamsRandom(const generator::Players& players) const
 {
-    return generator::GenerateTeams(players);
+    return generator::GenerateTeamsRandom(players);
+}
+
+std::optional<model::Teams> ModelMain::GenerateTeamsByElo(const generator::Players& players) const
+{
+    return generator::GenerateTeamsByElo(players);
+}
+
+bool ModelMain::CreatePlayer(const model::Nickname& nickname)
+{
+    return storage_.CreatePlayer(nickname);
+}
+
+bool ModelMain::RecordMatch(const ratings::MatchInput& match)
+{
+    return storage_.RecordMatch(match);
+}
+
+std::optional<Player> ModelMain::GetPlayer(const model::Nickname& nickname) const
+{
+    return storage_.GetPlayer(nickname);
+}
+
+const std::vector<ratings::MatchInput>& ModelMain::GetMatchHistory() const
+{
+    return storage_.GetMatchHistory();
 }

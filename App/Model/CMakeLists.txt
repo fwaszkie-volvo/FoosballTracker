@@ -10,6 +10,8 @@ add_library(foosball_model STATIC
 	src/model_main.cpp
 	src/frame_processor.cpp
 	src/generator.cpp
+	src/ratings/match_storage.cpp
+	src/ratings/match_elo_calculator.cpp
 	src/detectors/ball_detector.cpp
 	src/detectors/goal_detector.cpp
 	src/detectors/playfield_detector.cpp
@@ -42,6 +44,7 @@ target_include_directories(foosball_model
 		${OpenCV_INCLUDE_DIRS}
 		${CMAKE_CURRENT_SOURCE_DIR}/include/public
 		${CMAKE_CURRENT_SOURCE_DIR}/include/private
+		${CMAKE_CURRENT_SOURCE_DIR}/include/private/ratings
 		${CMAKE_CURRENT_SOURCE_DIR}/include/private/detectors
 		${CMAKE_CURRENT_SOURCE_DIR}/include/private/readers
 		${CMAKE_CURRENT_SOURCE_DIR}/include/private/utils
