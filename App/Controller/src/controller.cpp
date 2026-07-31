@@ -3,8 +3,6 @@
 #include <spdlog/spdlog.h>
 
 #include <functional>
-#include <opencv2/core/mat.hpp>
-#include <optional>
 #include <thread>
 
 int Controller::Run()

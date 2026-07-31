@@ -1,8 +1,9 @@
 #ifndef FOOSBALL_TRACKER_APP_VIEW_INCLUDE_PRIVATE_SAVE_BUTTON_HPP_
 #define FOOSBALL_TRACKER_APP_VIEW_INCLUDE_PRIVATE_SAVE_BUTTON_HPP_
 
-#include <gtk/gtk.h>
 #include <glib.h>
+#include <gtk/gtk.h>
+
 #include <functional>
 #include <string>
 

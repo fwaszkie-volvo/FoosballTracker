@@ -6,6 +6,15 @@
 #include <spdlog/spdlog.h>
 
 #include "gobject/gclosure.h"
+#include "gtk_converters.hpp"
+
+namespace conv
+{
+LoadButtonData* ToGtkLoadButtonData(gpointer cb_data)
+{
+    return static_cast<LoadButtonData*>(cb_data);  // NOLINT(bugprone-casting-through-void)
+}
+}  // namespace conv
 
 namespace
 {
@@ -37,11 +46,11 @@ GtkFileFilter* GetFilterAllFiles()
     return filter;
 }
 
-void OnDialogResponse(GtkDialog* d, gint response, gpointer cb_data)
+void OnDialogResponse(GtkDialog* dialog_window, gint response, gpointer cb_data)
 {
     if (response == GTK_RESPONSE_ACCEPT)
     {
-        GFile* file = gtk_file_chooser_get_file(GTK_FILE_CHOOSER(d));
+        GFile* file = gtk_file_chooser_get_file(conv::ToGtkFileChooser(dialog_window));
         if (file != nullptr)
         {
             char* path = g_file_get_path(file);
@@ -50,37 +59,34 @@ void OnDialogResponse(GtkDialog* d, gint response, gpointer cb_data)
             g_free(path);
             g_object_unref(file);
 
-            auto* btn_data =  // NOLINT(bugprone-casting-through-void)
-              static_cast<LoadButtonData*>(cb_data);
+            auto* btn_data = conv::ToGtkLoadButtonData(cb_data);
             if (btn_data != nullptr && btn_data->on_file_loaded && !path_str.empty())
             {
                 btn_data->on_file_loaded(path_str);
             }
         }
     }
-    gtk_window_destroy(GTK_WINDOW(d));
+    gtk_window_destroy(conv::ToGtkWindow(dialog_window));
 }
 }  // namespace
 
 void on_load_button_clicked(GtkButton* /*button*/, gpointer user_data)
 {
-    auto* data = static_cast<LoadButtonData*>(user_data);  // NOLINT(bugprone-casting-through-void)
+    auto* data = conv::ToGtkLoadButtonData(user_data);
     GtkWindow* parent = data != nullptr ? data->parent : nullptr;
 
-    GtkWidget* dialog = GetDialogButton(parent);
+    GtkWidget* dialog_button = GetDialogButton(parent);
 
     GtkFileFilter* filter_mp4 = GetMP4Filter();
-    gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(dialog), filter_mp4);
+    gtk_file_chooser_add_filter(conv::ToGtkFileChooser(dialog_button), filter_mp4);
 
     GtkFileFilter* filter_all = GetFilterAllFiles();
-    gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(dialog), filter_all);
+    gtk_file_chooser_add_filter(conv::ToGtkFileChooser(dialog_button), filter_all);
 
-    gtk_window_set_modal(GTK_WINDOW(dialog), TRUE);
+    gtk_window_set_modal(conv::ToGtkWindow(dialog_button), TRUE);
 
-    g_signal_connect(dialog,  // NOLINT(bugprone-casting-through-void)
-                     "response",
-                     G_CALLBACK(OnDialogResponse),
-                     data);
+    // NOLINTNEXTLINE(clang-analyzer-optin.core.EnumCastOutOfRange,bugprone-casting-through-void)
+    g_signal_connect(dialog_button, "response", G_CALLBACK(OnDialogResponse), data);
 
-    gtk_widget_set_visible(dialog, TRUE);
+    gtk_widget_set_visible(dialog_button, TRUE);
 }

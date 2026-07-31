@@ -2,14 +2,12 @@
 
 #include <unistd.h>
 
-#include <chrono>
+#include <cstdlib>
 #include <filesystem>
 #include <opencv2/core/mat.hpp>
 #include <opencv2/core/mat.inl.hpp>
-#include <opencv2/imgcodecs.hpp>
 #include <opencv2/videoio.hpp>
 #include <system_error>
-#include <utility>
 #include <vector>
 
 #include "processing_config.hpp"
@@ -22,9 +20,8 @@ void FrameProcessor::SetReaderType(const ReaderType reader_type)
 
 std::string FrameProcessor::GenerateTempPath()
 {
-    const auto now = std::chrono::steady_clock::now().time_since_epoch().count();
     const std::string filename =
-      "foosball_" + std::to_string(getpid()) + "_" + std::to_string(now) + ".mp4";
+      "foosball_" + std::to_string(getpid()) + "_" + std::to_string(std::rand()) + ".mp4";
     return (std::filesystem::temp_directory_path() / filename).string();
 }
 

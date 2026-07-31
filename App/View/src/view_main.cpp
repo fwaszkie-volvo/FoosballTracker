@@ -7,17 +7,17 @@
 #include <glib.h>
 #include <gtk/gtk.h>
 #include <spdlog/spdlog.h>
-#include <stddef.h>
 
+#include <cstddef>
 #include <functional>
 #include <opencv2/core/mat.inl.hpp>
 #include <opencv2/imgproc.hpp>
 #include <string>
-#include <type_traits>
 #include <utility>
 
 #include "anal_button.hpp"
 #include "gobject/gclosure.h"
+#include "gtk_converters.hpp"
 #include "live_button.hpp"
 #include "load_button.hpp"
 #include "save_button.hpp"
@@ -36,11 +36,6 @@ struct WindowState
     SaveButtonData save_button_data{};
     ViewMain* view_main{nullptr};
 };
-
-GtkWindow* ToGtkWindow(GtkWidget* widget)
-{
-    return GTK_WINDOW(widget);  // NOLINT(bugprone-casting-through-void)
-}
 
 GtkWidget* CreateImageWidget(const cv::Mat& frame)
 {
@@ -81,7 +76,7 @@ GtkWidget* CreateImageWidget(const cv::Mat& frame)
                                                   static_cast<int>(converted.step));
     GdkTexture* texture = gdk_texture_new_for_pixbuf(pixbuf);
     GtkWidget* picture = gtk_picture_new_for_paintable(GDK_PAINTABLE(texture));
-    gtk_picture_set_can_shrink(GTK_PICTURE(picture), TRUE);
+    gtk_picture_set_can_shrink(conv::ToGtkPicture(picture), TRUE);
 
     g_object_unref(texture);
     g_object_unref(pixbuf);
@@ -93,23 +88,23 @@ GtkWidget* CreateImageWidget(const cv::Mat& frame)
 GtkWidget* CreateVideoWidget(const std::string& path)
 {
     GtkWidget* video = gtk_video_new_for_filename(path.c_str());
-    gtk_video_set_autoplay(GTK_VIDEO(video), TRUE);  // NOLINT(bugprone-casting-through-void)
-    gtk_video_set_loop(GTK_VIDEO(video), FALSE);     // NOLINT(bugprone-casting-through-void)
+    gtk_video_set_autoplay(conv::ToGtkVideo(video), TRUE);
+    gtk_video_set_loop(conv::ToGtkVideo(video), FALSE);
 
     // autoplay nie startuje przed realizacją widgetu — wymuszamy play po realize
-    g_signal_connect(  // NOLINT(bugprone-casting-through-void)
-      video,
-      "realize",
-      G_CALLBACK(+[](GtkWidget* w, gpointer)
-                 {
-                     auto* stream = gtk_video_get_media_stream(
-                       GTK_VIDEO(w));  // NOLINT(bugprone-casting-through-void)
-                     if (stream != nullptr)
-                     {
-                         gtk_media_stream_play(stream);
-                     }
-                 }),
-      nullptr);
+    // NOLINTNEXTLINE(clang-analyzer-optin.core.EnumCastOutOfRange,bugprone-casting-through-void)
+    g_signal_connect(video,
+                     "realize",
+                     G_CALLBACK(+[](GtkWidget* widget, gpointer)
+                                {
+                                    auto* stream =
+                                      gtk_video_get_media_stream(conv::ToGtkVideo(widget));
+                                    if (stream != nullptr)
+                                    {
+                                        gtk_media_stream_play(stream);
+                                    }
+                                }),
+                     nullptr);
 
     return video;
 }
@@ -118,7 +113,7 @@ void on_activate(GtkApplication* app, gpointer user_data)
 {
     auto* state = static_cast<WindowState*>(user_data);  // NOLINT(bugprone-casting-through-void)
 
-    GtkWindow* gtk_window = ToGtkWindow(gtk_application_window_new(app));
+    GtkWindow* gtk_window = conv::ToGtkWindow(gtk_application_window_new(app));
     gtk_window_set_title(gtk_window, "Foosball Tracker");
     gtk_window_set_default_size(gtk_window, 800, 600);
 
@@ -140,36 +135,35 @@ void on_activate(GtkApplication* app, gpointer user_data)
     GtkWidget* btn_load = gtk_button_new_with_label("LOAD");
     GtkWidget* btn_anal = gtk_button_new_with_label("ANAL");
     GtkWidget* btn_save = gtk_button_new_with_label("SAVE");
-    // NOLINTNEXTLINE(bugprone-casting-through-void)
+    // NOLINTNEXTLINE(clang-analyzer-optin.core.EnumCastOutOfRange,bugprone-casting-through-void)
     g_signal_connect(btn_live,
                      "clicked",
                      G_CALLBACK(on_live_button_clicked),
                      state != nullptr ? &state->on_live_clicked : nullptr);
-    // NOLINTNEXTLINE(bugprone-casting-through-void)
+    // NOLINTNEXTLINE(clang-analyzer-optin.core.EnumCastOutOfRange,bugprone-casting-through-void)
     g_signal_connect(btn_load,
                      "clicked",
                      G_CALLBACK(on_load_button_clicked),
                      state != nullptr ? &state->load_button_data : nullptr);
-    // NOLINTNEXTLINE(bugprone-casting-through-void)
+    // NOLINTNEXTLINE(clang-analyzer-optin.core.EnumCastOutOfRange,bugprone-casting-through-void)
     g_signal_connect(btn_anal,
                      "clicked",
                      G_CALLBACK(on_anal_button_clicked),
                      state != nullptr ? &state->on_analyse_clicked : nullptr);
-    // NOLINTNEXTLINE(bugprone-casting-through-void)
+    // NOLINTNEXTLINE(clang-analyzer-optin.core.EnumCastOutOfRange,bugprone-casting-through-void)
     g_signal_connect(btn_save,
                      "clicked",
                      G_CALLBACK(on_save_button_clicked),
                      state != nullptr ? &state->save_button_data : nullptr);
-    gtk_box_append(GTK_BOX(button_bar), btn_live);
-    gtk_box_append(GTK_BOX(button_bar), btn_load);
-    gtk_box_append(GTK_BOX(button_bar), btn_anal);
-    gtk_box_append(GTK_BOX(button_bar), btn_save);
-
-    gtk_box_append(GTK_BOX(vbox), button_bar);
+    gtk_box_append(conv::ToGtkBox(button_bar), btn_live);
+    gtk_box_append(conv::ToGtkBox(button_bar), btn_load);
+    gtk_box_append(conv::ToGtkBox(button_bar), btn_anal);
+    gtk_box_append(conv::ToGtkBox(button_bar), btn_save);
+    gtk_box_append(conv::ToGtkBox(vbox), button_bar);
 
     GtkWidget* content = gtk_label_new("Przygotuj i załaduj do ANALA.");
     gtk_widget_set_vexpand(content, TRUE);
-    gtk_box_append(GTK_BOX(vbox), content);
+    gtk_box_append(conv::ToGtkBox(vbox), content);
 
     gtk_window_set_child(gtk_window, vbox);
 
@@ -186,20 +180,18 @@ void on_activate(GtkApplication* app, gpointer user_data)
 void ViewMain::ShowAnalProgressDialog()
 {
     auto* dialog = gtk_window_new();
-    gtk_window_set_title(GTK_WINDOW(dialog), "");         // NOLINT(bugprone-casting-through-void)
-    gtk_window_set_modal(GTK_WINDOW(dialog), TRUE);       // NOLINT(bugprone-casting-through-void)
-    gtk_window_set_resizable(GTK_WINDOW(dialog), FALSE);  // NOLINT(bugprone-casting-through-void)
-    gtk_window_set_deletable(GTK_WINDOW(dialog), FALSE);  // NOLINT(bugprone-casting-through-void)
+    gtk_window_set_title(conv::ToGtkWindow(dialog), "");
+    gtk_window_set_modal(conv::ToGtkWindow(dialog), TRUE);
+    gtk_window_set_resizable(conv::ToGtkWindow(dialog), FALSE);
+    gtk_window_set_deletable(conv::ToGtkWindow(dialog), FALSE);
 
     if (gtk_app_ != nullptr)
     {
-        GList* windows = gtk_application_get_windows(  // NOLINT(bugprone-casting-through-void)
-          GTK_APPLICATION(gtk_app_));
+        GList* windows = gtk_application_get_windows(conv::ToGtkApplication(gtk_app_));
         if (windows != nullptr)
         {
-            gtk_window_set_transient_for(
-              GTK_WINDOW(dialog),          // NOLINT(bugprone-casting-through-void)
-              GTK_WINDOW(windows->data));  // NOLINT(bugprone-casting-through-void)
+            gtk_window_set_transient_for(conv::ToGtkWindow(dialog),
+                                         conv::ToGtkWindow(static_cast<GtkWidget*>(windows->data)));
         }
     }
 
@@ -208,7 +200,7 @@ void ViewMain::ShowAnalProgressDialog()
     gtk_widget_set_margin_end(label, 32);
     gtk_widget_set_margin_top(label, 24);
     gtk_widget_set_margin_bottom(label, 24);
-    gtk_window_set_child(GTK_WINDOW(dialog), label);  // NOLINT(bugprone-casting-through-void)
+    gtk_window_set_child(conv::ToGtkWindow(dialog), label);
 
     progress_dialog_ = dialog;
     gtk_widget_set_visible(dialog, TRUE);
@@ -218,8 +210,7 @@ void ViewMain::HideAnalProgressDialog()
 {
     if (progress_dialog_ != nullptr)
     {
-        gtk_window_destroy(  // NOLINT(bugprone-casting-through-void)
-          GTK_WINDOW(static_cast<GtkWidget*>(progress_dialog_)));
+        gtk_window_destroy(conv::ToGtkWindow(static_cast<GtkWidget*>(progress_dialog_)));
         progress_dialog_ = nullptr;
     }
 }
@@ -228,15 +219,17 @@ void ViewMain::ShowModalCannotAnalyzeOfflineFile()
 {
     GtkWidget* dialog = gtk_message_dialog_new(
       nullptr,  // parent window
+                // NOLINTNEXTLINE(clang-analyzer-optin.core.EnumCastOutOfRange)
       static_cast<GtkDialogFlags>(GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT),
       GTK_MESSAGE_ERROR,
       GTK_BUTTONS_OK,
       "Nie można analizować pliku offline. Załaduj plik i spróbuj ponownie.");
-    gtk_window_set_title(GTK_WINDOW(dialog), "Błąd");  // NOLINT(bugprone-casting-through-void)
+    gtk_window_set_title(conv::ToGtkWindow(dialog), "Błąd");
+    // NOLINTNEXTLINE(clang-analyzer-optin.core.EnumCastOutOfRange,bugprone-casting-through-void)
     g_signal_connect(
       dialog,
-      "response",  // gtk_dialog_run removed in GTK4
-      G_CALLBACK(+[](GtkDialog* d, int, gpointer) { gtk_window_destroy(GTK_WINDOW(d)); }),
+      "response",
+      G_CALLBACK(+[](GtkDialog* d, int, gpointer) { gtk_window_destroy(conv::ToGtkWindow(d)); }),
       nullptr);
     gtk_widget_show(dialog);
 }
@@ -270,13 +263,13 @@ void ViewMain::UpdateContent(const std::optional<cv::Mat>& frame)
       button_bar != nullptr ? gtk_widget_get_next_sibling(button_bar) : nullptr;
     if (old_content != nullptr)
     {
-        gtk_box_remove(GTK_BOX(vbox), old_content);
+        gtk_box_remove(conv::ToGtkBox(vbox), old_content);
     }
 
     GtkWidget* new_content = frame.has_value() ? CreateImageWidget(frame.value())
                                                : gtk_label_new("Model nie zwrocil zadnej ramki.");
     gtk_widget_set_vexpand(new_content, TRUE);
-    gtk_box_append(GTK_BOX(vbox), new_content);
+    gtk_box_append(conv::ToGtkBox(vbox), new_content);
 }
 
 void ViewMain::UpdateContentWithVideo(const std::string& path)
@@ -292,22 +285,20 @@ void ViewMain::UpdateContentWithVideo(const std::string& path)
       button_bar != nullptr ? gtk_widget_get_next_sibling(button_bar) : nullptr;
 
     // Reuse an existing GtkVideo to avoid destroying a widget with active async media I/O.
-    if (old_content != nullptr &&
-        GTK_IS_VIDEO(old_content))  // NOLINT(bugprone-casting-through-void)
+    if (old_content != nullptr && GTK_IS_VIDEO(old_content))
     {
-        gtk_video_set_filename(GTK_VIDEO(old_content),
-                               path.c_str());  // NOLINT(bugprone-casting-through-void)
+        gtk_video_set_filename(conv::ToGtkVideo(old_content), path.c_str());
         return;
     }
 
     if (old_content != nullptr)
     {
-        gtk_box_remove(GTK_BOX(vbox), old_content);
+        gtk_box_remove(conv::ToGtkBox(vbox), old_content);
     }
 
     GtkWidget* video = CreateVideoWidget(path);
     gtk_widget_set_vexpand(video, TRUE);
-    gtk_box_append(GTK_BOX(vbox), video);
+    gtk_box_append(conv::ToGtkBox(vbox), video);
 }
 
 void ViewMain::SetOnSave(std::function<void(const std::string&)> callback)
@@ -336,8 +327,7 @@ int ViewMain::CreateAndRunMain()
     // NOLINTNEXTLINE(clang-analyzer-optin.core.EnumCastOutOfRange,bugprone-casting-through-void)
     g_signal_connect(app, "activate", G_CALLBACK(on_activate), &state);
 
-    // NOLINTNEXTLINE(bugprone-casting-through-void)
-    int ret_val = g_application_run(G_APPLICATION(app), 0, nullptr);
+    int ret_val = g_application_run(conv::ToGApplication(app), 0, nullptr);
     g_object_unref(app);
     gtk_app_ = nullptr;
     gtk_content_vbox_ = nullptr;
