@@ -32,10 +32,12 @@ TEST(PlayersDetector, CorrectPlayersAmount)
     size_t team_red_defense_count{players.rectangles_red_defense_.size()};
     size_t team_red_offense_count{players.rectangles_red_offense_.size()};
 
-    size_t constexpr actual_team_count = 11;
+    constexpr size_t actual_team_count = 11;
     EXPECT_EQ(team_blue_count, actual_team_count);
     EXPECT_EQ(team_red_count, actual_team_count);
 
+    constexpr size_t defense_count = 3;
+    constexpr size_t offense_count = 8;
     EXPECT_EQ(team_blue_defense_count, defense_count);
     EXPECT_EQ(team_blue_offense_count, offense_count);
     EXPECT_EQ(team_red_defense_count, defense_count);
