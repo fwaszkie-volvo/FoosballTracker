@@ -13,9 +13,7 @@ Checks: >
   readability-misleading-indentation,
   readability-redundant-control-flow,
   readability-redundant-declaration,
-  readability-redundant-member-init,
   readability-redundant-preprocessor,
-  readability-redundant-member-init,
   readability-simplify-boolean-expr
 WarningsAsErrors: >
   clang-analyzer-*,
