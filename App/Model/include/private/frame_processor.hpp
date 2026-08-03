@@ -19,15 +19,14 @@ class FrameProcessor
     using FrameHandler = std::function<void(cv::Mat&)>;
 
     void SetReaderType(const ReaderType reader_type);
-    std::optional<cv::Mat> ProcessFrames(const config::ProcessingTarget& target,
-                                         const FrameHandler& frame_processor);
+    void ProcessFrames(const config::ProcessingTarget& target, const FrameHandler& frame_processor);
+    const std::string& GetTempOutputPath() const { return temp_output_path_; }
 
   private:
     static bool HasValidFrame(const std::optional<cv::Mat>& frame);
+    static std::string GenerateTempPath();
 
-    std::optional<cv::Mat> ProcessInputFrames(cv::VideoWriter& output_writer,
-                                              const std::string& output_path,
-                                              const FrameHandler& frame_processor);
+    void ProcessInputFrames(const FrameHandler& frame_processor);
 
     static bool TryOpenOutputWriter(cv::VideoWriter& output_writer,
                                     const std::string& output_path,
@@ -40,6 +39,7 @@ class FrameProcessor
 
     ReaderType reader_type_{ReaderType::kUnspecified};
     std::unique_ptr<IFrameReader> reader_;
+    std::string temp_output_path_;
 };
 
 #endif  // FOOSBALL_TRACKER_APP_MODEL_INCLUDE_PRIVATE_FRAME_PROCESSOR_HPP_
