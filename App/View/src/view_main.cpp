@@ -6,6 +6,7 @@
 #include <glib-object.h>
 #include <glib.h>
 #include <gtk/gtk.h>
+#include <spdlog/spdlog.h>
 
 #include <cstddef>
 #include <functional>
@@ -20,8 +21,6 @@
 #include "live_button.hpp"
 #include "load_button.hpp"
 #include "save_button.hpp"
-
-#include "gobject/gclosure.h"
 
 namespace
 {
