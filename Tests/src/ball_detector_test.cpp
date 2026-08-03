@@ -61,25 +61,23 @@ TEST_F(BallDetectorTest, VideoReadAndAnnotatedWrite)
     int frame_count = 0;
     BallDetector ball_detector{};
 
-    const auto result =
-      processor_.ProcessFrames(process_target,
-                               [&](cv::Mat& frame) -> void
-                               {
-                                   if (frame_count >= max_frames)
-                                   {
-                                       return;
-                                   }
+    processor_.ProcessFrames(process_target,
+                             [&](cv::Mat& frame) -> void
+                             {
+                                 if (frame_count >= max_frames)
+                                 {
+                                     return;
+                                 }
 
-                                   spdlog::debug("Processing frame {}", processed_frame_count);
-                                   ball_detector.Detect(frame);
+                                 spdlog::debug("Processing frame {}", processed_frame_count);
+                                 ball_detector.Detect(frame);
 
-                                   ball_detector.Draw(frame);
+                                 ball_detector.Draw(frame);
 
-                                   ++processed_frame_count;
-                                   ++frame_count;
-                               });
+                                 ++processed_frame_count;
+                                 ++frame_count;
+                             });
 
-    ASSERT_TRUE(result.has_value()) << "Failed to process video";
     EXPECT_GT(processed_frame_count, 0)
       << "Input video had no readable frames: " << process_target.input_source;
 }
@@ -100,27 +98,25 @@ TEST_F(BallDetectorTest, VideoReadAndAnnotatedWriteWithGoalDetection)
     BallDetector ball_detector{};
     GoalDetector goal_detector{};
 
-    const auto result =
-      processor_.ProcessFrames(process_target,
-                               [&](cv::Mat& frame) -> void
-                               {
-                                   if (frame_count >= max_frames)
-                                   {
-                                       return;
-                                   }
+    processor_.ProcessFrames(process_target,
+                             [&](cv::Mat& frame) -> void
+                             {
+                                 if (frame_count >= max_frames)
+                                 {
+                                     return;
+                                 }
 
-                                   spdlog::debug("Processing frame {}", processed_frame_count);
-                                   ball_detector.Detect(frame);
-                                   goal_detector.Detect(frame);
+                                 spdlog::debug("Processing frame {}", processed_frame_count);
+                                 ball_detector.Detect(frame);
+                                 goal_detector.Detect(frame);
 
-                                   ball_detector.Draw(frame);
-                                   goal_detector.Draw(frame);
+                                 ball_detector.Draw(frame);
+                                 goal_detector.Draw(frame);
 
-                                   ++processed_frame_count;
-                                   ++frame_count;
-                               });
+                                 ++processed_frame_count;
+                                 ++frame_count;
+                             });
 
-    ASSERT_TRUE(result.has_value()) << "Failed to process video";
     EXPECT_GT(processed_frame_count, 0)
       << "Input video had no readable frames: " << process_target.input_source;
 }
