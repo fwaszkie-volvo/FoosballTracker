@@ -86,7 +86,7 @@ void PlayersDetector::Detect(const cv::Mat& frame)
       players_.rectangles_blue_, cv::Point{size.width, 0}, cv::Point{size.width, size.height});
     RemoveInvalidPlayers(players_.rectangles_red_, cv::Point{0, 0}, cv::Point{0, size.height});
 
-    SeperateIntoOffenseAndDefense(frame);
+    SeperateIntoOffenseAndDefense(size);
 }
 
 void PlayersDetector::SeperateIntoOffenseAndDefense(const cv::Size& size)
