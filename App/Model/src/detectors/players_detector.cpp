@@ -8,6 +8,7 @@
 #include <opencv2/core/types.hpp>
 #include <opencv2/imgproc.hpp>
 #include <ranges>
+#include <tuple>
 #include <vector>
 
 #include "detector_types.hpp"
@@ -94,6 +95,7 @@ void PlayersDetector::SeperateIntoOffenseAndDefense(const cv::Size& size)
     const int64_t frame_width = size.width;
     constexpr int64_t number_of_player_rows = 8;
 
+    // NOLINTBEGIN
     const int64_t red_defense_first_row_border_left{0};
     const int64_t red_defense_first_row_border_right{(1.0 / number_of_player_rows) * frame_width};
 
@@ -118,6 +120,7 @@ void PlayersDetector::SeperateIntoOffenseAndDefense(const cv::Size& size)
 
     const int64_t blue_defense_eight_row_border_left{blue_defense_seventh_row_border_right};
     const int64_t blue_defense_eight_row_border_right{frame_width};
+    // NOLINTEND
 
     for (auto&& [rectangle_blue, rectangle_red] :
          std::views::zip(players_.rectangles_blue_, players_.rectangles_red_))
