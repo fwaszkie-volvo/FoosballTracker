@@ -7,6 +7,7 @@
 #include <opencv2/core/traits.hpp>
 #include <opencv2/core/types.hpp>
 #include <opencv2/imgproc.hpp>
+#include <ranges>
 #include <vector>
 
 #include "detector_types.hpp"
@@ -80,9 +81,79 @@ void PlayersDetector::Detect(const cv::Mat& frame)
     DetectTeam<detector_types::BlueColorRange>(
       frame, players_.contours_blue_, players_.rectangles_blue_);
     const cv::Size size = frame.size();
+
     RemoveInvalidPlayers(
       players_.rectangles_blue_, cv::Point{size.width, 0}, cv::Point{size.width, size.height});
     RemoveInvalidPlayers(players_.rectangles_red_, cv::Point{0, 0}, cv::Point{0, size.height});
+
+    SeperateIntoOffenseAndDefense(frame);
+}
+
+void PlayersDetector::SeperateIntoOffenseAndDefense(const cv::Size& size)
+{
+    const int64_t frame_width = size.width;
+    constexpr int64_t number_of_player_rows = 8;
+
+    const int64_t red_defense_first_row_border_left{0};
+    const int64_t red_defense_first_row_border_right{(1.0 / number_of_player_rows) * frame_width};
+
+    const int64_t red_defense_second_row_border_left{red_defense_first_row_border_right};
+    const int64_t red_defense_second_row_border_right{(2.0 / number_of_player_rows) * frame_width};
+
+    const int64_t blue_offense_third_row_border_left{red_defense_second_row_border_right};
+    const int64_t blue_offense_third_row_border_right{(3.0 / number_of_player_rows) * frame_width};
+
+    const int64_t red_offense_fourth_row_border_left{blue_offense_third_row_border_right};
+    const int64_t red_offense_fourth_row_border_right{(4.0 / number_of_player_rows) * frame_width};
+
+    const int64_t blue_offense_fifth_row_border_left{red_offense_fourth_row_border_right};
+    const int64_t blue_offense_fifth_row_border_right{(5.0 / number_of_player_rows) * frame_width};
+
+    const int64_t red_offense_sixth_row_border_left{blue_offense_fifth_row_border_right};
+    const int64_t red_offense_sixth_row_border_right{(6.0 / number_of_player_rows) * frame_width};
+
+    const int64_t blue_defense_seventh_row_border_left{red_offense_sixth_row_border_right};
+    const int64_t blue_defense_seventh_row_border_right{(7.0 / number_of_player_rows) *
+                                                        frame_width};
+
+    const int64_t blue_defense_eight_row_border_left{blue_defense_seventh_row_border_right};
+    const int64_t blue_defense_eight_row_border_right{frame_width};
+
+    for (auto&& [rectangle_blue, rectangle_red] :
+         std::views::zip(players_.rectangles_blue_, players_.rectangles_red_))
+    {
+        if (red_defense_first_row_border_left < rectangle_red.x &&
+            rectangle_red.x < red_defense_second_row_border_right)
+        {
+            players_.rectangles_red_defense_.push_back(rectangle_red);
+        }
+        if (red_offense_fourth_row_border_left < rectangle_red.x &&
+            rectangle_red.x < red_offense_fourth_row_border_right)
+        {
+            players_.rectangles_red_offense_.push_back(rectangle_red);
+        }
+        if (red_offense_sixth_row_border_left < rectangle_red.x &&
+            rectangle_red.x < red_offense_sixth_row_border_right)
+        {
+            players_.rectangles_red_offense_.push_back(rectangle_red);
+        }
+
+        if (blue_defense_seventh_row_border_left < rectangle_blue.x &&
+            rectangle_blue.x < blue_defense_eight_row_border_right)
+        {
+            players_.rectangles_blue_defense_.push_back(rectangle_blue);
+        }
+        if (blue_offense_third_row_border_left < rectangle_blue.x &&
+            rectangle_blue.x < blue_offense_third_row_border_right)
+        {
+            players_.rectangles_blue_offense_.push_back(rectangle_blue);
+        }
+        if (blue_offense_fifth_row_border_left < rectangle_blue.x &&
+            rectangle_blue.x < blue_offense_fifth_row_border_right)
+        {
+            players_.rectangles_blue_offense_.push_back(rectangle_blue);
+        }
+    }
 }
 
 void PlayersDetector::Draw(const cv::Mat& frame)
