@@ -116,10 +116,13 @@ function configure() {
       clang-format-18
       clang-tidy-18
       iwyu
+      g++-14
       "${additional_packages[@]}"
     )
 
     "${privilege_prefix[@]}" apt install -y "${install_packages[@]}"
+
+    echo "CXX=g++-14" >> $GITHUB_ENV
 
     if ! verify_min_iwyu_version "$llvm_major"; then
       echo "Pakiet iwyu z apt jest za stary. Budowanie IWYU zrodlowo dla clang_${llvm_major}."
