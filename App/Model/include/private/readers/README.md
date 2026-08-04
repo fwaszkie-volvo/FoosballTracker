@@ -1,28 +1,6 @@
 # Readers Usage
 
-## 1) Choose the mode
-
-Open App/Model/src/model_main.cpp and set:
-
-```cpp
-const auto config = config::kProcessingConfigPhoto;
-```
-
-or:
-
-```cpp
-const auto config = config::kProcessingConfigRecording;
-```
-
-or:
-
-```cpp
-const auto config = config::kProcessingConfigOnline;
-```
-
-Input/output paths are defined in App/Model/include/private/processing_config.hpp.
-
-## 2) Build and run
+## 1) Build and run
 
 ```bash
 cd FoosballTracker
@@ -30,13 +8,7 @@ cd FoosballTracker
 ./run app
 ```
 
-## 3) Expected outputs
-
-- photo: Tests/test_outputs/output.jpg
-- recording: Tests/test_outputs/output_recording.mp4
-- online: Tests/test_outputs/output_online.mp4
-
-## 4) Online mode local test (RTSP)
+## 2) Online mode local test (RTSP)
 
 Start local RTSP server (Terminal A):
 

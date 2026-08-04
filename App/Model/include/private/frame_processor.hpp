@@ -19,7 +19,7 @@ class FrameProcessor
     using FrameHandler = std::function<void(cv::Mat&)>;
 
     void SetReaderType(const ReaderType reader_type);
-    void ProcessFrames(const config::ProcessingTarget& target, const FrameHandler& frame_processor);
+    void ProcessFrames(const std::string& input_stream, const FrameHandler& frame_processor);
     const std::string& GetTempOutputPath() const { return temp_output_path_; }
 
   private:
@@ -28,14 +28,11 @@ class FrameProcessor
 
     void ProcessInputFrames(const FrameHandler& frame_processor);
 
-    static bool TryOpenOutputWriter(cv::VideoWriter& output_writer,
-                                    const std::string& output_path,
-                                    double fps,
-                                    const cv::Size& frame_size);
+    bool TryOpenOutputWriter(cv::VideoWriter& output_writer,
+                             double fps,
+                             const cv::Size& frame_size) const;
 
-    bool TryWriteOutputFrame(cv::VideoWriter& output_writer,
-                             const std::string& output_path,
-                             const cv::Mat& frame) const;
+    bool TryWriteOutputFrame(cv::VideoWriter& output_writer, const cv::Mat& frame) const;
 
     ReaderType reader_type_{ReaderType::kUnspecified};
     std::unique_ptr<IFrameReader> reader_;
