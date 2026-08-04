@@ -28,14 +28,11 @@ class FrameProcessor
 
     void ProcessInputFrames(const FrameHandler& frame_processor);
 
-    static bool TryOpenOutputWriter(cv::VideoWriter& output_writer,
-                                    const std::string& output_path,
-                                    double fps,
-                                    const cv::Size& frame_size);
+    bool TryOpenOutputWriter(cv::VideoWriter& output_writer,
+                             double fps,
+                             const cv::Size& frame_size) const;
 
-    bool TryWriteOutputFrame(cv::VideoWriter& output_writer,
-                             const std::string& output_path,
-                             const cv::Mat& frame) const;
+    bool TryWriteOutputFrame(cv::VideoWriter& output_writer, const cv::Mat& frame) const;
 
     ReaderType reader_type_{ReaderType::kUnspecified};
     std::unique_ptr<IFrameReader> reader_;

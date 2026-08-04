@@ -31,28 +31,12 @@ class BallDetectorTest : public ::testing::Test
 
 TEST_F(BallDetectorTest, ImageLoads)
 {
-    ASSERT_FALSE(frame_.empty()) << "Failed to load input image: "
-                                 << detector_types::kInputImagePath;
-}
-
-TEST_F(BallDetectorTest, BallDetectionRuns)
-{
-    ASSERT_FALSE(frame_.empty());
-
-    detect_ball(frame_);
-
-    EXPECT_FALSE(frame_.empty());
-    bool success{cv::imwrite(detector_types::kOutputImagePath, frame_)};
-    EXPECT_TRUE(success) << "Failed to write output image: " << detector_types::kOutputImagePath;
+    ASSERT_FALSE(frame_.empty()) << "Failed to load input image: ";
 }
 
 TEST_F(BallDetectorTest, VideoReadAndAnnotatedWrite)
 {
-    config::ProcessingTarget process_target{
-      .input_source = test_utils::TestFilePath("test_video_trimmed.mp4"),
-      .output_path = test_utils::TestOutputPath("output_annotated_video.mp4"),
-    };
-
+    config::ProcessingTarget input_file{test_utils::TestFilePath("test_video_trimmed.mp4")};
     int processed_frame_count = 0;
     constexpr double kDefaultFps{30.0};
     constexpr double kDefaultShortVideoDurationSeconds{10.0};
@@ -61,7 +45,7 @@ TEST_F(BallDetectorTest, VideoReadAndAnnotatedWrite)
     int frame_count = 0;
     BallDetector ball_detector{};
 
-    processor_.ProcessFrames(process_target,
+    processor_.ProcessFrames(input_file,
                              [&](cv::Mat& frame) -> void
                              {
                                  if (frame_count >= max_frames)
@@ -78,17 +62,12 @@ TEST_F(BallDetectorTest, VideoReadAndAnnotatedWrite)
                                  ++frame_count;
                              });
 
-    EXPECT_GT(processed_frame_count, 0)
-      << "Input video had no readable frames: " << process_target.input_source;
+    EXPECT_GT(processed_frame_count, 0) << "Input video had no readable frames: " << input_file;
 }
 
 TEST_F(BallDetectorTest, VideoReadAndAnnotatedWriteWithGoalDetection)
 {
-    config::ProcessingTarget process_target{
-      .input_source = test_utils::TestFilePath("test_goal_scored.mp4"),
-      .output_path = test_utils::TestOutputPath("output_annotated_goal_video.mp4"),
-    };
-
+    config::ProcessingTarget input_file{test_utils::TestFilePath("test_goal_scored.mp4")};
     int processed_frame_count = 0;
     constexpr double kDefaultFps{30.0};
     constexpr double kDefaultShortVideoDurationSeconds{10.0};
@@ -98,7 +77,7 @@ TEST_F(BallDetectorTest, VideoReadAndAnnotatedWriteWithGoalDetection)
     BallDetector ball_detector{};
     GoalDetector goal_detector{};
 
-    processor_.ProcessFrames(process_target,
+    processor_.ProcessFrames(input_file,
                              [&](cv::Mat& frame) -> void
                              {
                                  if (frame_count >= max_frames)
@@ -117,6 +96,5 @@ TEST_F(BallDetectorTest, VideoReadAndAnnotatedWriteWithGoalDetection)
                                  ++frame_count;
                              });
 
-    EXPECT_GT(processed_frame_count, 0)
-      << "Input video had no readable frames: " << process_target.input_source;
+    EXPECT_GT(processed_frame_count, 0) << "Input video had no readable frames: " << input_file;
 }

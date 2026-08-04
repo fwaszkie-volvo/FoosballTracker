@@ -18,12 +18,8 @@ void ModelMain::CalculateFromStream()
 
     FrameProcessor frame_processor;
     frame_processor.SetReaderType(config.reader_type);
-    const config::ProcessingTarget target{
-      .input_source = config.target.input_source,
-      .output_path = {},
-    };
 
-    frame_processor.ProcessFrames(target,
+    frame_processor.ProcessFrames(config.target,
                                   [&](cv::Mat& current_frame) { detect_ball(current_frame); });
 
     temp_output_path_ = frame_processor.GetTempOutputPath();
@@ -48,12 +44,8 @@ void ModelMain::CalculateFromFile()
 
     FrameProcessor frame_processor;
     frame_processor.SetReaderType(ReaderType::kRecording);
-    const config::ProcessingTarget target{
-      .input_source = loaded_file_path_,
-      .output_path = config::kProcessingConfigRecording.target.output_path,
-    };
 
-    frame_processor.ProcessFrames(target,
+    frame_processor.ProcessFrames(loaded_file_path_,
                                   [&](cv::Mat& current_frame) { detect_ball(current_frame); });
 
     temp_output_path_ = frame_processor.GetTempOutputPath();

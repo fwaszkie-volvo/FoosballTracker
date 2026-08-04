@@ -34,7 +34,7 @@ void FrameProcessor::ProcessFrames(const config::ProcessingTarget& target,
         return;
     }
 
-    if (!reader_->Open(target.input_source))
+    if (!reader_->Open(target))
     {
         return;
     }
@@ -64,7 +64,7 @@ void FrameProcessor::ProcessInputFrames(const FrameHandler& frame_processor)
 
         frame_processor(frame.value());
 
-        if (!TryWriteOutputFrame(output_writer, temp_output_path_, frame.value()))
+        if (!TryWriteOutputFrame(output_writer, frame.value()))
         {
             return;
         }
@@ -76,9 +76,7 @@ bool FrameProcessor::HasValidFrame(const std::optional<cv::Mat>& frame)
     return frame.has_value() && !frame->empty();
 }
 
-bool FrameProcessor::TryWriteOutputFrame(cv::VideoWriter& output_writer,
-                                         const std::string& output_path,
-                                         const cv::Mat& frame) const
+bool FrameProcessor::TryWriteOutputFrame(cv::VideoWriter& output_writer, const cv::Mat& frame) const
 {
     if (reader_type_ == ReaderType::kPhoto)
     {
@@ -88,7 +86,7 @@ bool FrameProcessor::TryWriteOutputFrame(cv::VideoWriter& output_writer,
     if (!output_writer.isOpened())
     {
         const double fps = reader_->GetFps().value_or(30.0);
-        if (!TryOpenOutputWriter(output_writer, output_path, fps, frame.size()))
+        if (!TryOpenOutputWriter(output_writer, fps, frame.size()))
         {
             return false;
         }
@@ -98,9 +96,8 @@ bool FrameProcessor::TryWriteOutputFrame(cv::VideoWriter& output_writer,
 }
 
 bool FrameProcessor::TryOpenOutputWriter(cv::VideoWriter& output_writer,
-                                         const std::string& output_path,
                                          const double fps,
-                                         const cv::Size& frame_size)
+                                         const cv::Size& frame_size) const
 {
     const std::vector<int> codecs = {
       cv::VideoWriter::fourcc('a', 'v', 'c', '1'),
@@ -110,7 +107,7 @@ bool FrameProcessor::TryOpenOutputWriter(cv::VideoWriter& output_writer,
     for (const int codec : codecs)
     {
         output_writer.release();
-        output_writer.open(output_path, codec, fps, frame_size, true);
+        output_writer.open(temp_output_path_, codec, fps, frame_size, true);
         if (output_writer.isOpened())
         {
             return true;
