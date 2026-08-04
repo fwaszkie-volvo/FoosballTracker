@@ -19,7 +19,7 @@ class FrameProcessor
     using FrameHandler = std::function<void(cv::Mat&)>;
 
     void SetReaderType(const ReaderType reader_type);
-    void ProcessFrames(const config::ProcessingTarget& target, const FrameHandler& frame_processor);
+    void ProcessFrames(const std::string& input_stream, const FrameHandler& frame_processor);
     const std::string& GetTempOutputPath() const { return temp_output_path_; }
 
   private:

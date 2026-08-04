@@ -36,7 +36,7 @@ TEST_F(BallDetectorTest, ImageLoads)
 
 TEST_F(BallDetectorTest, VideoReadAndAnnotatedWrite)
 {
-    config::ProcessingTarget input_file{test_utils::TestFilePath("test_video_trimmed.mp4")};
+    const std::string input_file{test_utils::TestFilePath("test_video_trimmed.mp4")};
     int processed_frame_count = 0;
     constexpr double kDefaultFps{30.0};
     constexpr double kDefaultShortVideoDurationSeconds{10.0};
@@ -67,7 +67,7 @@ TEST_F(BallDetectorTest, VideoReadAndAnnotatedWrite)
 
 TEST_F(BallDetectorTest, VideoReadAndAnnotatedWriteWithGoalDetection)
 {
-    config::ProcessingTarget input_file{test_utils::TestFilePath("test_goal_scored.mp4")};
+    const std::string input_file{test_utils::TestFilePath("test_goal_scored.mp4")};
     int processed_frame_count = 0;
     constexpr double kDefaultFps{30.0};
     constexpr double kDefaultShortVideoDurationSeconds{10.0};

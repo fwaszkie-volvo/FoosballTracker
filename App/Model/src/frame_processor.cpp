@@ -25,7 +25,7 @@ std::string FrameProcessor::GenerateTempPath()
     return (std::filesystem::temp_directory_path() / filename).string();
 }
 
-void FrameProcessor::ProcessFrames(const config::ProcessingTarget& target,
+void FrameProcessor::ProcessFrames(const std::string& input_stream,
                                    const FrameHandler& frame_processor)
 {
     reader_ = CreateReader(reader_type_);
@@ -34,7 +34,7 @@ void FrameProcessor::ProcessFrames(const config::ProcessingTarget& target,
         return;
     }
 
-    if (!reader_->Open(target))
+    if (!reader_->Open(input_stream))
     {
         return;
     }
