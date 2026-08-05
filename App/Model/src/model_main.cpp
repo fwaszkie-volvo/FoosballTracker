@@ -89,6 +89,18 @@ std::optional<model::Teams> ModelMain::GenerateTeamsByElo(const generator::Playe
     return generator::GenerateTeamsByElo(players);
 }
 
+std::optional<ratings::TeamSettings> ModelMain::GenerateTeamSettingsRandom(
+  const model::Teams& teams) const
+{
+    return generator::GenerateTeamSettingsRandom(teams);
+}
+
+std::optional<ratings::TeamSettings> ModelMain::GenerateTeamSettingsStandard(
+  const model::Teams& teams) const
+{
+    return generator::GenerateTeamSettingsStandard(teams);
+}
+
 bool ModelMain::CreatePlayer(const model::Nickname& nickname)
 {
     return storage_.CreatePlayer(nickname);

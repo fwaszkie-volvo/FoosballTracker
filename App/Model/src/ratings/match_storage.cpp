@@ -49,15 +49,56 @@ bool MatchStorage::HasAllPlayersRegistered(const MatchInput& match) const
 
 MatchInput MatchStorage::BuildMatchWithCurrentRatings(const MatchInput& match) const
 {
+    static constexpr std::size_t kFirstSetIndex{0U};
+    static constexpr std::size_t kSecondSetIndex{1U};
+    static constexpr std::size_t kThirdSetIndex{2U};
+    static constexpr std::size_t kFourthSetIndex{3U};
+
+    const model::Teams& first_set = SelectSetTeams(match, kFirstSetIndex);
+    const model::Teams& second_set = SelectSetTeams(match, kSecondSetIndex);
+    const model::Teams& third_set = SelectSetTeams(match, kThirdSetIndex);
+    const model::Teams& fourth_set = SelectSetTeams(match, kFourthSetIndex);
+
+    const ratings::TeamSettings team_settings_with_ratings{
+      BuildTeamsWithCurrentRatings(first_set),
+      BuildTeamsWithCurrentRatings(second_set),
+      BuildTeamsWithCurrentRatings(third_set),
+      BuildTeamsWithCurrentRatings(fourth_set),
+    };
+
     return MatchInput{
-      .teams_ =
-        {
-          model::Team{.players = {players_.at(match.teams_.first.players.first.GetNickname()),
-                                  players_.at(match.teams_.first.players.second.GetNickname())}},
-          model::Team{.players = {players_.at(match.teams_.second.players.first.GetNickname()),
-                                  players_.at(match.teams_.second.players.second.GetNickname())}},
-        },
+      .teams_ = BuildTeamsWithCurrentRatings(match.teams_),
       .set_scores_ = match.set_scores_,
+      .team_settings_ = team_settings_with_ratings,
+    };
+}
+
+const model::Teams& MatchStorage::SelectSetTeams(const MatchInput& match,
+                                                 const std::size_t set_index)
+{
+    if (IsTeamSettingDefined(match.team_settings_.at(set_index)))
+    {
+        return match.team_settings_.at(set_index);
+    }
+
+    return match.teams_;
+}
+
+bool MatchStorage::IsTeamSettingDefined(const model::Teams& teams)
+{
+    return !teams.first.players.first.GetNickname().empty() &&
+           !teams.first.players.second.GetNickname().empty() &&
+           !teams.second.players.first.GetNickname().empty() &&
+           !teams.second.players.second.GetNickname().empty();
+}
+
+model::Teams MatchStorage::BuildTeamsWithCurrentRatings(const model::Teams& teams) const
+{
+    return model::Teams{
+      model::Team{.players = {players_.at(teams.first.players.first.GetNickname()),
+                              players_.at(teams.first.players.second.GetNickname())}},
+      model::Team{.players = {players_.at(teams.second.players.first.GetNickname()),
+                              players_.at(teams.second.players.second.GetNickname())}},
     };
 }
 

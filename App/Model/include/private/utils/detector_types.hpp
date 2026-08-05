@@ -67,6 +67,11 @@ constexpr int kBallSpeedWindowFrames{5};
 constexpr double kBallVelocityDeadbandPixels{0.5};
 constexpr int kBallTrackingResetMissFrames{5};
 
+constexpr double kDefaultProcessingFps{30.0};
+constexpr double kPlayfieldWidthMeters{1.2};
+constexpr double kPlayfieldHeightMeters{0.7};
+constexpr double kMetersPerSecondToKilometersPerHour{3.6};
+
 constexpr int kWhitePixelValue{255};
 constexpr int kColorChannels{3};
 constexpr double kBrightnessNormalization{255.0};

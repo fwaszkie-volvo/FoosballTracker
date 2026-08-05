@@ -51,6 +51,8 @@ class BallDetector : public Detector
                                const cv::Point& center,
                                const int radius);
     cv::Mat BuildForegroundMask(const cv::Mat& gray, const cv::Mat& playfield_mask);
+    double ComputeMetersPerPixel() const;
+    double ComputeBallSpeedMetersPerSecond() const;
 
     PlayfieldDetector playfield_detector_{};
     DetectionCandidate best_candidate_{};

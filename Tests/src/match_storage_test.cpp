@@ -19,6 +19,11 @@ constexpr int kPreparationMatches{8};
 class MatchStorageTest : public ::testing::Test
 {
   protected:
+    static ratings::TeamSettings BuildUniformTeamSettings(const model::Teams& teams)
+    {
+        return ratings::TeamSettings{teams, teams, teams, teams};
+    }
+
     void RegisterPlayers(const std::initializer_list<model::Nickname>& nicknames)
     {
         for (const auto& nickname : nicknames)
@@ -30,12 +35,17 @@ class MatchStorageTest : public ::testing::Test
     static ratings::MatchInput BuildMatchResult(const std::uint8_t first_team_goals,
                                                 const std::uint8_t second_team_goals)
     {
+        const model::Teams teams{model::Team{.players = {Player{"Alice"}, Player{"Bob"}}},
+                                 model::Team{.players = {Player{"Carol"}, Player{"Dave"}}}};
+
+        const ratings::TeamSettings team_settings = BuildUniformTeamSettings(teams);
+
         return ratings::MatchInput{
-          .teams_ = {model::Team{.players = {Player{"Alice"}, Player{"Bob"}}},
-                     model::Team{.players = {Player{"Carol"}, Player{"Dave"}}}},
+          .teams_ = teams,
           .set_scores_ =
             {{{first_team_goals, first_team_goals, first_team_goals, first_team_goals},
               {second_team_goals, second_team_goals, second_team_goals, second_team_goals}}},
+          .team_settings_ = team_settings,
         };
     }
 
@@ -45,13 +55,17 @@ class MatchStorageTest : public ::testing::Test
 
         for (int index{0}; index < kPreparationMatches; ++index)
         {
+            const model::Teams teams =
+              strong_opponents
+                ? model::Teams{model::Team{.players = {Player{"Carol"}, Player{"Dave"}}},
+                               model::Team{.players = {Player{"Eve"}, Player{"Frank"}}}}
+                : model::Teams{model::Team{.players = {Player{"Eve"}, Player{"Frank"}}},
+                               model::Team{.players = {Player{"Carol"}, Player{"Dave"}}}};
+
             EXPECT_TRUE(storage_.RecordMatch(ratings::MatchInput{
-              .teams_ = strong_opponents
-                          ? model::Teams{model::Team{.players = {Player{"Carol"}, Player{"Dave"}}},
-                                         model::Team{.players = {Player{"Eve"}, Player{"Frank"}}}}
-                          : model::Teams{model::Team{.players = {Player{"Eve"}, Player{"Frank"}}},
-                                         model::Team{.players = {Player{"Carol"}, Player{"Dave"}}}},
+              .teams_ = teams,
               .set_scores_ = {{{8, 8, 8, 8}, {0, 0, 0, 0}}},
+              .team_settings_ = BuildUniformTeamSettings(teams),
             }));
         }
     }
@@ -150,8 +164,14 @@ TEST_F(MatchStorageTest, StoresMatchHistory)
     EXPECT_EQ(match.teams_.first.players.second.GetNickname(), "Bob");
     EXPECT_EQ(match.teams_.second.players.first.GetNickname(), "Carol");
     EXPECT_EQ(match.teams_.second.players.second.GetNickname(), "Dave");
+
     EXPECT_EQ(match.set_scores_.at(0).at(0), kFirstTeamGoals);
     EXPECT_EQ(match.set_scores_.at(1).at(0), kSecondTeamGoals);
+
+    EXPECT_EQ(match.team_settings_.at(0).first.players.first.GetNickname(), "Alice");
+    EXPECT_EQ(match.team_settings_.at(0).first.players.second.GetNickname(), "Bob");
+    EXPECT_EQ(match.team_settings_.at(0).second.players.first.GetNickname(), "Carol");
+    EXPECT_EQ(match.team_settings_.at(0).second.players.second.GetNickname(), "Dave");
 }
 
 TEST_F(MatchStorageTest, EloChangeDependsOnOpponentStrength)

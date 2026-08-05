@@ -1,6 +1,8 @@
 #ifndef FOOSBALL_TRACKER_APP_MODEL_INCLUDE_PRIVATE_UTILS_RATINGS_TYPES_HPP_
 #define FOOSBALL_TRACKER_APP_MODEL_INCLUDE_PRIVATE_UTILS_RATINGS_TYPES_HPP_
 
+#include <array>
+
 #include "model_types.hpp"
 
 namespace ratings
@@ -12,11 +14,13 @@ struct SetAverages final
 };
 
 using SetScores = std::array<model::TeamSetScores, model::kTeamsNumber>;
+using TeamSettings = std::array<model::Teams, model::kSetsPerMatch>;
 
 struct MatchInput final
 {
     model::Teams teams_;
     SetScores set_scores_{};
+    TeamSettings team_settings_;
 };
 }  // namespace ratings
 
