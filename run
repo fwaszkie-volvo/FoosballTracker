@@ -110,6 +110,9 @@ function configure() {
     wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | "${privilege_prefix[@]}" gpg --yes --dearmor -o /usr/share/keyrings/llvm-archive-keyring.gpg
     printf 'deb [signed-by=/usr/share/keyrings/llvm-archive-keyring.gpg] http://apt.llvm.org/%s/ llvm-toolchain-%s-%s main\n' "$codename" "$codename" "$llvm_major" | "${privilege_prefix[@]}" tee /etc/apt/sources.list.d/llvm-toolchain-${llvm_major}.list >/dev/null
 
+    "${privilege_prefix[@]}" apt install -y software-properties-common
+    "${privilege_prefix[@]}" add-apt-repository ppa:ubuntu-toolchain-r/test -y
+
     "${privilege_prefix[@]}" apt update
 
     install_packages=(
@@ -122,10 +125,13 @@ function configure() {
       clang-format-18
       clang-tidy-18
       iwyu
+      g++-14
       "${additional_packages[@]}"
     )
 
     "${privilege_prefix[@]}" apt install -y "${install_packages[@]}"
+
+    "${privilege_prefix[@]}" update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-14 150 --slave /usr/bin/g++ g++ /usr/bin/g++-14
 
     if ! verify_min_iwyu_version "$llvm_major"; then
       echo "Pakiet iwyu z apt jest za stary. Budowanie IWYU zrodlowo dla clang_${llvm_major}."
