@@ -1,15 +1,19 @@
 #include "ball_detector.hpp"
 
+#include <bits/std_abs.h>
 #include <opencv2/core/hal/interface.h>
 
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
+#include <iomanip>
 #include <opencv2/core.hpp>
 #include <opencv2/core/fast_math.hpp>
 #include <opencv2/core/mat.inl.hpp>
 #include <opencv2/core/matx.hpp>
+#include <opencv2/core/traits.hpp>
 #include <opencv2/imgproc.hpp>
+#include <sstream>
 #include <vector>
 
 #include "detector_types.hpp"
@@ -302,6 +306,27 @@ cv::Mat BallDetector::BuildForegroundMask(const cv::Mat& gray, const cv::Mat& pl
     return foreground_mask;
 }
 
+double BallDetector::ComputeMetersPerPixel() const
+{
+    const auto& playfield_polygon = playfield_detector_.GetPolygon();
+
+    const auto playfield_area_pixels = std::abs(cv::contourArea(playfield_polygon));
+
+    const auto playfield_area_meters =
+      detector_types::kPlayfieldWidthMeters * detector_types::kPlayfieldHeightMeters;
+
+    return std::sqrt(playfield_area_meters / playfield_area_pixels);
+}
+
+double BallDetector::ComputeBallSpeedMetersPerSecond() const
+{
+    const auto meters_per_pixel = ComputeMetersPerPixel();
+
+    const auto speed_pixels_per_frame = cv::norm(measurement_.speed);
+
+    return speed_pixels_per_frame * detector_types::kDefaultProcessingFps * meters_per_pixel;
+}
+
 void BallDetector::Draw(cv::Mat& frame) const
 {
     playfield_detector_.Draw(frame);
@@ -328,6 +353,19 @@ void BallDetector::Draw(cv::Mat& frame) const
                     cv::LINE_AA,
                     0,
                     detector_types::kVelocityArrowTipLength);
+
+    const auto speed_meters_per_second = ComputeBallSpeedMetersPerSecond();
+
+    const auto speed_kilometers_per_hour =
+      speed_meters_per_second * detector_types::kMetersPerSecondToKilometersPerHour;
+
+    std::ostringstream speed_label;
+    speed_label << std::fixed << std::setprecision(2) << speed_meters_per_second << " m/s ("
+                << speed_kilometers_per_hour << " km/h)";
+
+    const cv::Point speed_label_position{center.x, center.y + 2 * detector_types::kLabelYOffset};
+    mask_utils::draw_label(
+      frame, speed_label.str(), speed_label_position, detector_types::kVelocityArrowColor);
 }
 
 void BallDetector::Detect(const cv::Mat& frame)

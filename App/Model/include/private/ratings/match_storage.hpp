@@ -1,6 +1,7 @@
 #ifndef FOOSBALL_TRACKER_APP_MODEL_INCLUDE_PRIVATE_RATINGS_MATCH_STORAGE_HPP_
 #define FOOSBALL_TRACKER_APP_MODEL_INCLUDE_PRIVATE_RATINGS_MATCH_STORAGE_HPP_
 
+#include <cstddef>
 #include <optional>
 #include <string>
 #include <unordered_map>
@@ -23,6 +24,9 @@ class MatchStorage
     const std::vector<MatchInput>& GetMatchHistory() const { return match_history_; }
 
   private:
+    static bool IsTeamSettingDefined(const model::Teams& teams);
+    static const model::Teams& SelectSetTeams(const MatchInput& match, std::size_t set_index);
+    model::Teams BuildTeamsWithCurrentRatings(const model::Teams& teams) const;
     bool HasAllPlayersRegistered(const MatchInput& match) const;
     void ApplyMatchDeltas(const MatchInput& match);
     MatchInput BuildMatchWithCurrentRatings(const MatchInput& match) const;
