@@ -284,16 +284,20 @@ void ViewMain::UpdateContentWithVideo(const std::string& path)
     GtkWidget* old_content =
       button_bar != nullptr ? gtk_widget_get_next_sibling(button_bar) : nullptr;
 
-    // Reuse an existing GtkVideo to avoid destroying a widget with active async media I/O.
-    if (old_content != nullptr && GTK_IS_VIDEO(old_content))
-    {
-        gtk_video_set_filename(conv::ToGtkVideo(old_content), path.c_str());
-        return;
-    }
-
     if (old_content != nullptr)
     {
+        // Hold an extra ref so the widget survives gtk_box_remove, then defer
+        // the final unref to the next main-loop iteration to let any in-flight
+        // GtkMediaFile async callbacks complete before finalization.
+        (g_object_ref)(old_content);
         gtk_box_remove(conv::ToGtkBox(vbox), old_content);
+        g_idle_add(
+          +[](gpointer data) -> gboolean
+          {
+              g_object_unref(data);
+              return G_SOURCE_REMOVE;
+          },
+          old_content);
     }
 
     GtkWidget* video = CreateVideoWidget(path);
