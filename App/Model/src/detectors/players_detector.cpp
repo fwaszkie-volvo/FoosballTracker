@@ -97,10 +97,8 @@ void PlayersDetector::SeperateIntoOffenseAndDefense(const cv::Size& size)
 
     // NOLINTBEGIN
     const int64_t red_defense_first_row_border_left{0};
-    // NOLINTNEXTLINE(bugprone-narrowing-conversions)
-    const int64_t red_defense_first_row_border_right{static_cast<int64_t>(
-      (1.0 / number_of_player_rows) *
-      frame_width)};  // NOLINT(bugprone-narrowing-conversions,-warnings-as-errors)
+    const int64_t red_defense_first_row_border_right{
+      static_cast<int64_t>((1.0 / number_of_player_rows) * frame_width)};
 
     const int64_t red_defense_second_row_border_left{red_defense_first_row_border_right};
     const int64_t red_defense_second_row_border_right{
