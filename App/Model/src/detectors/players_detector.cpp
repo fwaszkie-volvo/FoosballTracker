@@ -97,26 +97,34 @@ void PlayersDetector::SeperateIntoOffenseAndDefense(const cv::Size& size)
 
     // NOLINTBEGIN
     const int64_t red_defense_first_row_border_left{0};
-    const int64_t red_defense_first_row_border_right{(1.0 / number_of_player_rows) * frame_width};
+    // NOLINTNEXTLINE(bugprone-narrowing-conversions)
+    const int64_t red_defense_first_row_border_right{static_cast<int64_t>(
+      (1.0 / number_of_player_rows) *
+      frame_width)};  // NOLINT(bugprone-narrowing-conversions,-warnings-as-errors)
 
     const int64_t red_defense_second_row_border_left{red_defense_first_row_border_right};
-    const int64_t red_defense_second_row_border_right{(2.0 / number_of_player_rows) * frame_width};
+    const int64_t red_defense_second_row_border_right{
+      static_cast<int64_t>((2.0 / number_of_player_rows) * frame_width)};
 
     const int64_t blue_offense_third_row_border_left{red_defense_second_row_border_right};
-    const int64_t blue_offense_third_row_border_right{(3.0 / number_of_player_rows) * frame_width};
+    const int64_t blue_offense_third_row_border_right{
+      static_cast<int64_t>((3.0 / number_of_player_rows) * frame_width)};
 
     const int64_t red_offense_fourth_row_border_left{blue_offense_third_row_border_right};
-    const int64_t red_offense_fourth_row_border_right{(4.0 / number_of_player_rows) * frame_width};
+    const int64_t red_offense_fourth_row_border_right{
+      static_cast<int64_t>((4.0 / number_of_player_rows) * frame_width)};
 
     const int64_t blue_offense_fifth_row_border_left{red_offense_fourth_row_border_right};
-    const int64_t blue_offense_fifth_row_border_right{(5.0 / number_of_player_rows) * frame_width};
+    const int64_t blue_offense_fifth_row_border_right{
+      static_cast<int64_t>((5.0 / number_of_player_rows) * frame_width)};
 
     const int64_t red_offense_sixth_row_border_left{blue_offense_fifth_row_border_right};
-    const int64_t red_offense_sixth_row_border_right{(6.0 / number_of_player_rows) * frame_width};
+    const int64_t red_offense_sixth_row_border_right{
+      static_cast<int64_t>((6.0 / number_of_player_rows) * frame_width)};
 
     const int64_t blue_defense_seventh_row_border_left{red_offense_sixth_row_border_right};
-    const int64_t blue_defense_seventh_row_border_right{(7.0 / number_of_player_rows) *
-                                                        frame_width};
+    const int64_t blue_defense_seventh_row_border_right{
+      static_cast<int64_t>((7.0 / number_of_player_rows) * frame_width)};
 
     const int64_t blue_defense_eight_row_border_left{blue_defense_seventh_row_border_right};
     const int64_t blue_defense_eight_row_border_right{frame_width};
