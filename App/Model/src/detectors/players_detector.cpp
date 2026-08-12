@@ -129,7 +129,7 @@ void PlayersDetector::SeperateIntoOffenseAndDefense(const cv::Size& size)
         int64_t row = rectangle_blue.x / row_width;
         int64_t row_shift = row * role_mask_width;
 
-        uint32_t role = red_mask >> row_shift;
+        uint32_t role = blue_mask >> row_shift;
 
         if (role & role_defense)
         {
