@@ -9,6 +9,8 @@
 
 #include "detector_types.hpp"
 
+namespace player_detector
+{
 struct Team
 {
     std::vector<cv::Rect> offense_;
@@ -51,5 +53,5 @@ class PlayersDetector
                                            const uint32_t mask,
                                            const int64_t frame_width);
 };
-
+}  // namespace player_detector
 #endif  // FOOSBALL_TRACKER_APP_MODEL_INCLUDE_PRIVATE_DETECTORS_PLAYERS_DETECTOR_HPP_

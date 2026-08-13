@@ -14,6 +14,8 @@
 #include "detector_types.hpp"
 #include "mask_utils.hpp"
 
+namespace player_detector
+{
 const Players& PlayersDetector::GetPlayers() const { return players_; }
 
 template <typename ColorRange>
@@ -85,15 +87,14 @@ void PlayersDetector::Detect(const cv::Mat& frame)
       rectangles_blue_, cv::Point{size.width, 0}, cv::Point{size.width, size.height});
     RemoveInvalidPlayers(rectangles_red_, cv::Point{0, 0}, cv::Point{0, size.height});
 
-    constexpr uint32_t red_mask = 0b0000100010000101;
-    constexpr uint32_t blue_mask = 0b0101001000100000;
+    constexpr uint32_t red_mask = 0b00'00'10'00'10'00'01'01;
+    constexpr uint32_t blue_mask = 0b01'01'00'10'00'10'00'00;
     SeperateTeamIntoOffenseAndDefense(players_.red_team_, rectangles_red_, red_mask, size.width);
     SeperateTeamIntoOffenseAndDefense(players_.blue_team_, rectangles_blue_, blue_mask, size.width);
 }
 
 void PlayersDetector::SeperateTeamIntoOffenseAndDefense(Team& team,
                                                         const std::vector<cv::Rect>& rectangles,
-
                                                         const uint32_t mask,
                                                         const int64_t frame_width)
 {
@@ -132,15 +133,30 @@ void PlayersDetector::SeperateTeamIntoOffenseAndDefense(Team& team,
 
 void PlayersDetector::Draw(const cv::Mat& frame)
 {
-    for (const auto& rectangle : players_.red_team_.offense_)
+    for (const auto& [rectangle_offense, rectangle_deffense] :
+         std::views::zip(players_.red_team_.offense_, players_.red_team_.defense_))
     {
-        cv::rectangle(
-          frame, rectangle, detector_types::kPlayersDrawRedColor, detector_types::kDrawThickness);
+        cv::rectangle(frame,
+                      rectangle_offense,
+                      detector_types::kPlayersDrawRedColor,
+                      detector_types::kDrawThickness);
+        cv::rectangle(frame,
+                      rectangle_deffense,
+                      detector_types::kPlayersDrawRedColor,
+                      detector_types::kDrawThickness);
     }
 
-    for (const auto& rectangle : players_.blue_team_.defense_)
+    for (const auto& [rectangle_offense, rectangle_deffense] :
+         std::views::zip(players_.blue_team_.offense_, players_.blue_team_.defense_))
     {
-        cv::rectangle(
-          frame, rectangle, detector_types::kPlayersDrawBlueColor, detector_types::kDrawThickness);
+        cv::rectangle(frame,
+                      rectangle_offense,
+                      detector_types::kPlayersDrawBlueColor,
+                      detector_types::kDrawThickness);
+        cv::rectangle(frame,
+                      rectangle_deffense,
+                      detector_types::kPlayersDrawBlueColor,
+                      detector_types::kDrawThickness);
     }
 }
+}  // namespace player_detector

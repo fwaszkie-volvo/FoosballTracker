@@ -6,6 +6,8 @@
 #include <iostream>
 #include <opencv2/opencv.hpp>
 
+using namespace player_detector;
+
 TEST(PlayersDetector, CorrectPlayersAmount)
 {
     std::string image_path = std::string(TEST_SOURCE_DIR) + "/test_files/ball_unobscured.jpg";
