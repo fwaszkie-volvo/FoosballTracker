@@ -67,7 +67,7 @@ GtkWidget* CreateImageWidget(const cv::Mat& frame)
 
     GBytes* bytes =
       g_bytes_new(converted.data, converted.total() * static_cast<size_t>(converted.elemSize()));
-    GdkPixbuf* pixbuf = gdk_pixbuf_new_from_bytes(bytes,
+    GdkPixbuf* pixbuf   = gdk_pixbuf_new_from_bytes(bytes,
                                                   GDK_COLORSPACE_RGB,
                                                   has_alpha,
                                                   8,
@@ -75,7 +75,7 @@ GtkWidget* CreateImageWidget(const cv::Mat& frame)
                                                   converted.rows,
                                                   static_cast<int>(converted.step));
     GdkTexture* texture = gdk_texture_new_for_pixbuf(pixbuf);
-    GtkWidget* picture = gtk_picture_new_for_paintable(GDK_PAINTABLE(texture));
+    GtkWidget* picture  = gtk_picture_new_for_paintable(GDK_PAINTABLE(texture));
     gtk_picture_set_can_shrink(conv::ToGtkPicture(picture), TRUE);
 
     g_object_unref(texture);
@@ -333,7 +333,7 @@ int ViewMain::CreateAndRunMain()
 
     int ret_val = g_application_run(conv::ToGApplication(app), 0, nullptr);
     g_object_unref(app);
-    gtk_app_ = nullptr;
+    gtk_app_          = nullptr;
     gtk_content_vbox_ = nullptr;
     return ret_val;
 }

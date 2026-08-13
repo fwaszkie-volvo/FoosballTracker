@@ -11,6 +11,7 @@
 #include "frame_processor.hpp"
 #include "generator.hpp"
 #include "processing_config.hpp"
+#include "reader_factory.hpp"
 
 void ModelMain::CalculateFromStream()
 {
@@ -29,7 +30,7 @@ void ModelMain::CalculateFromStream()
 void ModelMain::LoadFile(const std::string& path)
 {
     can_analyze_offline_file_ = true;
-    loaded_file_path_ = path;
+    loaded_file_path_         = path;
     spdlog::info("Model: zaladowano plik: {}", loaded_file_path_);
 }
 
@@ -48,7 +49,7 @@ void ModelMain::CalculateFromFile()
     frame_processor.ProcessFrames(loaded_file_path_,
                                   [&](cv::Mat& current_frame) { detect_ball(current_frame); });
 
-    temp_output_path_ = frame_processor.GetTempOutputPath();
+    temp_output_path_         = frame_processor.GetTempOutputPath();
     can_analyze_offline_file_ = false;
 
     spdlog::info("CalculateFromFile: zapisano tymczasowo do: {}", temp_output_path_);

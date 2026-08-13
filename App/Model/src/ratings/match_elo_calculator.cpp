@@ -61,7 +61,7 @@ ratings::SetAverages ComputeAverageSetScoreAndMultiplier(const model::TeamSetSco
         const int signed_goal_difference = static_cast<int>(points_for.at(set_index)) -
                                            static_cast<int>(points_against.at(set_index));
 
-        total_set_score += ComputeSetScore(signed_goal_difference);
+        total_set_score              += ComputeSetScore(signed_goal_difference);
         total_goal_margin_multiplier += ComputeGoalMarginMultiplier(signed_goal_difference);
     }
 
@@ -81,10 +81,10 @@ int ComputeFirstTeamEloDelta(const ratings::MatchInput& match)
     static constexpr std::size_t kFirstTeamIndex{0U};
     static constexpr std::size_t kSecondTeamIndex{1U};
 
-    const double first_team_elo = match.teams_.first.GetAverageElo();
+    const double first_team_elo  = match.teams_.first.GetAverageElo();
     const double second_team_elo = match.teams_.second.GetAverageElo();
 
-    const double expected_first_team = ExpectedScore(first_team_elo, second_team_elo);
+    const double expected_first_team               = ExpectedScore(first_team_elo, second_team_elo);
     const ratings::SetAverages first_team_averages = ComputeAverageSetScoreAndMultiplier(
       match.set_scores_.at(kFirstTeamIndex), match.set_scores_.at(kSecondTeamIndex));
 

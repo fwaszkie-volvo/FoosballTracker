@@ -10,10 +10,10 @@ class IFrameReader
   public:
     virtual ~IFrameReader() = default;
 
-    virtual bool Open(const std::string& source) = 0;
-    virtual std::optional<cv::Mat> Read() = 0;
-    virtual bool IsOpened() const = 0;
-    virtual std::optional<double> GetFps() const = 0;
+    virtual bool Open(const std::string& source)         = 0;
+    virtual std::optional<cv::Mat> Read()                = 0;
+    virtual bool IsOpened() const                        = 0;
+    virtual std::optional<double> GetFps() const         = 0;
     virtual std::optional<cv::Size> GetFrameSize() const = 0;
 };
 

@@ -10,8 +10,6 @@
 #include <system_error>
 #include <vector>
 
-#include "processing_config.hpp"
-
 void FrameProcessor::SetReaderType(const ReaderType reader_type)
 {
     reader_type_ = reader_type;

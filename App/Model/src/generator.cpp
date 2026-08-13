@@ -76,9 +76,9 @@ std::optional<ratings::TeamSettings> GenerateTeamSettingsStandard(const model::T
 {
     const model::Teams& first_set{teams};
 
-    const Player& first_team_first_player = first_set.first.players.first;
-    const Player& first_team_second_player = first_set.first.players.second;
-    const Player& second_team_first_player = first_set.second.players.first;
+    const Player& first_team_first_player   = first_set.first.players.first;
+    const Player& first_team_second_player  = first_set.first.players.second;
+    const Player& second_team_first_player  = first_set.second.players.first;
     const Player& second_team_second_player = first_set.second.players.second;
 
     ratings::TeamSettings settings{

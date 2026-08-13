@@ -36,9 +36,9 @@ void BallDetector::UpdateCandidate(const cv::Point& center, const double score)
         return;
     }
 
-    best_candidate_.found = true;
+    best_candidate_.found  = true;
     best_candidate_.center = center;
-    best_candidate_.score = score;
+    best_candidate_.score  = score;
 }
 
 cv::Point2f BallDetector::ComputeWindowSpeed() const
@@ -95,9 +95,9 @@ void BallDetector::UpdateMeasurement(const cv::Point& center)
 
     updated_measurement.size = detector_types::kBallFixedRadius;
 
-    previous_position_ = updated_measurement.position;
+    previous_position_     = updated_measurement.position;
     has_previous_position_ = true;
-    measurement_ = updated_measurement;
+    measurement_           = updated_measurement;
 }
 
 cv::Mat BallDetector::BuildColorMask(const cv::Mat& frame) const
@@ -201,15 +201,15 @@ void BallDetector::UpdateTrackingState()
             predicted_measurement.speed = cv::Point2f{};
         }
         predicted_measurement.position = previous_position_ + predicted_measurement.speed;
-        predicted_measurement.size = detector_types::kBallFixedRadius;
+        predicted_measurement.size     = detector_types::kBallFixedRadius;
 
         previous_position_ = predicted_measurement.position;
-        measurement_ = predicted_measurement;
+        measurement_       = predicted_measurement;
     }
 
     if (missed_detection_frames_ >= detector_types::kBallTrackingResetMissFrames)
     {
-        previous_position_ = cv::Point2f{};
+        previous_position_     = cv::Point2f{};
         has_previous_position_ = false;
         position_history_.clear();
     }
@@ -218,7 +218,7 @@ void BallDetector::UpdateTrackingState()
 void BallDetector::ResetTrackingState()
 {
     ResetBestCandidate();
-    previous_position_ = cv::Point2f{};
+    previous_position_     = cv::Point2f{};
     has_previous_position_ = false;
     position_history_.clear();
     missed_detection_frames_ = 0;

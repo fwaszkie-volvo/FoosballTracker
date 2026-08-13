@@ -17,7 +17,7 @@ SaveButtonData* ToGtkSaveButtonData(gpointer cb_data)
 
 void on_save_button_clicked(GtkButton* /*button*/, gpointer user_data)
 {
-    auto* data = conv::ToGtkSaveButtonData(user_data);
+    auto* data        = conv::ToGtkSaveButtonData(user_data);
     GtkWindow* parent = data != nullptr ? data->parent : nullptr;
 
     GtkWidget* dialog = gtk_file_chooser_dialog_new("Zapisz wynik",
@@ -49,7 +49,7 @@ void on_save_button_clicked(GtkButton* /*button*/, gpointer user_data)
                            gtk_file_chooser_get_file(conv::ToGtkFileChooser(dialog_window));
                          if (file != nullptr)
                          {
-                             char* path = g_file_get_path(file);
+                             char* path                 = g_file_get_path(file);
                              const std::string path_str = path != nullptr ? path : "";
                              g_free(path);
                              g_object_unref(file);

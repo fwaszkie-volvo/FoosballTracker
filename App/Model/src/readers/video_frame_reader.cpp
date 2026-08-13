@@ -36,7 +36,7 @@ std::optional<cv::Size> VideoFrameReader::GetFrameSize() const
         return std::nullopt;
     }
 
-    const int width = static_cast<int>(capture_.get(cv::CAP_PROP_FRAME_WIDTH));
+    const int width  = static_cast<int>(capture_.get(cv::CAP_PROP_FRAME_WIDTH));
     const int height = static_cast<int>(capture_.get(cv::CAP_PROP_FRAME_HEIGHT));
     return cv::Size(width, height);
 }

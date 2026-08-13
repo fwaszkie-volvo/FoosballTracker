@@ -54,9 +54,9 @@ MatchInput MatchStorage::BuildMatchWithCurrentRatings(const MatchInput& match) c
     static constexpr std::size_t kThirdSetIndex{2U};
     static constexpr std::size_t kFourthSetIndex{3U};
 
-    const model::Teams& first_set = SelectSetTeams(match, kFirstSetIndex);
+    const model::Teams& first_set  = SelectSetTeams(match, kFirstSetIndex);
     const model::Teams& second_set = SelectSetTeams(match, kSecondSetIndex);
-    const model::Teams& third_set = SelectSetTeams(match, kThirdSetIndex);
+    const model::Teams& third_set  = SelectSetTeams(match, kThirdSetIndex);
     const model::Teams& fourth_set = SelectSetTeams(match, kFourthSetIndex);
 
     const ratings::TeamSettings team_settings_with_ratings{
@@ -67,8 +67,8 @@ MatchInput MatchStorage::BuildMatchWithCurrentRatings(const MatchInput& match) c
     };
 
     return MatchInput{
-      .teams_ = BuildTeamsWithCurrentRatings(match.teams_),
-      .set_scores_ = match.set_scores_,
+      .teams_         = BuildTeamsWithCurrentRatings(match.teams_),
+      .set_scores_    = match.set_scores_,
       .team_settings_ = team_settings_with_ratings,
     };
 }

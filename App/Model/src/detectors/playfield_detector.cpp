@@ -27,7 +27,7 @@ bool PlayfieldDetector::ChooseLargestContour(const std::vector<Contour>& contour
         const double area{cv::contourArea(contour)};
         if (area > best_area)
         {
-            best_area = area;
+            best_area       = area;
             largest_contour = contour;
         }
     }
@@ -62,7 +62,7 @@ Contour PlayfieldDetector::ApproximatePolygon(const Contour& hull) const
         if (vertex_delta < best_vertex_delta)
         {
             best_vertex_delta = vertex_delta;
-            best_polygon = polygon;
+            best_polygon      = polygon;
         }
 
         if (polygon.size() == detector_types::kPlayfieldTargetVertices)
@@ -133,7 +133,7 @@ void PlayfieldDetector::Detect(const cv::Mat& frame)
     playfield_mask_ = cv::Mat::zeros(frame.size(), CV_8UC1);
     cv::fillConvexPoly(playfield_mask_, hull, cv::Scalar(255));
     playfield_polygon_ = ApproximatePolygon(hull);
-    detected_ = true;
+    detected_          = true;
 }
 
 void PlayfieldDetector::Draw(cv::Mat& frame) const

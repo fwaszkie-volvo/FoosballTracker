@@ -13,7 +13,7 @@ struct SetAverages final
     double goal_margin_multiplier{};
 };
 
-using SetScores = std::array<model::TeamSetScores, model::kTeamsNumber>;
+using SetScores    = std::array<model::TeamSetScores, model::kTeamsNumber>;
 using TeamSettings = std::array<model::Teams, model::kSetsPerMatch>;
 
 struct MatchInput final

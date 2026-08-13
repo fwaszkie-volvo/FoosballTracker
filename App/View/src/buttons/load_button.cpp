@@ -45,7 +45,7 @@ void OnDialogResponse(GtkDialog* dialog_window, gint response, gpointer cb_data)
         GFile* file = gtk_file_chooser_get_file(conv::ToGtkFileChooser(dialog_window));
         if (file != nullptr)
         {
-            char* path = g_file_get_path(file);
+            char* path                 = g_file_get_path(file);
             const std::string path_str = path != nullptr ? path : "";
             spdlog::info("LOAD: wybrano plik: {}", path_str);
             g_free(path);
@@ -64,7 +64,7 @@ void OnDialogResponse(GtkDialog* dialog_window, gint response, gpointer cb_data)
 
 void on_load_button_clicked(GtkButton* /*button*/, gpointer user_data)
 {
-    auto* data = conv::ToGtkLoadButtonData(user_data);
+    auto* data        = conv::ToGtkLoadButtonData(user_data);
     GtkWindow* parent = data != nullptr ? data->parent : nullptr;
 
     GtkWidget* dialog_button = GetDialogButton(parent);

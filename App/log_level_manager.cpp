@@ -12,10 +12,10 @@ namespace app_logging
 {
 void LogLevelManager::SetLogLevel() const
 {
-    const auto resolved_level = Resolve(std::getenv("LOG_LEVEL"));
+    const auto resolved_level  = Resolve(std::getenv("LOG_LEVEL"));
     constexpr auto kLogPattern = "[%H:%M:%S.%e] [%^%l%$] %v";
 
-    auto sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
+    auto sink   = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
     auto logger = std::make_shared<spdlog::logger>("foosball_tracker_app", sink);
     spdlog::set_default_logger(logger);
 
@@ -27,7 +27,7 @@ void LogLevelManager::SetLogLevel() const
 LogLevelManager::ResolvedLevel LogLevelManager::Resolve(const char* level_env) const
 {
     const auto level_name = std::string_view(level_env ? level_env : "");
-    const auto it = levels_.find(level_name);
+    const auto it         = levels_.find(level_name);
     return (it == levels_.end()) ? ResolvedLevel{.level = default_level_, .label = default_label_}
                                  : ResolvedLevel{.level = it->second, .label = level_name};
 }
