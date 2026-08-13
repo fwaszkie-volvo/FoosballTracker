@@ -97,7 +97,9 @@ void PlayersDetector::SeperateTeamIntoOffenseAndDefense(Team& team,
                                                         const uint32_t mask,
                                                         const int64_t frame_width)
 {
-    // We make a mask of each teams position of offense and deffense, below are the indicies of rows in the mask
+    // We make a mask of each teams position of offense and deffense,
+    // below are the indicies of rows in the mask
+    // each ?? can be one of the roles below
     //            7  6  5  4  3  2  1  0
     // mask = 0b ?? ?? ?? ?? ?? ?? ?? ??
 
