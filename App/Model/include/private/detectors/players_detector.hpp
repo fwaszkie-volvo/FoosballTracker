@@ -49,7 +49,6 @@ class PlayersDetector
                                      const cv::Point& second_corner);
     void SeperateTeamIntoOffenseAndDefense(Team& team,
                                            const std::vector<cv::Rect>& rectangles,
-
                                            const uint32_t mask,
                                            const int64_t frame_width);
 };
