@@ -1,11 +1,11 @@
 #ifndef FOOSBALL_TRACKER_APP_MODEL_INCLUDE_PRIVATE_FRAME_PROCESSOR_HPP_
 #define FOOSBALL_TRACKER_APP_MODEL_INCLUDE_PRIVATE_FRAME_PROCESSOR_HPP_
 
-#include <functional>
-#include <memory>
 #include <opencv2/core/mat.hpp>
 #include <opencv2/core/types.hpp>
 #include <opencv2/videoio.hpp>
+#include <functional>
+#include <memory>
 #include <optional>
 #include <string>
 

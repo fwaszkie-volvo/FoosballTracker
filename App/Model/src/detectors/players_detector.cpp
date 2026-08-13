@@ -87,7 +87,7 @@ void PlayersDetector::Detect(const cv::Mat& frame)
       rectangles_blue_, cv::Point{size.width, 0}, cv::Point{size.width, size.height});
     RemoveInvalidPlayers(rectangles_red_, cv::Point{0, 0}, cv::Point{0, size.height});
 
-    constexpr uint32_t red_mask = 0b00'00'10'00'10'00'01'01;
+    constexpr uint32_t red_mask  = 0b00'00'10'00'10'00'01'01;
     constexpr uint32_t blue_mask = 0b01'01'00'10'00'10'00'00;
     SeperateTeamIntoOffenseAndDefense(players_.red_team_, rectangles_red_, red_mask, size.width);
     SeperateTeamIntoOffenseAndDefense(players_.blue_team_, rectangles_blue_, blue_mask, size.width);
@@ -105,16 +105,16 @@ void PlayersDetector::SeperateTeamIntoOffenseAndDefense(Team& team,
     // mask = 0b ?? ?? ?? ?? ?? ?? ?? ??
 
     constexpr int64_t number_of_player_rows = 8;
-    constexpr uint32_t role_mask_width = 2;
-    constexpr uint32_t role_none = 0b00;
-    constexpr uint32_t role_defense = 0b01;
-    constexpr uint32_t role_offense = 0b10;
+    constexpr uint32_t role_mask_width      = 2;
+    constexpr uint32_t role_none            = 0b00;
+    constexpr uint32_t role_defense         = 0b01;
+    constexpr uint32_t role_offense         = 0b10;
 
     const int64_t row_width = frame_width / number_of_player_rows;
 
     for (const auto& rectangle : rectangles)
     {
-        int64_t row = rectangle.x / row_width;
+        int64_t row       = rectangle.x / row_width;
         int64_t row_shift = row * role_mask_width;
 
         uint32_t role = mask >> row_shift;
