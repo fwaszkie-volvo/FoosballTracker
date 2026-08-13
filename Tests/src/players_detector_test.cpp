@@ -3,7 +3,10 @@
 #include <gtest/gtest.h>
 
 #include <filesystem>
+#include <iostream>
 #include <opencv2/opencv.hpp>
+
+using namespace player_detector;
 
 TEST(PlayersDetector, CorrectPlayersAmount)
 {
@@ -22,10 +25,23 @@ TEST(PlayersDetector, CorrectPlayersAmount)
     cv::imwrite(output_dir / "detect_players_output.jpg", frame);
 
     const Players& players{players_detector.GetPlayers()};
-    size_t team_blue_count{players.rectangles_blue_.size()};
-    size_t team_red_count{players.rectangles_red_.size()};
 
-    size_t constexpr actual_team_count = 11;
+    size_t team_red_count{players.red_team_.offense_.size() + players.red_team_.defense_.size()};
+    size_t team_blue_count{players.blue_team_.offense_.size() + players.blue_team_.defense_.size()};
+
+    size_t team_blue_defense_count{players.blue_team_.defense_.size()};
+    size_t team_blue_offense_count{players.blue_team_.offense_.size()};
+    size_t team_red_defense_count{players.red_team_.defense_.size()};
+    size_t team_red_offense_count{players.red_team_.offense_.size()};
+
+    constexpr size_t actual_team_count = 11;
     EXPECT_EQ(team_blue_count, actual_team_count);
     EXPECT_EQ(team_red_count, actual_team_count);
+
+    constexpr size_t defense_count = 3;
+    constexpr size_t offense_count = 8;
+    EXPECT_EQ(team_blue_defense_count, defense_count);
+    EXPECT_EQ(team_blue_offense_count, offense_count);
+    EXPECT_EQ(team_red_defense_count, defense_count);
+    EXPECT_EQ(team_red_offense_count, offense_count);
 }
