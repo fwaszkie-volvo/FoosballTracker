@@ -9,20 +9,6 @@
 
 #include "detector_types.hpp"
 
-// struct Players
-// {
-//     std::vector<Contour> contours_blue_;
-//     std::vector<Contour> contours_red_;
-
-//     std::vector<cv::Rect> rectangles_blue_;
-//     std::vector<cv::Rect> rectangles_red_;
-
-//     std::vector<cv::Rect> rectangles_blue_defense_;
-//     std::vector<cv::Rect> rectangles_blue_offense_;
-//     std::vector<cv::Rect> rectangles_red_defense_;
-//     std::vector<cv::Rect> rectangles_red_offense_;
-// };
-
 struct Team
 {
     std::vector<cv::Rect> offense_;
@@ -44,13 +30,12 @@ class PlayersDetector
 
   private:
     Players players_{};
+
     std::vector<Contour> contours_blue_;
     std::vector<Contour> contours_red_;
 
     std::vector<cv::Rect> rectangles_blue_;
     std::vector<cv::Rect> rectangles_red_;
-
-    std::vector<Contour> contours_;
 
     static int64_t DistanceToCorner(const cv::Rect& rectangle, const cv::Point& corner);
     template <typename ColorRange>
