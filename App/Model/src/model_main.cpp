@@ -1,8 +1,9 @@
 #include "model_main.hpp"
 
 #include <spdlog/spdlog.h>
-#include <opencv2/core/mat.hpp>
+
 #include <filesystem>
+#include <opencv2/core/mat.hpp>
 #include <optional>
 #include <system_error>
 
