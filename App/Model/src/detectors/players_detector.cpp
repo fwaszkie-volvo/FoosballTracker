@@ -77,81 +77,66 @@ void PlayersDetector::RemoveInvalidPlayers(std::vector<cv::Rect>& rectangles,
 
 void PlayersDetector::Detect(const cv::Mat& frame)
 {
-    DetectTeam<detector_types::RedColorRange>(
-      frame, players_.contours_red_, players_.rectangles_red_);
-    DetectTeam<detector_types::BlueColorRange>(
-      frame, players_.contours_blue_, players_.rectangles_blue_);
+    DetectTeam<detector_types::RedColorRange>(frame, contours_red_, rectangles_red_);
+    DetectTeam<detector_types::BlueColorRange>(frame, contours_blue_, rectangles_blue_);
+
     const cv::Size size = frame.size();
-
     RemoveInvalidPlayers(
-      players_.rectangles_blue_, cv::Point{size.width, 0}, cv::Point{size.width, size.height});
-    RemoveInvalidPlayers(players_.rectangles_red_, cv::Point{0, 0}, cv::Point{0, size.height});
+      rectangles_blue_, cv::Point{size.width, 0}, cv::Point{size.width, size.height});
+    RemoveInvalidPlayers(rectangles_red_, cv::Point{0, 0}, cv::Point{0, size.height});
 
-    SeperateIntoOffenseAndDefense(size);
+    constexpr uint32_t red_mask = 0b0000100010000101;
+    constexpr uint32_t blue_mask = 0b0101001000100000;
+    SeperateTeamIntoOffenseAndDefense(players_.red_team_, rectangles_red_, red_mask, size.width);
+    SeperateTeamIntoOffenseAndDefense(players_.blue_team_, rectangles_blue_, blue_mask, size.width);
 }
 
-void PlayersDetector::SeperateIntoOffenseAndDefense(const cv::Size& size)
-{
-    constexpr int64_t number_of_player_rows = 8;
-    const int64_t frame_width = size.width;
-    const int64_t row_width = frame_width / number_of_player_rows;
+void PlayersDetector::SeperateTeamIntoOffenseAndDefense(Team& team,
+                                                        const std::vector<cv::Rect>& rectangles,
 
+                                                        const uint32_t mask,
+                                                        const int64_t frame_width)
+{
     // We make a mask of each teams position of offense and deffense, below are the indicies of rows in the mask
-    //     7  6  5  4  3  2  1  0
-    // 0b ?? ?? ?? ?? ?? ?? ?? ??,
+    //            7  6  5  4  3  2  1  0
+    // mask = 0b ?? ?? ?? ?? ?? ?? ?? ??
+
+    constexpr int64_t number_of_player_rows = 8;
     constexpr uint32_t role_mask_width = 2;
     constexpr uint32_t role_none = 0b00;
     constexpr uint32_t role_defense = 0b01;
     constexpr uint32_t role_offense = 0b10;
-    constexpr uint32_t red_mask = 0b0000100010000101;
-    constexpr uint32_t blue_mask = 0b0101001000100000;
 
-    for (const auto& rectangle_red : players_.rectangles_red_)
+    const int64_t row_width = frame_width / number_of_player_rows;
+
+    for (const auto& rectangle : rectangles)
     {
-        int64_t row = rectangle_red.x / row_width;
+        int64_t row = rectangle.x / row_width;
         int64_t row_shift = row * role_mask_width;
 
-        uint32_t role = red_mask >> row_shift;
+        uint32_t role = mask >> row_shift;
 
         if (role & role_defense)
         {
-            players_.rectangles_red_defense_.push_back(rectangle_red);
+            team.defense_.push_back(rectangle);
         }
 
         else if (role & role_offense)
         {
-            players_.rectangles_red_offense_.push_back(rectangle_red);
-        }
-    }
-
-    for (const auto& rectangle_blue : players_.rectangles_blue_)
-    {
-        int64_t row = rectangle_blue.x / row_width;
-        int64_t row_shift = row * role_mask_width;
-
-        uint32_t role = blue_mask >> row_shift;
-
-        if (role & role_defense)
-        {
-            players_.rectangles_blue_defense_.push_back(rectangle_blue);
-        }
-
-        else if (role & role_offense)
-        {
-            players_.rectangles_blue_offense_.push_back(rectangle_blue);
+            team.offense_.push_back(rectangle);
         }
     }
 }
 
 void PlayersDetector::Draw(const cv::Mat& frame)
 {
-    for (const auto& rectangle : players_.rectangles_red_)
+    for (const auto& rectangle : players_.red_team_.offense_)
     {
         cv::rectangle(
           frame, rectangle, detector_types::kPlayersDrawRedColor, detector_types::kDrawThickness);
     }
 
-    for (const auto& rectangle : players_.rectangles_blue_)
+    for (const auto& rectangle : players_.blue_team_.defense_)
     {
         cv::rectangle(
           frame, rectangle, detector_types::kPlayersDrawBlueColor, detector_types::kDrawThickness);
