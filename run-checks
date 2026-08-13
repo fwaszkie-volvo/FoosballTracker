@@ -109,7 +109,7 @@ function clang_check() {
   fi
 
   source_targets |
-    xargs -0 python3 tools/run-clang-tidy.py -quiet -p "$BUILD_DIR" -header-filter="$header_filter" -checks=-modernize-use-nodiscard -extra-arg=-Wno-unknown-warning-option -extra-arg=-w
+    xargs -0 "$clang_tidy_bin" -quiet -p "$BUILD_DIR" -header-filter="$header_filter" -checks=-modernize-use-nodiscard -extra-arg=-Wno-unknown-warning-option -extra-arg=-w
 }
 
 function filter_iwyu_output_for_includes_only() {

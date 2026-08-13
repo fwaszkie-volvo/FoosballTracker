@@ -76,12 +76,6 @@ function configure() {
   additional_packages=(
     libgtk-4-1
     libgtk-4-dev
-    libgtk-4-media-gstreamer
-    gstreamer1.0-plugins-base
-    gstreamer1.0-plugins-good
-    gstreamer1.0-plugins-bad
-    gstreamer1.0-libav
-    gstreamer1.0-gl
   )
   llvm_major=18
   codename=""
@@ -118,8 +112,6 @@ function configure() {
     install_packages=(
       build-essential
       cmake
-      git
-      git-lfs
       libopencv-dev
       libgtest-dev
       libspdlog-dev
@@ -165,16 +157,6 @@ function configure() {
       rm -rf "$iwyu_src_dir"
 
       verify_min_iwyu_version "$llvm_major" || return 1
-    fi
-
-    if ! git -C "$SCRIPT_DIR" lfs install --local; then
-      echo "Nie udalo sie skonfigurowac Git LFS dla repozytorium." >&2
-      return 1
-    fi
-
-    if ! git -C "$SCRIPT_DIR" lfs pull; then
-      echo "Nie udalo sie pobrac plikow Git LFS dla repozytorium." >&2
-      return 1
     fi
 
     return $?
