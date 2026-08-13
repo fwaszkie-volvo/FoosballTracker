@@ -38,14 +38,6 @@ GtkFileFilter* GetMP4Filter()
     return filter;
 }
 
-GtkFileFilter* GetFilterAllFiles()
-{
-    GtkFileFilter* filter = gtk_file_filter_new();
-    gtk_file_filter_set_name(filter, "Wszystkie pliki");
-    gtk_file_filter_add_pattern(filter, "*");
-    return filter;
-}
-
 void OnDialogResponse(GtkDialog* dialog_window, gint response, gpointer cb_data)
 {
     if (response == GTK_RESPONSE_ACCEPT)
@@ -80,13 +72,10 @@ void on_load_button_clicked(GtkButton* /*button*/, gpointer user_data)
     GtkFileFilter* filter_mp4 = GetMP4Filter();
     gtk_file_chooser_add_filter(conv::ToGtkFileChooser(dialog_button), filter_mp4);
 
-    GtkFileFilter* filter_all = GetFilterAllFiles();
-    gtk_file_chooser_add_filter(conv::ToGtkFileChooser(dialog_button), filter_all);
-
     gtk_window_set_modal(conv::ToGtkWindow(dialog_button), TRUE);
 
     // NOLINTNEXTLINE(clang-analyzer-optin.core.EnumCastOutOfRange,bugprone-casting-through-void)
     g_signal_connect(dialog_button, "response", G_CALLBACK(OnDialogResponse), data);
 
-    gtk_widget_set_visible(dialog_button, TRUE);
+    gtk_window_present(conv::ToGtkWindow(dialog_button));
 }

@@ -258,6 +258,12 @@ function app() {
     export LOG_LEVEL="$log_level"
   fi
 
+  # WSLg + GTK4 GL renderer can crash on rapid file chooser repaints.
+  # Prefer software renderer unless user explicitly configured GSK_RENDERER.
+  if [[ -z "${GSK_RENDERER:-}" ]] && grep -qi "microsoft" /proc/version; then
+    export GSK_RENDERER="cairo"
+  fi
+
   "$APP_BINARY" "${args_for_app[@]}"
 }
 
