@@ -6,9 +6,9 @@
 class Detector
 {
   public:
-    virtual ~Detector() = default;
+    virtual ~Detector()                       = default;
     virtual void Detect(const cv::Mat& frame) = 0;
-    virtual void Draw(cv::Mat& frame) const = 0;
+    virtual void Draw(cv::Mat& frame) const   = 0;
 };
 
 cv::Mat detect_ball(cv::Mat& frame);

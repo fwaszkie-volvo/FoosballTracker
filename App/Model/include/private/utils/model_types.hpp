@@ -29,7 +29,7 @@ struct Team final
     }
 };
 
-using Teams = std::pair<model::Team, model::Team>;
+using Teams         = std::pair<model::Team, model::Team>;
 using TeamSetScores = std::array<std::uint8_t, kSetsPerMatch>;
 }  // namespace model
 

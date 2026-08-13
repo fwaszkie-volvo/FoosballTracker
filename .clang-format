@@ -15,3 +15,9 @@ ReflowComments: false
 ContinuationIndentWidth: 2
 Cpp11BracedListStyle: true
 IndentWidth: 4
+AlignConsecutiveAssignments:
+  Enabled: true
+  AcrossEmptyLines: false
+  AcrossComments: false
+  AlignCompound: true
+  PadOperators: true

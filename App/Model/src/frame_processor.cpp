@@ -1,16 +1,13 @@
 #include "frame_processor.hpp"
 
 #include <unistd.h>
-
-#include <cstdlib>
-#include <filesystem>
 #include <opencv2/core/mat.hpp>
 #include <opencv2/core/mat.inl.hpp>
 #include <opencv2/videoio.hpp>
+#include <cstdlib>
+#include <filesystem>
 #include <system_error>
 #include <vector>
-
-#include "processing_config.hpp"
 
 void FrameProcessor::SetReaderType(const ReaderType reader_type)
 {

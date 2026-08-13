@@ -5,7 +5,7 @@
 
 bool PhotoReader::Open(const std::string& source)
 {
-    image_ = cv::imread(source, cv::IMREAD_COLOR);
+    image_    = cv::imread(source, cv::IMREAD_COLOR);
     consumed_ = false;
     return !image_.empty();
 }

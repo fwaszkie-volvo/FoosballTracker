@@ -63,12 +63,12 @@ void PlayersDetector::RemoveInvalidPlayers(std::vector<cv::Rect>& rectangles,
 
         if (current_distance_1 < distance_1)
         {
-            distance_1 = current_distance_1;
+            distance_1     = current_distance_1;
             false_player_1 = rectangle;
         }
         if (current_distance_2 < distance_2)
         {
-            distance_2 = current_distance_2;
+            distance_2     = current_distance_2;
             false_player_2 = rectangle;
         }
     }
