@@ -16,6 +16,7 @@ add_library(foosball_model STATIC
 	src/detectors/goal_detector.cpp
 	src/detectors/playfield_detector.cpp
 	src/detectors/players_detector.cpp
+	src/detectors/pressure_index_detector.cpp
 	src/utils/mask_utils.cpp
 )
 
