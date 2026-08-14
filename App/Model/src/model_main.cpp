@@ -11,6 +11,7 @@
 #include "frame_processor.hpp"
 #include "generator.hpp"
 #include "processing_config.hpp"
+#include "ratings_service.hpp"
 #include "reader_factory.hpp"
 
 void ModelMain::CalculateFromStream()
@@ -102,22 +103,16 @@ std::optional<ratings::TeamSettings> ModelMain::GenerateTeamSettingsStandard(
     return generator::GenerateTeamSettingsStandard(teams);
 }
 
-bool ModelMain::CreatePlayer(const model::Nickname& nickname)
-{
-    return storage_.CreatePlayer(nickname);
-}
+void ModelMain::CreatePlayer(const model::Nickname& nickname) { ratings_.CreatePlayer(nickname); }
 
-bool ModelMain::RecordMatch(const ratings::MatchInput& match)
-{
-    return storage_.RecordMatch(match);
-}
+void ModelMain::RecordMatch(const ratings::MatchInput& match) { ratings_.RecordMatch(match); }
 
 std::optional<Player> ModelMain::GetPlayer(const model::Nickname& nickname) const
 {
-    return storage_.GetPlayer(nickname);
+    return ratings_.GetPlayer(nickname);
 }
 
-const std::vector<ratings::MatchInput>& ModelMain::GetMatchHistory() const
+std::vector<ratings::MatchInput> ModelMain::GetMatchHistory() const
 {
-    return storage_.GetMatchHistory();
+    return ratings_.GetMatchHistory();
 }

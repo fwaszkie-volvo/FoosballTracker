@@ -124,6 +124,7 @@ function configure() {
       libgtest-dev
       libspdlog-dev
       libfmt-dev
+      libsqlite3-dev
       clang-format-18
       clang-tidy-18
       iwyu

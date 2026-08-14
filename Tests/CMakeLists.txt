@@ -40,6 +40,8 @@ target_include_directories(unit_tests
     ${FOOSBALL_APP_MODEL_SOURCE_DIR}/include/private/detectors
     ${FOOSBALL_APP_MODEL_SOURCE_DIR}/include/private/utils
     ${FOOSBALL_APP_MODEL_SOURCE_DIR}/include/private/readers
+    ${FOOSBALL_APP_MODEL_SOURCE_DIR}/include/private/ratings
+    ${FOOSBALL_APP_MODEL_SOURCE_DIR}/include/private/ratings/db
 )
 
 target_compile_options(unit_tests PRIVATE -DSPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_TRACE)

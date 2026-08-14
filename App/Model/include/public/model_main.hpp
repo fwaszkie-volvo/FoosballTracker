@@ -6,9 +6,9 @@
 #include <vector>
 
 #include "generator_types.hpp"
-#include "match_storage.hpp"
 #include "model_types.hpp"
 #include "player.hpp"
+#include "ratings_service.hpp"
 #include "ratings_types.hpp"
 
 class ModelMain
@@ -26,17 +26,17 @@ class ModelMain
       const model::Teams& teams) const;
     std::optional<ratings::TeamSettings> GenerateTeamSettingsStandard(
       const model::Teams& teams) const;
-    bool CreatePlayer(const model::Nickname& nickname);
-    bool RecordMatch(const ratings::MatchInput& match);
+    void CreatePlayer(const model::Nickname& nickname);
+    void RecordMatch(const ratings::MatchInput& match);
     std::optional<Player> GetPlayer(const model::Nickname& nickname) const;
-    const std::vector<ratings::MatchInput>& GetMatchHistory() const;
+    std::vector<ratings::MatchInput> GetMatchHistory() const;
 
   private:
     std::string loaded_file_path_;
     std::string temp_output_path_;
     bool can_analyze_offline_file_{false};
 
-    ratings::MatchStorage storage_{};
+    ratings::RatingsService ratings_{};
 };
 
 #endif  // FOOSBALL_TRACKER_APP_MODEL_INCLUDE_PUBLIC_MODEL_MAIN_HPP_

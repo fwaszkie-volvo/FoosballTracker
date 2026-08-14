@@ -97,6 +97,56 @@ function source_targets() {
   find "$APP_DIR" -path "$BUILD_DIR" -prune -o -name '*.cpp' -print0
 }
 
+function changed_clang_check_targets() {
+  if ! command -v git >/dev/null 2>&1; then
+    echo "Brak git. Uruchamiam clang-check dla wszystkich plikow zrodlowych." >&2
+    source_targets
+    return 0
+  fi
+
+  if ! git -C "$SCRIPT_DIR" rev-parse --verify origin/master >/dev/null 2>&1; then
+    echo "Brak referencji origin/master. Uruchamiam clang-check dla wszystkich plikow zrodlowych." >&2
+    source_targets
+    return 0
+  fi
+
+  local changed_files=()
+  local selected_files=()
+  local changed_file=""
+  local candidate_source=""
+
+  while IFS= read -r changed_file; do
+    [[ -n "$changed_file" ]] && changed_files+=("$changed_file")
+  done < <(
+    {
+      git -C "$SCRIPT_DIR" diff --name-only --diff-filter=ACMR origin/master -- App
+      git -C "$SCRIPT_DIR" ls-files --others --exclude-standard -- App
+    } | sort -u
+  )
+
+  if [[ ${#changed_files[@]} -eq 0 ]]; then
+    return 0
+  fi
+
+  for changed_file in "${changed_files[@]}"; do
+    case "$changed_file" in
+      App/*.cpp)
+        [[ -f "$SCRIPT_DIR/$changed_file" ]] && selected_files+=("$SCRIPT_DIR/$changed_file")
+        ;;
+      App/*.hpp|App/*.h)
+        candidate_source="$SCRIPT_DIR/${changed_file%.*}.cpp"
+        [[ -f "$candidate_source" ]] && selected_files+=("$candidate_source")
+        ;;
+    esac
+  done
+
+  if [[ ${#selected_files[@]} -eq 0 ]]; then
+    return 0
+  fi
+
+  printf '%s\0' "${selected_files[@]}" | sort -zu
+}
+
 function clang_check() {
   header_filter='^(.*/)?App/.*\.(h|hpp)$'
 
