@@ -17,6 +17,8 @@ class PlayfieldDetector : public Detector
     const Contour& GetPolygon() const { return playfield_polygon_; }
     bool HasDetection() const { return detected_; }
 
+    void Reset();
+
   private:
     bool ChooseLargestContour(const std::vector<Contour>& contours, Contour& largest_contour) const;
     Contour ApproximatePolygon(const Contour& hull) const;

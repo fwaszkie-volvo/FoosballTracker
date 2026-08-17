@@ -120,6 +120,11 @@ bool GoalDetector::DidCrossGoalLine(const cv::Point2f& previous_position,
 
 void GoalDetector::DetectGoals(const cv::Mat& frame)
 {
+    if (goal_lines_locked_)
+    {
+        return;
+    }
+
     has_left_goal_   = false;
     has_right_goal_  = false;
     left_goal_line_  = cv::Vec4f{};
@@ -161,10 +166,11 @@ void GoalDetector::DetectGoals(const cv::Mat& frame)
         }
     }
 
-    left_goal_line_  = BuildGoalLine(frame, playfield_polygon, left_edge_index);
-    has_left_goal_   = (left_goal_line_ != cv::Vec4f{});
-    right_goal_line_ = BuildGoalLine(frame, playfield_polygon, right_edge_index);
-    has_right_goal_  = (right_goal_line_ != cv::Vec4f{});
+    left_goal_line_    = BuildGoalLine(frame, playfield_polygon, left_edge_index);
+    has_left_goal_     = (left_goal_line_ != cv::Vec4f{});
+    right_goal_line_   = BuildGoalLine(frame, playfield_polygon, right_edge_index);
+    has_right_goal_    = (right_goal_line_ != cv::Vec4f{});
+    goal_lines_locked_ = has_left_goal_ && has_right_goal_;
 }
 
 void GoalDetector::DetectGoalScored(const BallDetector::BallMeasurement& ball_measurement)
@@ -281,4 +287,14 @@ void GoalDetector::Draw(cv::Mat& frame) const
                     goal_label_thickness,
                     cv::LINE_AA);
     }
+}
+
+void GoalDetector::Reset()
+{
+    playfield_detector_.Reset();
+    goal_lines_locked_ = false;
+    has_left_goal_     = false;
+    has_right_goal_    = false;
+    left_goal_line_    = cv::Vec4f{};
+    right_goal_line_   = cv::Vec4f{};
 }

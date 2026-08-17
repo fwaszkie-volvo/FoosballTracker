@@ -32,6 +32,8 @@ class GoalDetector : public Detector
     const cv::Vec4f& GetLeftGoalLine() const { return left_goal_line_; }
     const cv::Vec4f& GetRightGoalLine() const { return right_goal_line_; }
 
+    void Reset();
+
   private:
     void DetectGoals(const cv::Mat& frame);
     void DetectGoalScored(const BallDetector::BallMeasurement& ball_measurement);
@@ -61,6 +63,7 @@ class GoalDetector : public Detector
     GoalSide pending_goal_side_{GoalSide::kNone};
     bool goal_scored_{false};
     GoalSide scored_side_{GoalSide::kNone};
+    bool goal_lines_locked_{false};
 };
 
 #endif  // FOOSBALL_TRACKER_APP_MODEL_INCLUDE_PRIVATE_DETECTORS_GOAL_DETECTOR_HPP_

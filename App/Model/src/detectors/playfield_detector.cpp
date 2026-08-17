@@ -76,7 +76,11 @@ Contour PlayfieldDetector::ApproximatePolygon(const Contour& hull) const
 
 void PlayfieldDetector::Detect(const cv::Mat& frame)
 {
-    detected_ = false;
+    if (detected_)
+    {
+        return;
+    }
+
     playfield_polygon_.clear();
     playfield_mask_.release();
 
@@ -148,4 +152,11 @@ void PlayfieldDetector::Draw(cv::Mat& frame) const
                   true,
                   detector_types::kPlayfieldDrawColor,
                   detector_types::kDrawThickness);
+}
+
+void PlayfieldDetector::Reset()
+{
+    detected_ = false;
+    playfield_polygon_.clear();
+    playfield_mask_.release();
 }
