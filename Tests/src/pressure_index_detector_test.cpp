@@ -4,10 +4,8 @@
 
 #include <vector>
 
-constexpr float kFirstSampleRed{1.0f};
-constexpr float kFirstSampleBlue{2.0f};
-constexpr float kSecondSampleRed{3.0f};
-constexpr float kSecondSampleBlue{4.0f};
+constexpr float kFirstSampleBallY{1.0f};
+constexpr float kSecondSampleBallY{3.0f};
 
 class PressureIndexDetectorTest : public ::testing::Test
 {
@@ -17,17 +15,14 @@ class PressureIndexDetectorTest : public ::testing::Test
 
 TEST_F(PressureIndexDetectorTest, StartsEmpty)
 {
-    EXPECT_TRUE(detector_.GetRedPressure().empty());
-    EXPECT_TRUE(detector_.GetBluePressure().empty());
+    EXPECT_TRUE(detector_.GetBallPossession().empty());
 }
 
 TEST_F(PressureIndexDetectorTest, RecordSampleAppendsValuesInOrder)
 {
-    detector_.RecordSample(kFirstSampleRed, kFirstSampleBlue);
-    detector_.RecordSample(kSecondSampleRed, kSecondSampleBlue);
+    detector_.RecordSample(kFirstSampleBallY);
+    detector_.RecordSample(kSecondSampleBallY);
 
-    const std::vector<float> expected_red{kFirstSampleRed, kSecondSampleRed};
-    const std::vector<float> expected_blue{kFirstSampleBlue, kSecondSampleBlue};
-    EXPECT_EQ(detector_.GetRedPressure(), expected_red);
-    EXPECT_EQ(detector_.GetBluePressure(), expected_blue);
+    const std::vector<float> expected_ball_possession{kFirstSampleBallY, kSecondSampleBallY};
+    EXPECT_EQ(detector_.GetBallPossession(), expected_ball_possession);
 }

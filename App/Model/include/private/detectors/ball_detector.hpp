@@ -7,6 +7,7 @@
 
 #include "detector.hpp"
 #include "playfield_detector.hpp"
+#include "pressure_index_detector.hpp"
 
 class BallDetector : public Detector
 {
@@ -23,6 +24,7 @@ class BallDetector : public Detector
     void Draw(cv::Mat& frame) const override;
 
     const BallMeasurement& GetMeasurement() const { return measurement_; }
+    const PressureIndexDetector& GetPressureIndex() const { return pressure_index_; }
 
   private:
     struct DetectionCandidate
@@ -55,6 +57,7 @@ class BallDetector : public Detector
     double ComputeBallSpeedMetersPerSecond() const;
 
     PlayfieldDetector playfield_detector_{};
+    PressureIndexDetector pressure_index_{};
     DetectionCandidate best_candidate_{};
     BallMeasurement measurement_{};
     cv::Point2f previous_position_;

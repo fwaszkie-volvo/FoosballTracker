@@ -10,7 +10,6 @@
 #include <string>
 
 #include "frame_reader.hpp"
-#include "processing_config.hpp"
 #include "reader_factory.hpp"
 
 class FrameProcessor

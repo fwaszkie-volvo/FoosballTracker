@@ -12,13 +12,10 @@ PressureIndexDetector::PressureIndexDetector()
     const std::size_t reserved_samples{static_cast<std::size_t>(
       std::ceil(kAverageMatchDurationSeconds * detector_types::kDefaultProcessingFps))};
 
-    possession_red_.reserve(reserved_samples);
-    possession_blue_.reserve(reserved_samples);
+    ball_possession_.reserve(reserved_samples);
 }
 
-void PressureIndexDetector::RecordSample(const float red_distance_from_goal,
-                                         const float blue_distance_from_goal)
+void PressureIndexDetector::RecordSample(const float ball_y_position)
 {
-    possession_red_.push_back(red_distance_from_goal);
-    possession_blue_.push_back(blue_distance_from_goal);
+    ball_possession_.push_back(ball_y_position);
 }
