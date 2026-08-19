@@ -21,14 +21,14 @@ class DbStorageTest : public ::testing::Test
   protected:
     void SetUp() override
     {
-        std::filesystem::remove(kTestDbPath);
+        std::filesystem::remove_all(kTestDbPath);
         storage_ = std::make_unique<db::DbStorage>();
     }
 
     void TearDown() override
     {
         storage_.reset();
-        std::filesystem::remove(kTestDbPath);
+        std::filesystem::remove_all(kTestDbPath);
     }
 
     static ratings::MatchInput BuildMatch(std::uint8_t first_goals, std::uint8_t second_goals)
