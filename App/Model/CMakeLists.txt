@@ -10,13 +10,13 @@ add_library(foosball_model STATIC
 	src/model_main.cpp
 	src/frame_processor.cpp
 	src/generator.cpp
+	src/ball_position_recorder.cpp
 	src/ratings/match_storage.cpp
 	src/ratings/match_elo_calculator.cpp
 	src/detectors/ball_detector.cpp
 	src/detectors/goal_detector.cpp
 	src/detectors/playfield_detector.cpp
 	src/detectors/players_detector.cpp
-	src/detectors/pressure_index_detector.cpp
 	src/utils/mask_utils.cpp
 )
 

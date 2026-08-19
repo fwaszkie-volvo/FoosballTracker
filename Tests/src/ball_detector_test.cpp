@@ -65,7 +65,7 @@ TEST_F(BallDetectorTest, VideoReadAndAnnotatedWrite)
     EXPECT_GT(processed_frame_count, 0) << "Input video had no readable frames: " << input_file;
 }
 
-TEST_F(BallDetectorTest, RecordsBallPossessionDuringDetection)
+TEST_F(BallDetectorTest, RecordsBallPositionDuringDetection)
 {
     const std::string input_file{test_utils::TestFilePath("test_video_trimmed.mp4")};
     constexpr double kDefaultFps{30.0};
@@ -89,11 +89,11 @@ TEST_F(BallDetectorTest, RecordsBallPossessionDuringDetection)
 
     ASSERT_GT(frame_count, 0) << "Input video had no readable frames: " << input_file;
 
-    const auto& ball_possession{ball_detector.GetPressureIndex().GetBallPossession()};
+    const auto& ball_positions{ball_detector.GetBallPositionRecorder().GetPositions()};
 
-    ASSERT_FALSE(ball_possession.empty());
-    EXPECT_LE(static_cast<int>(ball_possession.size()), frame_count);
-    EXPECT_FLOAT_EQ(ball_possession.back(), ball_detector.GetMeasurement().position.y);
+    ASSERT_FALSE(ball_positions.empty());
+    EXPECT_LE(static_cast<int>(ball_positions.size()), frame_count);
+    EXPECT_FLOAT_EQ(ball_positions.back(), ball_detector.GetMeasurement().position.y);
 }
 
 TEST_F(BallDetectorTest, VideoReadAndAnnotatedWriteWithGoalDetection)

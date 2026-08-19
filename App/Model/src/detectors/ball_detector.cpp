@@ -403,7 +403,7 @@ void BallDetector::Detect(const cv::Mat& frame)
     ResetBestCandidate();
     ScoreHoughCandidates(frame, gray, mask);
     UpdateTrackingState();
-    pressure_index_.RecordSample(measurement_.position.y);
+    ball_position_recorder_.RecordSample(measurement_.position.y);
 }
 
 cv::Mat detect_ball(cv::Mat& frame)
