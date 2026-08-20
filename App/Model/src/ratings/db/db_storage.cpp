@@ -51,8 +51,8 @@ DbStorage::DbStorage()
     options.create_if_missing = true;
 
     leveldb::DB* db{nullptr};
-    if (const leveldb::Status status{leveldb::DB::Open(options, std::string{kPath}, &db)};
-        !status.ok())
+    const leveldb::Status status{leveldb::DB::Open(options, std::string{kPath}, &db)};
+    if (!status.ok())
     {
         spdlog::error("Failed to open database at {}: {}", kPath, status.ToString());
     }
