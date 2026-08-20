@@ -5,6 +5,7 @@
 #include <opencv2/core/mat.hpp>
 #include <opencv2/core/types.hpp>
 
+#include "ball_position_recorder.hpp"
 #include "detector.hpp"
 #include "playfield_detector.hpp"
 
@@ -23,6 +24,7 @@ class BallDetector : public Detector
     void Draw(cv::Mat& frame) const override;
 
     const BallMeasurement& GetMeasurement() const { return measurement_; }
+    const BallPositionRecorder& GetBallPositionRecorder() const { return ball_position_recorder_; }
 
   private:
     struct DetectionCandidate
@@ -55,6 +57,7 @@ class BallDetector : public Detector
     double ComputeBallSpeedMetersPerSecond() const;
 
     PlayfieldDetector playfield_detector_{};
+    BallPositionRecorder ball_position_recorder_{};
     DetectionCandidate best_candidate_{};
     BallMeasurement measurement_{};
     cv::Point2f previous_position_;

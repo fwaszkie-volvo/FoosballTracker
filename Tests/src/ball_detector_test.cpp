@@ -65,6 +65,37 @@ TEST_F(BallDetectorTest, VideoReadAndAnnotatedWrite)
     EXPECT_GT(processed_frame_count, 0) << "Input video had no readable frames: " << input_file;
 }
 
+TEST_F(BallDetectorTest, RecordsBallPositionDuringDetection)
+{
+    const std::string input_file{test_utils::TestFilePath("test_video_trimmed.mp4")};
+    constexpr double kDefaultFps{30.0};
+    constexpr double kDefaultShortVideoDurationSeconds{10.0};
+    const int max_frames =
+      static_cast<int>(std::ceil(kDefaultFps * kDefaultShortVideoDurationSeconds));
+    int frame_count = 0;
+    BallDetector ball_detector{};
+
+    processor_.ProcessFrames(input_file,
+                             [&](cv::Mat& frame) -> void
+                             {
+                                 if (frame_count >= max_frames)
+                                 {
+                                     return;
+                                 }
+
+                                 ball_detector.Detect(frame);
+                                 ++frame_count;
+                             });
+
+    ASSERT_GT(frame_count, 0) << "Input video had no readable frames: " << input_file;
+
+    const auto& ball_positions{ball_detector.GetBallPositionRecorder().GetPositions()};
+
+    ASSERT_FALSE(ball_positions.empty());
+    EXPECT_LE(static_cast<int>(ball_positions.size()), frame_count);
+    EXPECT_FLOAT_EQ(ball_positions.back(), ball_detector.GetMeasurement().position.y);
+}
+
 TEST_F(BallDetectorTest, VideoReadAndAnnotatedWriteWithGoalDetection)
 {
     const std::string input_file{test_utils::TestFilePath("test_goal_scored.mp4")};

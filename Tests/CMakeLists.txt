@@ -22,17 +22,15 @@ else()
     message(FATAL_ERROR "Nie znaleziono App/Model/CMakeLists.txt pod sciezka: ${FOOSBALL_APP_MODEL_SOURCE_DIR}")
 endif()
 
-add_executable(unit_tests
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/test_main.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/readers_test.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/frame_processor_test.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/ball_detector_test.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/players_detector_test.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/generator_test.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/match_storage_test.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/../App/log_level_manager.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/utils/utils.cpp
+file(GLOB_RECURSE TEST_SOURCES CONFIGURE_DEPENDS
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp
 )
+
+add_executable(unit_tests
+    ${TEST_SOURCES}
+    ${CMAKE_CURRENT_SOURCE_DIR}/../App/log_level_manager.cpp
+)
+
 target_include_directories(unit_tests
     PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include
