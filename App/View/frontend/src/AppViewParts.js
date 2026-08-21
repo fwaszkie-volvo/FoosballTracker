@@ -9,6 +9,8 @@ export function AppHeader({
   onLoadClick,
   onAnalClick,
   onSaveClick,
+  onCreatePlayerClick,
+  onGenerateTeamsClick,
 }) {
   return (
     <header className="topbar">
@@ -27,6 +29,12 @@ export function AppHeader({
           </button>
           <button type="button" onClick={onSaveClick} disabled={!canSave}>
             Save Result
+          </button>
+          <button type="button" onClick={onCreatePlayerClick}>
+            Create Player
+          </button>
+          <button type="button" onClick={onGenerateTeamsClick}>
+            Generate Teams
           </button>
         </div>
       </div>
@@ -141,6 +149,132 @@ export function ErrorModal({ error, onDismiss }) {
         <button type="button" onClick={onDismiss}>
           Dismiss
         </button>
+      </div>
+    </div>
+  );
+}
+
+export function CreatePlayerModal({
+  visible,
+  nickname,
+  successMessage,
+  onNicknameChange,
+  onSubmit,
+  onCancel,
+}) {
+  if (!visible) {
+    return null;
+  }
+
+  return (
+    <div className="modal-overlay">
+      <form className="modal player-modal" onSubmit={onSubmit}>
+        <h2>Create player</h2>
+        <div className="player-label-row">
+          <label htmlFor="player-nickname">Nickname</label>
+          {successMessage && <p className="player-success">{successMessage}</p>}
+        </div>
+        <input
+          id="player-nickname"
+          value={nickname}
+          onChange={(event) => onNicknameChange(event.target.value)}
+          autoFocus
+          required
+        />
+        <div className="modal-actions">
+          <button type="button" onClick={onCancel}>
+            Cancel
+          </button>
+          <button type="submit">Create</button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
+export function GenerateTeamsModal({
+  visible,
+  nicknames,
+  playerStatuses,
+  teamNames,
+  teams,
+  onNicknameChange,
+  onPlayerBlur,
+  onTeamNameChange,
+  onGenerate,
+  onCancel,
+}) {
+  if (!visible) {
+    return null;
+  }
+
+  return (
+    <div className="modal-overlay">
+      <div className="modal teams-modal">
+        <h2>Generate teams</h2>
+        <div className="nickname-list">
+          {nicknames.map((nickname, index) => (
+            <div className="nickname-row" key={index}>
+              <input
+                value={nickname}
+                placeholder={`Player ${index + 1}`}
+                onChange={(event) =>
+                  onNicknameChange(index, event.target.value)
+                }
+                onBlur={() => onPlayerBlur(index)}
+              />
+              {playerStatuses[index]?.exists && (
+                <span className="player-elo-status">
+                  Elo: {playerStatuses[index].elo}
+                </span>
+              )}
+              {playerStatuses[index] && !playerStatuses[index].exists && (
+                <span className="player-missing-status">Not exists</span>
+              )}
+            </div>
+          ))}
+        </div>
+        <div className="modal-actions">
+          <button type="button" onClick={onCancel}>
+            Close
+          </button>
+          <button type="button" onClick={() => onGenerate(false)}>
+            Random
+          </button>
+          <button type="button" onClick={() => onGenerate(true)}>
+            By Elo
+          </button>
+        </div>
+        {teams && (
+          <div className="team-results">
+            <h3>Generation results</h3>
+            {teams.map((team, index) => (
+              <article
+                className={`generated-team team-block ${index === 0 ? "red-team" : "blue-team"}`}
+                key={index}
+              >
+                <input
+                  className="generated-team-name"
+                  value={teamNames[index]}
+                  onChange={(event) =>
+                    onTeamNameChange(index, event.target.value)
+                  }
+                  aria-label={`${index === 0 ? "Red" : "Blue"} team name`}
+                />
+                <div className="generated-team-players">
+                  <span className="generated-player generated-player-left">
+                    <span>{team.players[0].nickname}</span>
+                    <span>({team.players[0].elo})</span>
+                  </span>
+                  <span className="generated-player generated-player-right">
+                    <span>({team.players[1].elo})</span>
+                    <span>{team.players[1].nickname}</span>
+                  </span>
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
