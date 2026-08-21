@@ -21,6 +21,8 @@ const cv::Scalar kPlayfieldDrawColor(255, 255, 0);
 const cv::Scalar kPlayersDrawRedColor(0, 0, 255);
 const cv::Scalar kPlayersDrawBlueColor(255, 0, 0);
 
+const cv::Scalar kPlayersDrawDebugBlackColor(0, 0, 0);
+
 const cv::Scalar kPlayersLowerBlue(100, 150, 50);
 const cv::Scalar kPlayersUpperBlue(140, 255, 255);
 

@@ -23,6 +23,7 @@ class BallDetector : public Detector
     void Draw(cv::Mat& frame) const override;
 
     const BallMeasurement& GetMeasurement() const { return measurement_; }
+    const std::deque<cv::Point2f>& GetPositionHistory() const { return position_history_; }
 
   private:
     struct DetectionCandidate

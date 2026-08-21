@@ -46,7 +46,8 @@ class PlayersDetector
                     std::vector<cv::Rect>& rectangles);
     static void RemoveInvalidPlayers(std::vector<cv::Rect>& rectangles,
                                      const cv::Point& first_corner,
-                                     const cv::Point& second_corner);
+                                     const cv::Point& second_corner,
+                                     const cv::Mat& frame);
     void SeperateTeamIntoOffenseAndDefense(Team& team,
                                            const std::vector<cv::Rect>& rectangles,
                                            const uint32_t mask,

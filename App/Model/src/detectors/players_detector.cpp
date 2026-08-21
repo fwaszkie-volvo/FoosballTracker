@@ -48,31 +48,56 @@ int64_t PlayersDetector::DistanceToCorner(const cv::Rect& rectangle, const cv::P
 }
 
 void PlayersDetector::RemoveInvalidPlayers(std::vector<cv::Rect>& rectangles,
-                                           const cv::Point& first_corner,
-                                           const cv::Point& second_corner)
+                                           const cv::Point& upper_corner,
+                                           const cv::Point& lower_corner,
+                                           const cv::Mat& frame)
 {
     cv::Rect false_player_1{};
     cv::Rect false_player_2{};
-    int64_t distance_1{std::numeric_limits<int64_t>::max()};
-    int64_t distance_2{std::numeric_limits<int64_t>::max()};
+    int64_t distance_upper{std::numeric_limits<int64_t>::max()};
+    int64_t distance_lower{std::numeric_limits<int64_t>::max()};
+    constexpr int64_t number_of_player_rows{8};
+    const int64_t frame_width{frame.size().width};
+    const int64_t first_row{frame_width / number_of_player_rows};
+    const int64_t seventh_row{7 * first_row};
+    int64_t keeper_row{};
+    std::function<bool(int, int)> compare;
+
+    if (upper_corner == cv::Point{0, 0})
+    {
+        keeper_row = first_row;
+        compare    = std::less<int>();
+    }
+    else
+    {
+        keeper_row = seventh_row;
+        compare    = std::greater<int>();
+    }
 
     for (const auto& rectangle : rectangles)
     {
-        const int64_t current_distance_1 = DistanceToCorner(rectangle, first_corner);
-        const int64_t current_distance_2 = DistanceToCorner(rectangle, second_corner);
+        const int64_t current_distance_upper = DistanceToCorner(rectangle, upper_corner);
+        const int64_t current_distance_lower = DistanceToCorner(rectangle, lower_corner);
 
-        if (current_distance_1 < distance_1)
+        if (current_distance_upper < distance_upper && compare(keeper_row, rectangle.x))
         {
-            distance_1     = current_distance_1;
+            distance_upper = current_distance_upper;
             false_player_1 = rectangle;
         }
-        if (current_distance_2 < distance_2)
+        if (current_distance_lower < distance_lower && compare(keeper_row, rectangle.x))
         {
-            distance_2     = current_distance_2;
+            distance_lower = current_distance_lower;
             false_player_2 = rectangle;
         }
     }
-
+    cv::rectangle(frame,
+                  false_player_1,
+                  detector_types::kPlayersDrawDebugBlackColor,
+                  detector_types::kDrawThickness);
+    cv::rectangle(frame,
+                  false_player_2,
+                  detector_types::kPlayersDrawDebugBlackColor,
+                  detector_types::kDrawThickness);
     std::erase(rectangles, false_player_1);
     std::erase(rectangles, false_player_2);
 }
@@ -84,8 +109,8 @@ void PlayersDetector::Detect(const cv::Mat& frame)
 
     const cv::Size size = frame.size();
     RemoveInvalidPlayers(
-      rectangles_blue_, cv::Point{size.width, 0}, cv::Point{size.width, size.height});
-    RemoveInvalidPlayers(rectangles_red_, cv::Point{0, 0}, cv::Point{0, size.height});
+      rectangles_blue_, cv::Point{size.width, 0}, cv::Point{size.width, size.height}, frame);
+    RemoveInvalidPlayers(rectangles_red_, cv::Point{0, 0}, cv::Point{0, size.height}, frame);
 
     constexpr uint32_t red_mask  = 0b00'00'10'00'10'00'01'01;
     constexpr uint32_t blue_mask = 0b01'01'00'10'00'10'00'00;

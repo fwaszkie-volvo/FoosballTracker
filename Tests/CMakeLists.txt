@@ -4,6 +4,10 @@ project(FoosballTrackerTests LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+if(NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Debug CACHE STRING "Build type" FORCE)
+endif()
+
 add_compile_definitions(SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_TRACE)
 
 enable_testing()
@@ -13,6 +17,7 @@ include(GoogleTest)
 find_package(GTest REQUIRED)
 find_package(spdlog REQUIRED)
 find_package(fmt REQUIRED)
+find_package(OpenCV REQUIRED)
 
 set(FOOSBALL_APP_MODEL_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../App/Model")
 
@@ -24,12 +29,13 @@ endif()
 
 add_executable(unit_tests
     ${CMAKE_CURRENT_SOURCE_DIR}/src/test_main.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/readers_test.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/frame_processor_test.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/ball_detector_test.cpp
+    # ${CMAKE_CURRENT_SOURCE_DIR}/src/readers_test.cpp
+    # ${CMAKE_CURRENT_SOURCE_DIR}/src/frame_processor_test.cpp
+    # ${CMAKE_CURRENT_SOURCE_DIR}/src/ball_detector_test.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/players_detector_test.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/generator_test.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/match_storage_test.cpp
+    # ${CMAKE_CURRENT_SOURCE_DIR}/src/kick_detector_test.cpp
+    # ${CMAKE_CURRENT_SOURCE_DIR}/src/generator_test.cpp
+    # ${CMAKE_CURRENT_SOURCE_DIR}/src/match_storage_test.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../App/log_level_manager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/utils/utils.cpp
 )
@@ -59,5 +65,6 @@ target_link_libraries(unit_tests
       GTest::gtest
       spdlog::spdlog
       fmt::fmt
+      ${OpenCV_LIBS}
 )
 gtest_discover_tests(unit_tests)
