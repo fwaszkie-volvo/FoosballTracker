@@ -1,237 +1,99 @@
 #include "view_main.hpp"
 
-#include <gdk-pixbuf/gdk-pixbuf.h>
-#include <gdk/gdk.h>
-#include <gio/gio.h>
-#include <glib-object.h>
-#include <glib.h>
-#include <gtk/gtk.h>
+#include <httplib.h>
 #include <spdlog/spdlog.h>
 
-#include <cstddef>
-#include <functional>
-#include <opencv2/core/mat.inl.hpp>
-#include <opencv2/imgproc.hpp>
+#include <chrono>
+#include <filesystem>
+#include <fstream>
+#include <opencv2/imgcodecs.hpp>
+#include <sstream>
 #include <string>
+#include <thread>
 #include <utility>
-
-#include "anal_button.hpp"
-#include "gobject/gclosure.h"
-#include "gtk_converters.hpp"
-#include "live_button.hpp"
-#include "load_button.hpp"
-#include "save_button.hpp"
 
 namespace
 {
-const std::string kAnalInProgress = "ANAL IN PROGRESS";
+constexpr int kPort         = 8080;
+constexpr const char* kHost = "0.0.0.0";
 
-struct WindowState
+std::string JsonEscape(const std::string& value)
 {
-    std::function<void(const std::string&)> on_file_loaded;
-    std::function<void()> on_analyse_clicked;
-    std::function<void()> on_live_clicked;
-    std::function<void(const std::string&)> on_save;
-    LoadButtonData load_button_data{};
-    SaveButtonData save_button_data{};
-    ViewMain* view_main{nullptr};
-};
-
-GtkWidget* CreateImageWidget(const cv::Mat& frame)
-{
-    if (frame.empty())
+    std::string escaped;
+    escaped.reserve(value.size());
+    for (char c : value)
     {
-        return gtk_label_new("Brak danych ramki do wyswietlenia.");
+        switch (c)
+        {
+            case '"':
+                escaped += "\\\"";
+                break;
+            case '\\':
+                escaped += "\\\\";
+                break;
+            case '\n':
+                escaped += "\\n";
+                break;
+            case '\r':
+                escaped += "\\r";
+                break;
+            default:
+                escaped += c;
+        }
     }
-
-    cv::Mat converted;
-    bool has_alpha = false;
-
-    if (frame.channels() == 3)
-    {
-        cv::cvtColor(frame, converted, cv::COLOR_BGR2RGB);
-    }
-    else if (frame.channels() == 4)
-    {
-        cv::cvtColor(frame, converted, cv::COLOR_BGRA2RGBA);
-        has_alpha = true;
-    }
-    else if (frame.channels() == 1)
-    {
-        cv::cvtColor(frame, converted, cv::COLOR_GRAY2RGB);
-    }
-    else
-    {
-        return gtk_label_new("Nieobslugiwany format ramki.");
-    }
-
-    GBytes* bytes =
-      g_bytes_new(converted.data, converted.total() * static_cast<size_t>(converted.elemSize()));
-    GdkPixbuf* pixbuf   = gdk_pixbuf_new_from_bytes(bytes,
-                                                  GDK_COLORSPACE_RGB,
-                                                  has_alpha,
-                                                  8,
-                                                  converted.cols,
-                                                  converted.rows,
-                                                  static_cast<int>(converted.step));
-    GdkTexture* texture = gdk_texture_new_for_pixbuf(pixbuf);
-    GtkWidget* picture  = gtk_picture_new_for_paintable(GDK_PAINTABLE(texture));
-    gtk_picture_set_can_shrink(conv::ToGtkPicture(picture), TRUE);
-
-    g_object_unref(texture);
-    g_object_unref(pixbuf);
-    g_bytes_unref(bytes);
-
-    return picture;
+    return escaped;
 }
 
-GtkWidget* CreateVideoWidget(const std::string& path)
+std::string JsonStringOrNull(const std::string& value)
 {
-    GtkWidget* video = gtk_video_new_for_filename(path.c_str());
-    gtk_video_set_autoplay(conv::ToGtkVideo(video), TRUE);
-    gtk_video_set_loop(conv::ToGtkVideo(video), FALSE);
-
-    // autoplay nie startuje przed realizacją widgetu — wymuszamy play po realize
-    // NOLINTNEXTLINE(clang-analyzer-optin.core.EnumCastOutOfRange,bugprone-casting-through-void)
-    g_signal_connect(video,
-                     "realize",
-                     G_CALLBACK(+[](GtkWidget* widget, gpointer)
-                                {
-                                    auto* stream =
-                                      gtk_video_get_media_stream(conv::ToGtkVideo(widget));
-                                    if (stream != nullptr)
-                                    {
-                                        gtk_media_stream_play(stream);
-                                    }
-                                }),
-                     nullptr);
-
-    return video;
-}
-
-void on_activate(GtkApplication* app, gpointer user_data)
-{
-    auto* state = static_cast<WindowState*>(user_data);  // NOLINT(bugprone-casting-through-void)
-
-    GtkWindow* gtk_window = conv::ToGtkWindow(gtk_application_window_new(app));
-    gtk_window_set_title(gtk_window, "Foosball Tracker");
-    gtk_window_set_default_size(gtk_window, 800, 600);
-
-    if (state != nullptr)
-    {
-        state->load_button_data = {gtk_window, state->on_file_loaded};
-        state->save_button_data = {gtk_window, state->on_save};
-    }
-
-    GtkWidget* vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
-
-    GtkWidget* button_bar = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 4);
-    gtk_widget_set_margin_start(button_bar, 4);
-    gtk_widget_set_margin_end(button_bar, 4);
-    gtk_widget_set_margin_top(button_bar, 4);
-    gtk_widget_set_margin_bottom(button_bar, 4);
-
-    GtkWidget* btn_live = gtk_button_new_with_label("LIVE");
-    GtkWidget* btn_load = gtk_button_new_with_label("LOAD");
-    GtkWidget* btn_anal = gtk_button_new_with_label("ANAL");
-    GtkWidget* btn_save = gtk_button_new_with_label("SAVE");
-    // NOLINTNEXTLINE(clang-analyzer-optin.core.EnumCastOutOfRange,bugprone-casting-through-void)
-    g_signal_connect(btn_live,
-                     "clicked",
-                     G_CALLBACK(on_live_button_clicked),
-                     state != nullptr ? &state->on_live_clicked : nullptr);
-    // NOLINTNEXTLINE(clang-analyzer-optin.core.EnumCastOutOfRange,bugprone-casting-through-void)
-    g_signal_connect(btn_load,
-                     "clicked",
-                     G_CALLBACK(on_load_button_clicked),
-                     state != nullptr ? &state->load_button_data : nullptr);
-    // NOLINTNEXTLINE(clang-analyzer-optin.core.EnumCastOutOfRange,bugprone-casting-through-void)
-    g_signal_connect(btn_anal,
-                     "clicked",
-                     G_CALLBACK(on_anal_button_clicked),
-                     state != nullptr ? &state->on_analyse_clicked : nullptr);
-    // NOLINTNEXTLINE(clang-analyzer-optin.core.EnumCastOutOfRange,bugprone-casting-through-void)
-    g_signal_connect(btn_save,
-                     "clicked",
-                     G_CALLBACK(on_save_button_clicked),
-                     state != nullptr ? &state->save_button_data : nullptr);
-    gtk_box_append(conv::ToGtkBox(button_bar), btn_live);
-    gtk_box_append(conv::ToGtkBox(button_bar), btn_load);
-    gtk_box_append(conv::ToGtkBox(button_bar), btn_anal);
-    gtk_box_append(conv::ToGtkBox(button_bar), btn_save);
-    gtk_box_append(conv::ToGtkBox(vbox), button_bar);
-
-    GtkWidget* content = gtk_label_new("Przygotuj i załaduj do ANALA.");
-    gtk_widget_set_vexpand(content, TRUE);
-    gtk_box_append(conv::ToGtkBox(vbox), content);
-
-    gtk_window_set_child(gtk_window, vbox);
-
-    if (state != nullptr && state->view_main != nullptr)
-    {
-        state->view_main->SetContentVbox(vbox);
-    }
-
-    gtk_window_present(gtk_window);
+    return value.empty() ? "null" : "\"" + JsonEscape(value) + "\"";
 }
 
 }  // namespace
 
-void ViewMain::ShowAnalProgressDialog()
-{
-    auto* dialog = gtk_window_new();
-    gtk_window_set_title(conv::ToGtkWindow(dialog), "");
-    gtk_window_set_modal(conv::ToGtkWindow(dialog), TRUE);
-    gtk_window_set_resizable(conv::ToGtkWindow(dialog), FALSE);
-    gtk_window_set_deletable(conv::ToGtkWindow(dialog), FALSE);
+ViewMain::ViewMain() : server_{std::make_unique<httplib::Server>()} {}
 
-    if (gtk_app_ != nullptr)
+ViewMain::~ViewMain() = default;
+
+void ViewMain::DrawVideo(const std::string& path)
+{
+    const std::lock_guard<std::mutex> lock{state_mutex_};
+    current_video_path_ = path;
+}
+
+void ViewMain::PushLiveFrame(const cv::Mat& frame)
+{
+    if (frame.empty())
     {
-        GList* windows = gtk_application_get_windows(conv::ToGtkApplication(gtk_app_));
-        if (windows != nullptr)
-        {
-            gtk_window_set_transient_for(conv::ToGtkWindow(dialog),
-                                         conv::ToGtkWindow(static_cast<GtkWidget*>(windows->data)));
-        }
+        return;
     }
 
-    GtkWidget* label = gtk_label_new(kAnalInProgress.c_str());
-    gtk_widget_set_margin_start(label, 32);
-    gtk_widget_set_margin_end(label, 32);
-    gtk_widget_set_margin_top(label, 24);
-    gtk_widget_set_margin_bottom(label, 24);
-    gtk_window_set_child(conv::ToGtkWindow(dialog), label);
+    std::vector<unsigned char> encoded;
+    if (!cv::imencode(".jpg", frame, encoded))
+    {
+        return;
+    }
 
-    progress_dialog_ = dialog;
-    gtk_widget_set_visible(dialog, TRUE);
+    const std::lock_guard<std::mutex> lock{live_frame_mutex_};
+    live_frame_jpeg_ = std::move(encoded);
+}
+
+void ViewMain::ShowAnalProgressDialog()
+{
+    const std::lock_guard<std::mutex> lock{state_mutex_};
+    analysis_in_progress_ = true;
 }
 
 void ViewMain::HideAnalProgressDialog()
 {
-    if (progress_dialog_ != nullptr)
-    {
-        gtk_window_destroy(conv::ToGtkWindow(static_cast<GtkWidget*>(progress_dialog_)));
-        progress_dialog_ = nullptr;
-    }
+    const std::lock_guard<std::mutex> lock{state_mutex_};
+    analysis_in_progress_ = false;
 }
 
 void ViewMain::ShowModalCannotAnalyzeOfflineFile()
 {
-    GtkWidget* dialog = gtk_message_dialog_new(
-      nullptr,  // parent window
-                // NOLINTNEXTLINE(clang-analyzer-optin.core.EnumCastOutOfRange)
-      static_cast<GtkDialogFlags>(GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT),
-      GTK_MESSAGE_ERROR,
-      GTK_BUTTONS_OK,
-      "Nie można analizować pliku offline. Załaduj plik i spróbuj ponownie.");
-    gtk_window_set_title(conv::ToGtkWindow(dialog), "Błąd");
-    // NOLINTNEXTLINE(clang-analyzer-optin.core.EnumCastOutOfRange,bugprone-casting-through-void)
-    g_signal_connect(
-      dialog,
-      "response",
-      G_CALLBACK(+[](GtkDialog* d, int, gpointer) { gtk_window_destroy(conv::ToGtkWindow(d)); }),
-      nullptr);
-    gtk_widget_show(dialog);
+    const std::lock_guard<std::mutex> lock{state_mutex_};
+    error_message_ = "Nie mozna analizowac pliku offline. Zaladuj plik i sprobuj ponownie.";
 }
 
 void ViewMain::SetOnFileLoaded(std::function<void(const std::string&)> callback)
@@ -249,91 +111,226 @@ void ViewMain::SetOnLiveClicked(std::function<void()> callback)
     on_live_clicked_ = std::move(callback);
 }
 
-void ViewMain::UpdateContent(const std::optional<cv::Mat>& frame)
-{
-    auto* vbox = static_cast<GtkWidget*>(gtk_content_vbox_);
-    if (vbox == nullptr)
-    {
-        return;
-    }
-
-    // The content widget is the second child of vbox (after button_bar).
-    GtkWidget* button_bar = gtk_widget_get_first_child(vbox);
-    GtkWidget* old_content =
-      button_bar != nullptr ? gtk_widget_get_next_sibling(button_bar) : nullptr;
-    if (old_content != nullptr)
-    {
-        gtk_box_remove(conv::ToGtkBox(vbox), old_content);
-    }
-
-    GtkWidget* new_content = frame.has_value() ? CreateImageWidget(frame.value())
-                                               : gtk_label_new("Model nie zwrocil zadnej ramki.");
-    gtk_widget_set_vexpand(new_content, TRUE);
-    gtk_box_append(conv::ToGtkBox(vbox), new_content);
-}
-
-void ViewMain::UpdateContentWithVideo(const std::string& path)
-{
-    auto* vbox = static_cast<GtkWidget*>(gtk_content_vbox_);
-    if (vbox == nullptr)
-    {
-        return;
-    }
-
-    GtkWidget* button_bar = gtk_widget_get_first_child(vbox);
-    GtkWidget* old_content =
-      button_bar != nullptr ? gtk_widget_get_next_sibling(button_bar) : nullptr;
-
-    if (old_content != nullptr)
-    {
-        // Hold an extra ref so the widget survives gtk_box_remove, then defer
-        // the final unref to the next main-loop iteration to let any in-flight
-        // GtkMediaFile async callbacks complete before finalization.
-        (g_object_ref)(old_content);
-        gtk_box_remove(conv::ToGtkBox(vbox), old_content);
-        g_idle_add(
-          +[](gpointer data) -> gboolean
-          {
-              g_object_unref(data);
-              return G_SOURCE_REMOVE;
-          },
-          old_content);
-    }
-
-    GtkWidget* video = CreateVideoWidget(path);
-    gtk_widget_set_vexpand(video, TRUE);
-    gtk_box_append(conv::ToGtkBox(vbox), video);
-}
-
 void ViewMain::SetOnSave(std::function<void(const std::string&)> callback)
 {
     on_save_ = std::move(callback);
 }
 
-void ViewMain::DrawVideo(const std::string& path)
+void ViewMain::RegisterRoutes()
 {
-    if (gtk_app_ == nullptr)
+    server_->set_default_headers({{"Access-Control-Allow-Origin", "*"}});
+
+    server_->Options(".*",
+                     [](const httplib::Request&, httplib::Response& res)
+                     {
+                         res.set_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+                         res.set_header("Access-Control-Allow-Headers", "Content-Type");
+                         res.status = 204;
+                     });
+
+    server_->Get("/api/status",
+                 [this](const httplib::Request&, httplib::Response& res)
+                 {
+                     std::string video_url;
+                     std::string error;
+                     bool analyzing = false;
+                     {
+                         const std::lock_guard<std::mutex> lock{state_mutex_};
+                         if (!current_video_path_.empty())
+                         {
+                             video_url = "/media/current";
+                         }
+                         error     = error_message_;
+                         analyzing = analysis_in_progress_;
+                         error_message_.clear();
+                     }
+
+                     std::ostringstream body;
+                     body << "{\"analyzing\":" << (analyzing ? "true" : "false")
+                          << ",\"error\":" << JsonStringOrNull(error)
+                          << ",\"videoUrl\":" << JsonStringOrNull(video_url) << "}";
+                     res.set_content(body.str(), "application/json");
+                 });
+
+    server_->Post(
+      "/api/load",
+      [this](const httplib::Request& req, httplib::Response& res)
+      {
+          if (!req.has_file("file"))
+          {
+              res.status = 400;
+              res.set_content("{\"error\":\"Brak pliku w polu 'file'.\"}", "application/json");
+              return;
+          }
+
+          const auto& file     = req.get_file_value("file");
+          const auto extension = std::filesystem::path(file.filename).extension().string();
+          const auto dest_path =
+            std::filesystem::temp_directory_path() /
+            ("foosball_upload_" +
+             std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()) +
+             (extension.empty() ? ".mp4" : extension));
+
+          std::ofstream out{dest_path, std::ios::binary};
+          out << file.content;
+          out.close();
+
+          if (on_file_loaded_)
+          {
+              on_file_loaded_(dest_path.string());
+          }
+
+          res.set_content("{\"ok\":true}", "application/json");
+      });
+
+    server_->Post("/api/analyse",
+                  [this](const httplib::Request&, httplib::Response& res)
+                  {
+                      if (on_analyse_clicked_)
+                      {
+                          on_analyse_clicked_();
+                      }
+                      res.set_content("{\"ok\":true}", "application/json");
+                  });
+
+    server_->Post("/api/live",
+                  [this](const httplib::Request&, httplib::Response& res)
+                  {
+                      if (on_live_clicked_)
+                      {
+                          on_live_clicked_();
+                      }
+                      res.set_content("{\"ok\":true}", "application/json");
+                  });
+
+    server_->Get(
+      "/api/save",
+      [this](const httplib::Request&, httplib::Response& res)
+      {
+          if (!on_save_)
+          {
+              res.status = 500;
+              res.set_content("{\"error\":\"Zapis nie jest dostepny.\"}", "application/json");
+              return;
+          }
+
+          const auto temp_path =
+            std::filesystem::temp_directory_path() /
+            ("foosball_result_" +
+             std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()) + ".mp4");
+
+          on_save_(temp_path.string());
+
+          if (!std::filesystem::exists(temp_path))
+          {
+              res.status = 404;
+              res.set_content("{\"error\":\"Nie udalo sie przygotowac pliku wynikowego.\"}",
+                              "application/json");
+              return;
+          }
+
+          const auto file_size = std::filesystem::file_size(temp_path);
+          auto stream          = std::make_shared<std::ifstream>(temp_path, std::ios::binary);
+          res.set_header("Content-Disposition", "attachment; filename=\"foosball_result.mp4\"");
+          res.set_content_provider(
+            file_size,
+            "video/mp4",
+            [stream](size_t offset, size_t length, httplib::DataSink& sink) -> bool
+            {
+                std::vector<char> buffer(length);
+                stream->seekg(static_cast<std::streamoff>(offset));
+                stream->read(buffer.data(), static_cast<std::streamsize>(length));
+                sink.write(buffer.data(), length);
+                return true;
+            },
+            [temp_path](bool /*success*/)
+            {
+                std::error_code ec;
+                std::filesystem::remove(temp_path, ec);
+            });
+      });
+
+    server_->Get("/media/current",
+                 [this](const httplib::Request&, httplib::Response& res)
+                 {
+                     std::string path;
+                     {
+                         const std::lock_guard<std::mutex> lock{state_mutex_};
+                         path = current_video_path_;
+                     }
+
+                     if (path.empty() || !std::filesystem::exists(path))
+                     {
+                         res.status = 404;
+                         return;
+                     }
+
+                     const auto file_size = std::filesystem::file_size(path);
+                     auto stream          = std::make_shared<std::ifstream>(path, std::ios::binary);
+                     res.set_content_provider(
+                       file_size,
+                       "video/mp4",
+                       [stream](size_t offset, size_t length, httplib::DataSink& sink) -> bool
+                       {
+                           std::vector<char> buffer(length);
+                           stream->seekg(static_cast<std::streamoff>(offset));
+                           stream->read(buffer.data(), static_cast<std::streamsize>(length));
+                           sink.write(buffer.data(), length);
+                           return true;
+                       });
+                 });
+
+    server_->Get("/media/live.mjpg",
+                 [this](const httplib::Request&, httplib::Response& res)
+                 {
+                     static const std::string kBoundary = "foosballframe";
+                     res.set_chunked_content_provider(
+                       "multipart/x-mixed-replace; boundary=" + kBoundary,
+                       [this](size_t /*offset*/, httplib::DataSink& sink) -> bool
+                       {
+                           std::vector<unsigned char> frame;
+                           {
+                               const std::lock_guard<std::mutex> lock{live_frame_mutex_};
+                               frame = live_frame_jpeg_;
+                           }
+
+                           if (!frame.empty())
+                           {
+                               std::ostringstream header;
+                               header << "--" << kBoundary << "\r\n"
+                                      << "Content-Type: image/jpeg\r\n"
+                                      << "Content-Length: " << frame.size() << "\r\n\r\n";
+                               const auto header_str = header.str();
+                               sink.write(header_str.data(), header_str.size());
+                               sink.write(reinterpret_cast<const char*>(frame.data()),
+                                          frame.size());
+                               sink.write("\r\n", 2);
+                           }
+
+                           std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                           return true;
+                       });
+                 });
+
+    const char* frontend_dir = FOOSBALL_FRONTEND_BUILD_DIR;
+    if (std::filesystem::exists(frontend_dir))
     {
-        spdlog::warn("DrawVideo: aplikacja GTK nie jest uruchomiona");
-        return;
+        server_->set_mount_point("/", frontend_dir);
     }
-    UpdateContentWithVideo(path);
+    else
+    {
+        spdlog::warn("Katalog build reactowego frontendu nie istnieje: {}", frontend_dir);
+    }
 }
 
 int ViewMain::CreateAndRunMain()
 {
-    WindowState state{
-      on_file_loaded_, on_analyse_clicked_, on_live_clicked_, on_save_, {}, {}, this};
-    GtkApplication* app =
-      gtk_application_new("foosballtracker.app", G_APPLICATION_FLAGS_NONE);  // NOLINT
-    gtk_app_ = app;
-
-    // NOLINTNEXTLINE(clang-analyzer-optin.core.EnumCastOutOfRange,bugprone-casting-through-void)
-    g_signal_connect(app, "activate", G_CALLBACK(on_activate), &state);
-
-    int ret_val = g_application_run(conv::ToGApplication(app), 0, nullptr);
-    g_object_unref(app);
-    gtk_app_          = nullptr;
-    gtk_content_vbox_ = nullptr;
-    return ret_val;
+    RegisterRoutes();
+    spdlog::info("Uruchamiam serwer HTTP na {}:{}", kHost, kPort);
+    if (!server_->listen(kHost, kPort))
+    {
+        spdlog::error("Nie udalo sie uruchomic serwera HTTP na porcie {}", kPort);
+        return 1;
+    }
+    return 0;
 }
