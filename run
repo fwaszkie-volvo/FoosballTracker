@@ -103,6 +103,9 @@ function configure() {
   lfs_enabled=true
   privilege_prefix=()
   install_packages=()
+  additional_packages=(
+    nodejs
+  )
   llvm_major=18
   codename=""
 
