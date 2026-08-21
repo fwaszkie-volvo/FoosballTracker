@@ -13,7 +13,7 @@ Uzycie: $0 <opcja>
 
 Dostepne opcje:
   configure        Instaluje komplet niezbednych pakietow (build, test, clang, format)
-                    [--no-ui-tools] - nie instaluje narzędzi do implementacji UI
+                    [--no-ui-tools] - nie instaluje Node.js/npm potrzebnych do zbudowania frontendu React
                     [--no-lfs] - nie konfiguruje ani nie pobiera plikow Git LFS
   build            Buduje projekt przy uzyciu CMake.
   clang-check      Uruchamia clang-tidy na plikach C++ projektu.
@@ -76,14 +76,7 @@ function configure() {
   privilege_prefix=()
   install_packages=()
   additional_packages=(
-    libgtk-4-1
-    libgtk-4-dev
-    libgtk-4-media-gstreamer
-    gstreamer1.0-plugins-base
-    gstreamer1.0-plugins-good
-    gstreamer1.0-plugins-bad
-    gstreamer1.0-libav
-    gstreamer1.0-gl
+    nodejs
   )
   llvm_major=18
   codename=""
@@ -195,8 +188,23 @@ function configure() {
     return $?
   fi
 
-  echo "Nieobslugiwany menedzer pakietow. Zainstaluj recznie: build-essential, cmake, OpenCV, GoogleTest, spdlog, fmt, GTK4, clang-format, clang-tidy, include-what-you-use."
+  echo "Nieobslugiwany menedzer pakietow. Zainstaluj recznie: build-essential, cmake, OpenCV, GoogleTest, spdlog, fmt, Node.js/npm, clang-format, clang-tidy, include-what-you-use."
   return 1
+}
+
+function build_frontend() {
+  local frontend_dir="$APP_DIR/View/frontend"
+
+  if ! command -v npm >/dev/null 2>&1; then
+    echo "Brak pakietu npm. Zainstaluj Node.js/npm i sprobuj ponownie."
+    return 1
+  fi
+
+  if [[ ! -d "$frontend_dir/node_modules" ]]; then
+    (cd "$frontend_dir" && npm install) || return 1
+  fi
+
+  (cd "$frontend_dir" && CI=true npm run build) || return 1
 }
 
 function build() {
@@ -204,6 +212,8 @@ function build() {
     echo "Brak pakietu cmake. Zainstaluj cmake i sprobuj ponownie."
     return 1
   fi
+
+  build_frontend || return 1
 
   mkdir -p "$BUILD_DIR"
   cmake -S "$APP_DIR" -B "$BUILD_DIR"
@@ -280,12 +290,7 @@ function app() {
     export LOG_LEVEL="$log_level"
   fi
 
-  # WSLg + GTK4 GL renderer can crash on rapid file chooser repaints.
-  # Prefer software renderer unless user explicitly configured GSK_RENDERER.
-  if [[ -z "${GSK_RENDERER:-}" ]] && grep -qi "microsoft" /proc/version; then
-    export GSK_RENDERER="cairo"
-  fi
-
+  echo "Foosball Tracker dostepny pod adresem http://localhost:8080"
   "$APP_BINARY" "${args_for_app[@]}"
 }
 
