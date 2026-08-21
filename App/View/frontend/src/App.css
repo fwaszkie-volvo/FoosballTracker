@@ -401,6 +401,155 @@
   margin: 0;
 }
 
+.player-modal {
+  display: grid;
+  gap: 0.65rem;
+  text-align: left;
+}
+
+.player-modal h2 {
+  margin: 0;
+}
+
+.player-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.player-success {
+  margin: 0;
+  color: #18794e;
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.player-modal input {
+  min-height: 2.4rem;
+  border: 1px solid #b9c6d8;
+  border-radius: 0.55rem;
+  padding: 0 0.65rem;
+  font: inherit;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.55rem;
+  margin-top: 0.35rem;
+}
+
+.modal-actions button {
+  border: 0;
+  border-radius: 0.65rem;
+  padding: 0.5rem 0.85rem;
+  background: #173f7a;
+  color: #fff;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.modal-actions button:first-child {
+  background: #718096;
+}
+
+.teams-modal {
+  display: grid;
+  gap: 0.65rem;
+  text-align: left;
+}
+
+.teams-modal h2,
+.team-results h3 {
+  margin: 0;
+}
+
+.nickname-list {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.nickname-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 5rem;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.nickname-row input {
+  min-height: 2.4rem;
+  border: 1px solid #b9c6d8;
+  border-radius: 0.55rem;
+  padding: 0 0.65rem;
+  font: inherit;
+}
+
+.player-elo-status,
+.player-missing-status {
+  font-size: 0.85rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.player-elo-status {
+  color: #18794e;
+}
+
+.player-missing-status {
+  color: #b42318;
+}
+
+.team-results {
+  display: grid;
+  gap: 0.5rem;
+  margin-top: 0.35rem;
+}
+
+.generated-team {
+  display: grid;
+  gap: 0.2rem;
+  padding: 0.6rem 0.7rem;
+  border-radius: 0.55rem;
+  color: #fff;
+}
+
+.generated-team-name {
+  width: min(100%, 8rem);
+  box-sizing: border-box;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 0.45rem;
+  padding: 0.2rem 0.35rem;
+  background: rgba(7, 13, 22, 0.28);
+  color: inherit;
+  font: inherit;
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.generated-team-players {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.generated-player {
+  display: flex;
+  gap: 0.35rem;
+  min-width: 0;
+  white-space: nowrap;
+}
+
+.generated-player-left {
+  justify-content: flex-start;
+}
+
+.generated-player-right {
+  justify-content: flex-end;
+  text-align: right;
+}
+
 .modal.error button {
   margin-top: 0.9rem;
   border: 0;

@@ -2,15 +2,17 @@
 
 #include <httplib.h>
 #include <spdlog/spdlog.h>
-
-#include <chrono>
+#include <opencv2/imgcodecs.hpp>
+#include <bits/chrono.h>
+#include <stddef.h>
+#include <opencv2/core/mat.inl.hpp>
 #include <filesystem>
 #include <fstream>
-#include <opencv2/imgcodecs.hpp>
 #include <sstream>
 #include <string>
 #include <thread>
 #include <utility>
+#include <system_error>
 
 namespace
 {
@@ -116,6 +118,22 @@ void ViewMain::SetOnSave(std::function<void(const std::string&)> callback)
     on_save_ = std::move(callback);
 }
 
+void ViewMain::SetOnCreatePlayer(std::function<bool(const std::string&)> callback)
+{
+    on_create_player_ = std::move(callback);
+}
+
+void ViewMain::SetOnCheckPlayer(std::function<std::optional<int>(const std::string&)> callback)
+{
+    on_check_player_ = std::move(callback);
+}
+
+void ViewMain::SetOnGenerateTeams(
+    std::function<std::pair<int, std::string>(const std::vector<std::string>&, bool)> callback)
+{
+        on_generate_teams_ = std::move(callback);
+}
+
 void ViewMain::RegisterRoutes()
 {
     server_->set_default_headers({{"Access-Control-Allow-Origin", "*"}});
@@ -202,6 +220,85 @@ void ViewMain::RegisterRoutes()
                       }
                       res.set_content("{\"ok\":true}", "application/json");
                   });
+
+    server_->Post(
+      "/api/players",
+      [this](const httplib::Request& req, httplib::Response& res)
+      {
+          const std::string nickname = req.body;
+          if (nickname.empty())
+          {
+              res.status = 400;
+              res.set_content("{\"error\":\"Nickname is required.\"}", "application/json");
+              return;
+          }
+
+          if (!on_create_player_ || !on_create_player_(nickname))
+          {
+              res.status = 409;
+              res.set_content("{\"error\":\"Player already exists.\"}", "application/json");
+              return;
+          }
+
+          res.status = 201;
+          res.set_content("{\"ok\":true}", "application/json");
+      });
+
+    server_->Post(
+      "/api/teams",
+      [this](const httplib::Request& req, httplib::Response& res)
+      {
+          std::istringstream input{req.body};
+          std::vector<std::string> nicknames;
+          std::string nickname;
+          while (input >> nickname)
+          {
+              nicknames.push_back(nickname);
+          }
+
+          if (nicknames.size() != 4U)
+          {
+              res.status = 400;
+              res.set_content("{\"error\":\"Exactly four nicknames are required.\"}",
+                              "application/json");
+              return;
+          }
+
+          const bool by_elo = req.has_param("mode") && req.get_param_value("mode") == "elo";
+          if (!on_generate_teams_)
+          {
+              res.status = 500;
+              res.set_content("{\"error\":\"Team generation is unavailable.\"}",
+                              "application/json");
+              return;
+          }
+
+          const auto [status, body] = on_generate_teams_(nicknames, by_elo);
+          res.status = status;
+          res.set_content(body, "application/json");
+      });
+
+    server_->Get(
+      "/api/player",
+      [this](const httplib::Request& req, httplib::Response& res)
+      {
+          if (!req.has_param("nickname") || !on_check_player_)
+          {
+              res.status = 400;
+              res.set_content("{\"error\":\"Nickname is required.\"}", "application/json");
+              return;
+          }
+
+          const auto elo = on_check_player_(req.get_param_value("nickname"));
+          if (!elo)
+          {
+              res.set_content("{\"exists\":false}", "application/json");
+              return;
+          }
+
+          res.set_content("{\"exists\":true,\"elo\":" + std::to_string(*elo) + "}",
+                          "application/json");
+      });
 
     server_->Get(
       "/api/save",

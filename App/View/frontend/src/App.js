@@ -5,7 +5,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import {
   AnalysisModal,
   AppHeader,
+  CreatePlayerModal,
   ErrorModal,
+  GenerateTeamsModal,
   StatsPanel,
   VideoOverlayPanel,
 } from "./AppViewParts";
@@ -31,6 +33,19 @@ function App() {
   const [liveStreamState, setLiveStreamState] = useState(
     LIVE_STREAM_STATE.IDLE,
   );
+  const [isCreatePlayerOpen, setIsCreatePlayerOpen] = useState(false);
+  const [nickname, setNickname] = useState("");
+  const [playerCreated, setPlayerCreated] = useState(false);
+  const [isGenerateTeamsOpen, setIsGenerateTeamsOpen] = useState(false);
+  const [teamNicknames, setTeamNicknames] = useState(["", "", "", ""]);
+  const [playerStatuses, setPlayerStatuses] = useState([
+    null,
+    null,
+    null,
+    null,
+  ]);
+  const [teamNames, setTeamNames] = useState(["Red Team", "Blue Team"]);
+  const [generatedTeams, setGeneratedTeams] = useState(null);
   const fileInputRef = useRef(null);
   const wasAnalyzingRef = useRef(false);
   const liveProbeTimerRef = useRef(null);
@@ -39,7 +54,10 @@ function App() {
     try {
       const response = await fetch(API_ROUTE.STATUS);
       const data = await response.json();
-      setStatus(data);
+      setStatus((current) => ({
+        ...data,
+        error: data.error ?? current.error,
+      }));
       if (data.videoUrl) {
         setMode((current) => (current === MODE.LIVE ? current : MODE.VIDEO));
       }
@@ -132,6 +150,103 @@ function App() {
     window.location.href = API_ROUTE.SAVE;
   };
 
+  const handleCreatePlayer = async (event) => {
+    event.preventDefault();
+    setPlayerCreated(false);
+    const response = await fetch(API_ROUTE.PLAYERS, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain" },
+      body: nickname.trim(),
+    });
+    if (response.ok) {
+      setNickname("");
+      setPlayerCreated(true);
+      return;
+    }
+    const data = await response.json().catch(() => null);
+    setStatus((current) => ({
+      ...current,
+      error: data?.error || UI_TEXT.PLAYER_CREATE_ERROR,
+    }));
+  };
+
+  const openCreatePlayer = () => {
+    setPlayerCreated(false);
+    setNickname("");
+    setIsCreatePlayerOpen(true);
+  };
+
+  const closeCreatePlayer = () => {
+    setPlayerCreated(false);
+    setNickname("");
+    setIsCreatePlayerOpen(false);
+  };
+
+  const openGenerateTeams = () => {
+    setGeneratedTeams(null);
+    setTeamNicknames(["", "", "", ""]);
+    setPlayerStatuses([null, null, null, null]);
+    setTeamNames(["Red Team", "Blue Team"]);
+    setIsGenerateTeamsOpen(true);
+  };
+
+  const closeGenerateTeams = () => {
+    setGeneratedTeams(null);
+    setTeamNicknames(["", "", "", ""]);
+    setPlayerStatuses([null, null, null, null]);
+    setTeamNames(["Red Team", "Blue Team"]);
+    setIsGenerateTeamsOpen(false);
+  };
+
+  const handlePlayerBlur = async (index) => {
+    const nicknameValue = teamNicknames[index].trim();
+    if (!nicknameValue) {
+      setPlayerStatuses((current) =>
+        current.map((playerStatus, statusIndex) =>
+          statusIndex === index ? null : playerStatus,
+        ),
+      );
+      return;
+    }
+
+    const response = await fetch(
+      `${API_ROUTE.PLAYER}?nickname=${encodeURIComponent(nicknameValue)}`,
+    );
+    if (!response.ok) {
+      return;
+    }
+    const data = await response.json();
+    setPlayerStatuses((current) =>
+      current.map((playerStatus, statusIndex) =>
+        statusIndex === index
+          ? data.exists
+            ? { exists: true, elo: data.elo }
+            : { exists: false }
+          : playerStatus,
+      ),
+    );
+  };
+
+  const handleGenerateTeams = async (byElo) => {
+    const response = await fetch(
+      `${API_ROUTE.TEAMS}?mode=${byElo ? "elo" : "random"}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "text/plain" },
+        body: teamNicknames.map((value) => value.trim()).join("\n"),
+      },
+    );
+    if (response.ok) {
+      setGeneratedTeams(await response.json());
+      return;
+    }
+    const data = await response.json().catch(() => null);
+    setStatus((current) => ({
+      ...current,
+      error: data?.error || UI_TEXT.TEAM_GENERATION_ERROR,
+    }));
+  };
+
   const dismissError = () =>
     setStatus((current) => ({ ...current, error: null }));
 
@@ -159,6 +274,8 @@ function App() {
         onLoadClick={handleLoadClick}
         onAnalClick={handleAnalClick}
         onSaveClick={handleSaveClick}
+        onCreatePlayerClick={openCreatePlayer}
+        onGenerateTeamsClick={openGenerateTeams}
       />
 
       <main className="viewer-panel">
@@ -213,6 +330,43 @@ function App() {
       />
 
       <AnalysisModal visible={status.analyzing} />
+      <CreatePlayerModal
+        visible={isCreatePlayerOpen}
+        nickname={nickname}
+        successMessage={playerCreated ? UI_TEXT.PLAYER_CREATED : null}
+        onNicknameChange={setNickname}
+        onSubmit={handleCreatePlayer}
+        onCancel={closeCreatePlayer}
+      />
+      <GenerateTeamsModal
+        visible={isGenerateTeamsOpen}
+        nicknames={teamNicknames}
+        playerStatuses={playerStatuses}
+        teamNames={teamNames}
+        teams={generatedTeams?.teams}
+        onNicknameChange={(index, value) => {
+          setTeamNicknames((current) =>
+            current.map((nicknameValue, nicknameIndex) =>
+              nicknameIndex === index ? value : nicknameValue,
+            ),
+          );
+          setPlayerStatuses((current) =>
+            current.map((playerStatus, statusIndex) =>
+              statusIndex === index ? null : playerStatus,
+            ),
+          );
+        }}
+        onPlayerBlur={handlePlayerBlur}
+        onTeamNameChange={(index, value) =>
+          setTeamNames((current) =>
+            current.map((teamName, teamIndex) =>
+              teamIndex === index ? value : teamName,
+            ),
+          )
+        }
+        onGenerate={handleGenerateTeams}
+        onCancel={closeGenerateTeams}
+      />
       <ErrorModal error={status.error} onDismiss={dismissError} />
     </div>
   );

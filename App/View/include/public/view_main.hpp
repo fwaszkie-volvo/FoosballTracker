@@ -4,6 +4,7 @@
 #include <functional>
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <opencv2/core/mat.hpp>
 #include <string>
 #include <vector>
@@ -14,7 +15,8 @@ class Server;
 }  // namespace httplib
 
 // Web-based view: hosts an HTTP API + the built React frontend and exposes the
-// same callback-driven interface the Controller previously used with the GTK view.
+// same callback-driven interface the Controller previously used with the GTK
+// view.
 class ViewMain
 {
   public:
@@ -31,6 +33,10 @@ class ViewMain
     void SetOnAnalyseClicked(std::function<void()> callback);
     void SetOnLiveClicked(std::function<void()> callback);
     void SetOnSave(std::function<void(const std::string&)> callback);
+    void SetOnCreatePlayer(std::function<bool(const std::string&)> callback);
+    void SetOnCheckPlayer(std::function<std::optional<int>(const std::string&)> callback);
+    void SetOnGenerateTeams(
+      std::function<std::pair<int, std::string>(const std::vector<std::string>&, bool)> callback);
 
   private:
     void RegisterRoutes();
@@ -39,6 +45,10 @@ class ViewMain
     std::function<void()> on_analyse_clicked_;
     std::function<void()> on_live_clicked_;
     std::function<void(const std::string&)> on_save_;
+    std::function<bool(const std::string&)> on_create_player_;
+    std::function<std::optional<int>(const std::string&)> on_check_player_;
+    std::function<std::pair<int, std::string>(const std::vector<std::string>&, bool)>
+      on_generate_teams_;
 
     std::unique_ptr<httplib::Server> server_;
 
