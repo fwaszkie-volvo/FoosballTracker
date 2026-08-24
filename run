@@ -14,6 +14,7 @@ Uzycie: $0 <opcja>
 Dostepne opcje:
   configure        Instaluje komplet niezbednych pakietow (build, test, clang, format)
                     [--no-ui-tools] - nie instaluje narzędzi do implementacji UI
+                    [--no-lfs] - nie konfiguruje ani nie pobiera plikow Git LFS
   build            Buduje projekt przy uzyciu CMake.
   clang-check      Uruchamia clang-tidy na plikach C++ projektu.
   include-check    Uruchamia include-what-you-use na plikach C++ projektu.
@@ -70,7 +71,8 @@ function verify_min_iwyu_version() {
 }
 
 function configure() {
-  configure_mode=$1
+  configure_mode=""
+  lfs_enabled=true
   privilege_prefix=()
   install_packages=()
   additional_packages=(
@@ -85,6 +87,14 @@ function configure() {
   )
   llvm_major=18
   codename=""
+
+  for arg in "$@"; do
+    if [[ "$arg" == "--no-ui-tools" ]]; then
+      configure_mode="--no-ui-tools"
+    elif [[ "$arg" == "--no-lfs" ]]; then
+      lfs_enabled=false
+    fi
+  done
 
   if [[ "$configure_mode" == "--no-ui-tools" ]]; then
     additional_packages=()
@@ -170,14 +180,16 @@ function configure() {
       verify_min_iwyu_version "$llvm_major" || return 1
     fi
 
-    if ! git -C "$SCRIPT_DIR" lfs install --local; then
-      echo "Nie udalo sie skonfigurowac Git LFS dla repozytorium." >&2
-      return 1
-    fi
+    if [[ "$lfs_enabled" == true ]]; then
+      if ! git -C "$SCRIPT_DIR" lfs install --local; then
+        echo "Nie udalo sie skonfigurowac Git LFS dla repozytorium." >&2
+        return 1
+      fi
 
-    if ! git -C "$SCRIPT_DIR" lfs pull; then
-      echo "Nie udalo sie pobrac plikow Git LFS dla repozytorium." >&2
-      return 1
+      if ! git -C "$SCRIPT_DIR" lfs pull; then
+        echo "Nie udalo sie pobrac plikow Git LFS dla repozytorium." >&2
+        return 1
+      fi
     fi
 
     return $?
