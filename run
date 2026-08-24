@@ -267,6 +267,8 @@ function build_frontend() {
 function build_frontend() {
   local frontend_dir="$APP_DIR/View/frontend"
 
+  install_frontend_dependencies || return 1
+
   if ! command -v npm >/dev/null 2>&1; then
     echo "Brak pakietu npm. Zainstaluj Node.js/npm i sprobuj ponownie."
     return 1
