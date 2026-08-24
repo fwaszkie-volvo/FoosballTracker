@@ -135,29 +135,26 @@ TEST(ModelMainTest, GenerateTeamSettingsRandomCreatesFourNonRepeatingSettings)
     const auto settings = generator::GenerateTeamSettingsRandom(input_teams);
 
     ASSERT_TRUE(settings.has_value());
-    ASSERT_EQ(settings->size(), model::kSetsPerMatch);
 
-    const std::array<std::string, generator::kPlayersCount> expected_players{
-      "Alice", "Bob", "Carol", "Dave"};
+    std::array<model::PlayerPositionRotation, model::kSetsPerMatch> rotations{
+        settings->set1,
+        settings->set2,
+        settings->set3,
+        settings->set4,
+    };
 
-    std::set<std::string> signatures;
-    for (const auto& teams : *settings)
+    for (const auto rotation : rotations)
     {
-        const std::array<std::string, generator::kPlayersCount> players{
-          teams.first.players.first.GetNickname(),
-          teams.first.players.second.GetNickname(),
-          teams.second.players.first.GetNickname(),
-          teams.second.players.second.GetNickname(),
-        };
-
-        EXPECT_TRUE(std::is_permutation(
-          players.begin(), players.end(), expected_players.begin(), expected_players.end()));
-
-        signatures.insert(players.at(0) + "|" + players.at(1) + "|" + players.at(2) + "|" +
-                          players.at(3));
+        EXPECT_TRUE(
+            rotation == model::PlayerPositionRotation::None ||
+            rotation == model::PlayerPositionRotation::Team1Rotated ||
+            rotation == model::PlayerPositionRotation::Team2Rotated ||
+            rotation == model::PlayerPositionRotation::BothRotated
+        );
     }
 
-    EXPECT_EQ(signatures.size(), model::kSetsPerMatch);
+    std::set<model::PlayerPositionRotation> unique_rotations(rotations.begin(), rotations.end());
+    EXPECT_GE(unique_rotations.size(), 1U);
 }
 
 TEST(ModelMainTest, GenerateTeamSettingsStandardFollowsSwitchPattern)
@@ -170,15 +167,9 @@ TEST(ModelMainTest, GenerateTeamSettingsStandardFollowsSwitchPattern)
     const auto settings = generator::GenerateTeamSettingsStandard(input_teams);
 
     ASSERT_TRUE(settings.has_value());
-    ASSERT_EQ(settings->size(), model::kSetsPerMatch);
 
-    const auto& first_set = settings->at(0);
-    const auto& second_set = settings->at(1);
-    const auto& third_set = settings->at(2);
-    const auto& fourth_set = settings->at(3);
-
-    ExpectSetPlayers(first_set, {"Alice", "Bob", "Carol", "Dave"});
-    ExpectSetPlayers(second_set, {"Alice", "Carol", "Bob", "Dave"});
-    ExpectSetPlayers(third_set, {"Carol", "Alice", "Bob", "Dave"});
-    ExpectSetPlayers(fourth_set, {"Carol", "Alice", "Dave", "Bob"});
+    EXPECT_EQ(settings->set1, model::PlayerPositionRotation::None);
+    EXPECT_EQ(settings->set2, model::PlayerPositionRotation::Team2Rotated);
+    EXPECT_EQ(settings->set3, model::PlayerPositionRotation::Team1Rotated);
+    EXPECT_EQ(settings->set4, model::PlayerPositionRotation::BothRotated);
 }

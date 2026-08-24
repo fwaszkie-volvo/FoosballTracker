@@ -16,6 +16,22 @@ constexpr std::size_t kTeamSize{2};
 constexpr std::size_t kTeamsNumber{2};
 constexpr std::size_t kSetsPerMatch{4};
 
+enum class PlayerPositionRotation : std::uint8_t
+{
+    None,
+    Team1Rotated,
+    Team2Rotated,
+    BothRotated
+};
+
+struct TeamSettings final
+{
+    PlayerPositionRotation set1;
+    PlayerPositionRotation set2;
+    PlayerPositionRotation set3;
+    PlayerPositionRotation set4;
+};
+
 using Nickname              = std::string;
 using NicknamePair          = std::pair<Nickname, Nickname>;
 using TeamNicknames         = std::array<NicknamePair, kTeamsNumber>;

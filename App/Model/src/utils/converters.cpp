@@ -1,22 +1,21 @@
 #include "converters.hpp"
 
-#include <cstddef>
+#include <array>
+#include <cstdint>
 #include <nlohmann/detail/json_ref.hpp>
 #include <nlohmann/json.hpp>
+#include <string>
+#include <utility>
 
+#include "model_types.hpp"
 #include "player.hpp"
+#include "ratings_types.hpp"
 
 namespace convert
 {
 ratings::MatchInput MatchInputFromPlayers(const ratings::MatchInput& match,
                                           const model::PlayerMap& players)
 {
-    const auto select_set = [&](std::size_t i) -> const model::Teams&
-    {
-        const auto& s = match.team_settings_.at(i);
-        return !s.first.players.first.GetNickname().empty() ? s : match.teams_;
-    };
-
     const auto make_team = [&](const model::Team& team)
     {
         return model::Team{.players = {players.at(team.players.first.GetNickname()),
@@ -27,10 +26,7 @@ ratings::MatchInput MatchInputFromPlayers(const ratings::MatchInput& match,
 
     return ratings::MatchInput{.teams_         = make_teams(match.teams_),
                                .set_scores_    = match.set_scores_,
-                               .team_settings_ = {make_teams(select_set(0)),
-                                                  make_teams(select_set(1)),
-                                                  make_teams(select_set(2)),
-                                                  make_teams(select_set(3))}};
+                               .team_settings_ = match.team_settings_};
 }
 
 nlohmann::json MatchToJson(const ratings::MatchInput& match)
@@ -43,19 +39,21 @@ nlohmann::json MatchToJson(const ratings::MatchInput& match)
     };
 
     nlohmann::json result{};
-    result["teams"]         = names_from_teams(match.teams_);
-    result["set_scores"]    = match.set_scores_;
-    result["team_settings"] = nlohmann::json::array({names_from_teams(match.team_settings_.at(0)),
-                                                     names_from_teams(match.team_settings_.at(1)),
-                                                     names_from_teams(match.team_settings_.at(2)),
-                                                     names_from_teams(match.team_settings_.at(3))});
+    result["teams"]      = names_from_teams(match.teams_);
+    result["set_scores"] = match.set_scores_;
+    result["team_settings"] =
+      nlohmann::json::array({static_cast<std::uint8_t>(match.team_settings_.set1),
+                             static_cast<std::uint8_t>(match.team_settings_.set2),
+                             static_cast<std::uint8_t>(match.team_settings_.set3),
+                             static_cast<std::uint8_t>(match.team_settings_.set4)});
     return result;
 }
 
 ratings::MatchInput MatchFromJson(const nlohmann::json& json)
 {
     const auto teams{json.at("teams").get<model::TeamNicknames>()};
-    const auto settings{json.at("team_settings").get<model::TeamSettingsNicknames>()};
+    const auto settings_array{
+      json.at("team_settings").get<std::array<std::uint8_t, model::kSetsPerMatch>>()};
     const auto make_teams = [](const model::TeamNicknames& names)
     {
         return model::Teams{
@@ -66,10 +64,10 @@ ratings::MatchInput MatchFromJson(const nlohmann::json& json)
     return ratings::MatchInput{
       .teams_         = make_teams(teams),
       .set_scores_    = json.at("set_scores").get<ratings::SetScores>(),
-      .team_settings_ = {make_teams(settings.at(0)),
-                         make_teams(settings.at(1)),
-                         make_teams(settings.at(2)),
-                         make_teams(settings.at(3))},
+      .team_settings_ = {.set1 = static_cast<model::PlayerPositionRotation>(settings_array.at(0)),
+                         .set2 = static_cast<model::PlayerPositionRotation>(settings_array.at(1)),
+                         .set3 = static_cast<model::PlayerPositionRotation>(settings_array.at(2)),
+                         .set4 = static_cast<model::PlayerPositionRotation>(settings_array.at(3))},
     };
 }
 }  // namespace convert

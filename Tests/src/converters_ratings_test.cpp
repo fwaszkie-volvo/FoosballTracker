@@ -29,7 +29,12 @@ ratings::MatchInput Make2v2Match(const model::Teams& teams,
     return ratings::MatchInput{
       .teams_ = teams,
       .set_scores_ = {{{goals1, goals1, goals1, goals1}, {goals2, goals2, goals2, goals2}}},
-      .team_settings_ = {teams, teams, teams, teams},
+      .team_settings_ = {
+          .set1 = model::PlayerPositionRotation::None,
+          .set2 = model::PlayerPositionRotation::None,
+          .set3 = model::PlayerPositionRotation::None,
+          .set4 = model::PlayerPositionRotation::None,
+      },
     };
 }
 

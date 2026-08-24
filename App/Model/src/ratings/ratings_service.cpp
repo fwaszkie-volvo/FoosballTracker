@@ -59,7 +59,8 @@ void RatingsService::RecordMatch(const MatchInput& match)
        second_team_players.second.GetElo() - first_team_elo_delta},
     };
 
-    storage_.InsertMatch(rated_match, updated_elos);
+    storage_.InsertMatch(rated_match);
+    storage_.UpdateElos(updated_elos);
 }
 
 std::optional<Player> RatingsService::GetPlayer(const model::Nickname& nickname) const

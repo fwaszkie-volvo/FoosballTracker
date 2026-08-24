@@ -116,7 +116,14 @@ std::uint64_t DbStorage::GetNextMatchId() const
     return last_id + 1;
 }
 
-bool DbStorage::InsertMatch(const ratings::MatchInput& match, const model::PlayerEloMap& new_elos)
+bool DbStorage::InsertMatch(const ratings::MatchInput& match)
+{
+    leveldb::WriteBatch batch{};
+    batch.Put(MatchKey(GetNextMatchId()), convert::MatchToJson(match).dump());
+    return db_->Write(leveldb::WriteOptions(), &batch).ok();
+}
+
+bool DbStorage::UpdateElos(const model::PlayerEloMap& new_elos)
 {
     const bool all_players_exist{std::ranges::all_of(
       new_elos, [this](const auto& entry) { return GetPlayer(entry.first).has_value(); })};
@@ -126,7 +133,6 @@ bool DbStorage::InsertMatch(const ratings::MatchInput& match, const model::Playe
     }
 
     leveldb::WriteBatch batch{};
-    batch.Put(MatchKey(GetNextMatchId()), convert::MatchToJson(match).dump());
     for (const auto& [nickname, elo] : new_elos)
     {
         batch.Put(PlayerKey(nickname), std::format("{}", elo));

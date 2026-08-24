@@ -13,14 +13,13 @@ struct SetAverages final
     double goal_margin_multiplier{};
 };
 
-using SetScores    = std::array<model::TeamSetScores, model::kTeamsNumber>;
-using TeamSettings = std::array<model::Teams, model::kSetsPerMatch>;
+using SetScores = std::array<model::TeamSetScores, model::kTeamsNumber>;
 
 struct MatchInput final
 {
     model::Teams teams_;
     SetScores set_scores_{};
-    TeamSettings team_settings_;
+    model::TeamSettings team_settings_;
 };
 }  // namespace ratings
 

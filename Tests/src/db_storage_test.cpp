@@ -35,7 +35,12 @@ class DbStorageTest : public ::testing::Test
     {
         const model::Teams teams{model::Team{{Player{"Alice"}, Player{"Bob"}}},
                                  model::Team{{Player{"Carol"}, Player{"Dave"}}}};
-        const ratings::TeamSettings team_settings{teams, teams, teams, teams};
+        const model::TeamSettings team_settings{
+            .set1 = model::PlayerPositionRotation::None,
+            .set2 = model::PlayerPositionRotation::None,
+            .set3 = model::PlayerPositionRotation::None,
+            .set4 = model::PlayerPositionRotation::None,
+        };
         ratings::MatchInput match{.teams_ = teams, .team_settings_ = team_settings};
         for (std::size_t s{0}; s < model::kSetsPerMatch; ++s)
         {
@@ -99,9 +104,8 @@ TEST_F(DbStorageTest, UpdatePlayerEloReturnsFalseForUnknown)
 TEST_F(DbStorageTest, RecordAndRetrieveMatch)
 {
     CreateMatchPlayers();
-    ASSERT_TRUE(storage_->InsertMatch(
-      BuildMatch(3, 1),
-      model::PlayerEloMap{
+    ASSERT_TRUE(storage_->InsertMatch(BuildMatch(3, 1)));
+    ASSERT_TRUE(storage_->UpdateElos(model::PlayerEloMap{
         {"Alice", kWinnerElo}, {"Bob", kWinnerElo}, {"Carol", kLoserElo}, {"Dave", kLoserElo}}));
 
     const auto history = storage_->GetMatchHistory();
@@ -118,26 +122,16 @@ TEST_F(DbStorageTest, RecordAndRetrieveMatch)
         EXPECT_EQ(match.set_scores_.at(0).at(s), 3);
         EXPECT_EQ(match.set_scores_.at(1).at(s), 1);
     }
-
-    for (std::size_t s{0}; s < model::kSetsPerMatch; ++s)
-    {
-        EXPECT_EQ(match.team_settings_.at(s).first.players.first.GetNickname(), "Alice");
-        EXPECT_EQ(match.team_settings_.at(s).first.players.second.GetNickname(), "Bob");
-        EXPECT_EQ(match.team_settings_.at(s).second.players.first.GetNickname(), "Carol");
-        EXPECT_EQ(match.team_settings_.at(s).second.players.second.GetNickname(), "Dave");
-    }
 }
 
 TEST_F(DbStorageTest, MultipleMatchesPreserveOrder)
 {
     CreateMatchPlayers();
-    ASSERT_TRUE(storage_->InsertMatch(
-      BuildMatch(3, 0),
-      model::PlayerEloMap{
+    ASSERT_TRUE(storage_->InsertMatch(BuildMatch(3, 0)));
+    ASSERT_TRUE(storage_->UpdateElos(model::PlayerEloMap{
         {"Alice", kWinnerElo}, {"Bob", kWinnerElo}, {"Carol", kLoserElo}, {"Dave", kLoserElo}}));
-    ASSERT_TRUE(storage_->InsertMatch(
-      BuildMatch(1, 2),
-      model::PlayerEloMap{
+    ASSERT_TRUE(storage_->InsertMatch(BuildMatch(1, 2)));
+    ASSERT_TRUE(storage_->UpdateElos(model::PlayerEloMap{
         {"Alice", kLoserElo}, {"Bob", kLoserElo}, {"Carol", kWinnerElo}, {"Dave", kWinnerElo}}));
 
     const auto history = storage_->GetMatchHistory();
@@ -153,20 +147,18 @@ TEST_F(DbStorageTest, RecordMatchDoesNothingWhenPlayerIsMissing)
     storage_->CreatePlayer("Alice");
     storage_->CreatePlayer("Bob");
 
-    EXPECT_FALSE(storage_->InsertMatch(
-      BuildMatch(3, 1),
-      model::PlayerEloMap{
+    ASSERT_TRUE(storage_->InsertMatch(BuildMatch(3, 1)));
+    EXPECT_FALSE(storage_->UpdateElos(model::PlayerEloMap{
         {"Alice", kWinnerElo}, {"Bob", kWinnerElo}, {"Carol", kLoserElo}, {"Dave", kLoserElo}}));
-    EXPECT_TRUE(storage_->GetMatchHistory().empty());
+    EXPECT_FALSE(storage_->GetMatchHistory().empty());
 }
 
 TEST_F(DbStorageTest, RecordMatchUpdatesPlayersElo)
 {
     CreateMatchPlayers();
 
-    ASSERT_TRUE(storage_->InsertMatch(
-      BuildMatch(8, 5),
-      model::PlayerEloMap{
+    ASSERT_TRUE(storage_->InsertMatch(BuildMatch(8, 5)));
+    ASSERT_TRUE(storage_->UpdateElos(model::PlayerEloMap{
         {"Alice", kWinnerElo}, {"Bob", kWinnerElo}, {"Carol", kLoserElo}, {"Dave", kLoserElo}}));
 
     const auto alice = storage_->GetPlayer("Alice");
@@ -187,9 +179,8 @@ TEST_F(DbStorageTest, RecordMatchUpdatesPlayersElo)
 TEST_F(DbStorageTest, PersistsAcrossReopens)
 {
     CreateMatchPlayers();
-    ASSERT_TRUE(storage_->InsertMatch(
-      BuildMatch(2, 1),
-      model::PlayerEloMap{
+    ASSERT_TRUE(storage_->InsertMatch(BuildMatch(2, 1)));
+    ASSERT_TRUE(storage_->UpdateElos(model::PlayerEloMap{
         {"Alice", kWinnerElo}, {"Bob", kWinnerElo}, {"Carol", kLoserElo}, {"Dave", kLoserElo}}));
 
     const auto player_before_reopen = storage_->GetPlayer("Alice");

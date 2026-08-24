@@ -26,7 +26,8 @@ class DbStorage
     void CreatePlayer(const model::Nickname& nickname);
     bool TryUpdatePlayerElo(const model::Nickname& nickname, const int elo);
     std::optional<Player> GetPlayer(const model::Nickname& nickname) const;
-    bool InsertMatch(const ratings::MatchInput& match, const model::PlayerEloMap& new_elos);
+    bool InsertMatch(const ratings::MatchInput& match);
+    bool UpdateElos(const model::PlayerEloMap& new_elos);
     std::vector<ratings::MatchInput> GetMatchHistory() const;
 
   private:
