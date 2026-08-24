@@ -6,6 +6,7 @@ BUILD_DIR="$APP_DIR/build"
 APP_BINARY="$BUILD_DIR/foosball_tracker"
 TESTS_DIR="$SCRIPT_DIR/Tests"
 TESTS_BUILD_DIR="$TESTS_DIR/build"
+FRONTEND_BUILD_DIR="$APP_DIR/View/frontend/build"
 
 function help() {
   cat <<EOF
@@ -18,7 +19,7 @@ Dostepne opcje:
   build            Buduje projekt przy uzyciu CMake.
   clang-check      Uruchamia clang-tidy na plikach C++ projektu.
   include-check    Uruchamia include-what-you-use na plikach C++ projektu.
-  clean            Usuwa katalog build, katalog build testow i katalog test_outputs.
+  clean            Usuwa katalogi build aplikacji, testow i frontendu oraz test_outputs.
   format-check     Sprawdza formatowanie C++ oraz header guardy z auto-poprawkami.
   format-check-ci  Sprawdza formatowanie C++, header guardy, clang-tidy oraz include-what-you-use bez auto-poprawek.
   format-fix       Poprawia formatowanie C++ oraz header guardy.
@@ -222,20 +223,35 @@ function configure() {
 
 function install_frontend_dependencies() {
   local frontend_dir="$APP_DIR/View/frontend"
+  local react_scripts_bin="$frontend_dir/node_modules/.bin/react-scripts"
 
   if ! command -v npm >/dev/null 2>&1; then
     echo "Brak pakietu npm. Zainstaluj Node.js/npm i sprobuj ponownie."
     return 1
   fi
 
-  if [[ ! -d "$frontend_dir/node_modules" ]]; then
-    echo "Instalowanie zaleznosci frontendu w $frontend_dir"
-    (cd "$frontend_dir" && npm install) || return 1
+  if [[ -x "$react_scripts_bin" ]]; then
+    return 0
+  fi
+
+  if [[ -d "$frontend_dir/node_modules" ]]; then
+    echo "Znaleziono niepelny katalog node_modules. Wznowienie instalacji zaleznosci frontendu."
+    rm -rf "$frontend_dir/node_modules"
+  fi
+
+  echo "Instalowanie zaleznosci frontendu w $frontend_dir"
+  (cd "$frontend_dir" && npm install --no-fund --no-audit --loglevel=error) || return 1
+
+  if [[ ! -x "$react_scripts_bin" ]]; then
+    echo "Nie udalo sie zainstalowac zaleznosci frontendu. Sprawdz npm i plik package.json." >&2
+    return 1
   fi
 }
 
 function build_frontend() {
   local frontend_dir="$APP_DIR/View/frontend"
+
+  install_frontend_dependencies || return 1
 
   if ! command -v npm >/dev/null 2>&1; then
     echo "Brak pakietu npm. Zainstaluj Node.js/npm i sprobuj ponownie."
@@ -259,12 +275,12 @@ function build() {
 }
 
 function clean() {
-  if [[ ! -d "$BUILD_DIR" && ! -d "$TESTS_BUILD_DIR" && ! -d "$TESTS_DIR/test_outputs" ]]; then
-    echo "Katalogi build nie istnieja: $BUILD_DIR, $TESTS_BUILD_DIR, $TESTS_DIR/test_outputs"
+  if [[ ! -d "$BUILD_DIR" && ! -d "$TESTS_BUILD_DIR" && ! -d "$FRONTEND_BUILD_DIR" && ! -d "$TESTS_DIR/test_outputs" ]]; then
+    echo "Katalogi build nie istnieja: $BUILD_DIR, $TESTS_BUILD_DIR, $FRONTEND_BUILD_DIR, $TESTS_DIR/test_outputs"
     return 0
   fi
 
-  rm -rf "$BUILD_DIR" "$TESTS_BUILD_DIR" "$TESTS_DIR/test_outputs"
+  rm -rf "$BUILD_DIR" "$TESTS_BUILD_DIR" "$FRONTEND_BUILD_DIR" "$TESTS_DIR/test_outputs"
 }
 
 function build_tests() {
