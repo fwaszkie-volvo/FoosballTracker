@@ -54,3 +54,8 @@ export const INITIAL_STATUS = {
   error: null,
   videoUrl: null,
 };
+
+export const INITIAL_DISPLAY_POSITIONS = {
+  red: { defence: "Czarek", offence: "Bartek" },
+  blue: { defence: "Jarek", offence: "Marek" },
+};

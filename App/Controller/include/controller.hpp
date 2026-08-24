@@ -33,7 +33,7 @@ class Controller
     bool CreatePlayer(const std::string& nickname);
     std::optional<int> CheckPlayer(const std::string& nickname);
     std::pair<int, std::string> GenerateTeams(const std::vector<std::string>& nicknames,
-                          bool by_elo);
+                          bool by_elo, const std::string& formation);
 
   private:
     std::unique_ptr<ModelMain> model_;

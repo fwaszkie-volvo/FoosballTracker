@@ -49,19 +49,24 @@ export function AppHeader({
   );
 }
 
-export function VideoOverlayPanel() {
+export function VideoOverlayPanel({
+  teamNames = ["Red Team", "Blue Team"],
+  positions,
+}) {
   return (
     <div className="video-overlay">
       <div className="scoreboard-row">
         <div className="clock-pill">00:00</div>
         <div className="team-block red-team">
-          <strong>Red Team</strong>
+          <strong>{teamNames[0]}</strong>
         </div>
         <div className="score-pill">0 : 0</div>
         <div className="team-block blue-team">
-          <strong>Blue Team</strong>
+          <strong>{teamNames[1]}</strong>
         </div>
       </div>
+
+      <TablePositionPanel positions={positions} />
 
       <div className="diagram-stack">
         <article className="diagram-card">
@@ -124,6 +129,55 @@ export function StatsPanel() {
         <h3>31.8 km/h</h3>
       </article>
     </section>
+  );
+}
+
+export function TablePositionPanel({
+  positions = {
+    red: { defence: "Czarek", offence: "Bartek" },
+    blue: { defence: "Jarek", offence: "Marek" },
+  },
+}) {
+  return (
+    <article
+      className="table-position-panel diagram-card"
+      aria-label="Foosball table positions"
+    >
+      <div
+        className="table-image-frame"
+        aria-label="Foosball table image placement"
+      >
+        <img
+          src={`${process.env.PUBLIC_URL}/images/foosball-table.png`}
+          alt=""
+          onError={(event) => {
+            event.currentTarget.hidden = true;
+          }}
+        />
+        <div
+          className="table-marker-column table-marker-column-right"
+          aria-hidden="true"
+        >
+          <div className="table-marker team-block blue-team">
+            <strong>{positions.blue.offence}</strong>
+          </div>
+          <div className="table-marker team-block blue-team">
+            <strong>{positions.blue.defence}</strong>
+          </div>
+        </div>
+        <div
+          className="table-marker-column table-marker-column-left"
+          aria-hidden="true"
+        >
+          <div className="table-marker team-block red-team">
+            <strong>{positions.red.defence}</strong>
+          </div>
+          <div className="table-marker team-block red-team">
+            <strong>{positions.red.offence}</strong>
+          </div>
+        </div>
+      </div>
+    </article>
   );
 }
 
@@ -198,10 +252,15 @@ export function GenerateTeamsModal({
   playerStatuses,
   teamNames,
   teams,
+  schema,
+  formation,
   onNicknameChange,
   onPlayerBlur,
   onTeamNameChange,
+  onSchemaChange,
+  onFormationChange,
   onGenerate,
+  onSave,
   onCancel,
 }) {
   if (!visible) {
@@ -212,69 +271,131 @@ export function GenerateTeamsModal({
     <div className="modal-overlay">
       <div className="modal teams-modal">
         <h2>Generate teams</h2>
-        <div className="nickname-list">
-          {nicknames.map((nickname, index) => (
-            <div className="nickname-row" key={index}>
+        <fieldset className="nickname-group">
+          <legend>Nicknames</legend>
+          <div className="nickname-list">
+            {nicknames.map((nickname, index) => (
+              <div className="nickname-row" key={index}>
+                <input
+                  value={nickname}
+                  placeholder={`Player ${index + 1}`}
+                  onChange={(event) =>
+                    onNicknameChange(index, event.target.value)
+                  }
+                  onBlur={() => onPlayerBlur(index)}
+                />
+                {playerStatuses[index]?.exists && (
+                  <span className="player-elo-status">
+                    Elo: {playerStatuses[index].elo}
+                  </span>
+                )}
+                {playerStatuses[index] && !playerStatuses[index].exists && (
+                  <span className="player-missing-status">Not exists</span>
+                )}
+              </div>
+            ))}
+          </div>
+        </fieldset>
+        <div className="team-options">
+          <fieldset className="option-group">
+            <legend>Schema</legend>
+            <label>
               <input
-                value={nickname}
-                placeholder={`Player ${index + 1}`}
-                onChange={(event) =>
-                  onNicknameChange(index, event.target.value)
-                }
-                onBlur={() => onPlayerBlur(index)}
+                type="checkbox"
+                checked={schema === "random"}
+                onChange={() => onSchemaChange("random")}
               />
-              {playerStatuses[index]?.exists && (
-                <span className="player-elo-status">
-                  Elo: {playerStatuses[index].elo}
-                </span>
-              )}
-              {playerStatuses[index] && !playerStatuses[index].exists && (
-                <span className="player-missing-status">Not exists</span>
-              )}
-            </div>
-          ))}
+              Random
+            </label>
+            <label>
+              <input
+                type="checkbox"
+                checked={schema === "elo"}
+                onChange={() =>
+                  onSchemaChange(schema === "elo" ? "random" : "elo")
+                }
+              />
+              By Elo
+            </label>
+          </fieldset>
+          <fieldset className="option-group">
+            <legend>Formation</legend>
+            {[
+              ["random", "Random"],
+              ["standard", "9th Standard"],
+              ["custom", "Custom"],
+            ].map(([value, label]) => (
+              <label key={value}>
+                <input
+                  type="checkbox"
+                  checked={formation === value}
+                  onChange={() => onFormationChange(value)}
+                />
+                {label}
+              </label>
+            ))}
+          </fieldset>
+        </div>
+        <div className="team-results">
+          <h3>Generation results</h3>
+          {teams
+            ? teams.map((team, index) => (
+                <article
+                  className={`generated-team team-block ${index === 0 ? "red-team" : "blue-team"}`}
+                  key={index}
+                >
+                  <input
+                    className="generated-team-name"
+                    value={teamNames[index]}
+                    onChange={(event) =>
+                      onTeamNameChange(index, event.target.value)
+                    }
+                    aria-label={`${index === 0 ? "Red" : "Blue"} team name`}
+                  />
+                  <div className="generated-team-players">
+                    <span className="generated-player generated-player-left">
+                      <span>{team.players[0].nickname}</span>
+                      <span>({team.players[0].elo})</span>
+                    </span>
+                    <span className="generated-player generated-player-right">
+                      <span>({team.players[1].elo})</span>
+                      <span>{team.players[1].nickname}</span>
+                    </span>
+                  </div>
+                </article>
+              ))
+            : [0, 1].map((index) => (
+                <article
+                  className={`generated-team team-block result-placeholder-team ${index === 0 ? "red-team" : "blue-team"}`}
+                  key={index}
+                >
+                  <span className="generated-team-name">
+                    {index === 0 ? "Red Team" : "Blue Team"}
+                  </span>
+                  <div className="generated-team-players">
+                    <span className="generated-player generated-player-left">
+                      <span>------</span>
+                      <span></span>
+                    </span>
+                    <span className="generated-player generated-player-right">
+                      <span></span>
+                      <span>------</span>
+                    </span>
+                  </div>
+                </article>
+              ))}
         </div>
         <div className="modal-actions">
           <button type="button" onClick={onCancel}>
-            Close
+            Cancel
           </button>
-          <button type="button" onClick={() => onGenerate(false)}>
-            Random
+          <button type="button" onClick={onGenerate}>
+            Generate
           </button>
-          <button type="button" onClick={() => onGenerate(true)}>
-            By Elo
+          <button type="button" onClick={onSave} disabled={!teams}>
+            Save
           </button>
         </div>
-        {teams && (
-          <div className="team-results">
-            <h3>Generation results</h3>
-            {teams.map((team, index) => (
-              <article
-                className={`generated-team team-block ${index === 0 ? "red-team" : "blue-team"}`}
-                key={index}
-              >
-                <input
-                  className="generated-team-name"
-                  value={teamNames[index]}
-                  onChange={(event) =>
-                    onTeamNameChange(index, event.target.value)
-                  }
-                  aria-label={`${index === 0 ? "Red" : "Blue"} team name`}
-                />
-                <div className="generated-team-players">
-                  <span className="generated-player generated-player-left">
-                    <span>{team.players[0].nickname}</span>
-                    <span>({team.players[0].elo})</span>
-                  </span>
-                  <span className="generated-player generated-player-right">
-                    <span>({team.players[1].elo})</span>
-                    <span>{team.players[1].nickname}</span>
-                  </span>
-                </div>
-              </article>
-            ))}
-          </div>
-        )}
       </div>
     </div>
   );

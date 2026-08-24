@@ -129,7 +129,8 @@ void ViewMain::SetOnCheckPlayer(std::function<std::optional<int>(const std::stri
 }
 
 void ViewMain::SetOnGenerateTeams(
-    std::function<std::pair<int, std::string>(const std::vector<std::string>&, bool)> callback)
+    std::function<std::pair<int, std::string>(
+      const std::vector<std::string>&, bool, const std::string&)> callback)
 {
         on_generate_teams_ = std::move(callback);
 }
@@ -265,6 +266,8 @@ void ViewMain::RegisterRoutes()
           }
 
           const bool by_elo = req.has_param("mode") && req.get_param_value("mode") == "elo";
+          const std::string formation =
+            req.has_param("formation") ? req.get_param_value("formation") : "random";
           if (!on_generate_teams_)
           {
               res.status = 500;
@@ -273,7 +276,7 @@ void ViewMain::RegisterRoutes()
               return;
           }
 
-          const auto [status, body] = on_generate_teams_(nicknames, by_elo);
+          const auto [status, body] = on_generate_teams_(nicknames, by_elo, formation);
           res.status = status;
           res.set_content(body, "application/json");
       });

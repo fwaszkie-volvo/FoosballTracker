@@ -14,6 +14,7 @@ import {
 import {
   API_ROUTE,
   FILE_ACCEPT_VIDEO_TYPE,
+  INITIAL_DISPLAY_POSITIONS,
   INITIAL_STATUS,
   LIVE_STREAM_STATE,
   LIVE_STREAM_TIMEOUT_MS,
@@ -45,7 +46,16 @@ function App() {
     null,
   ]);
   const [teamNames, setTeamNames] = useState(["Red Team", "Blue Team"]);
+  const [displayTeamNames, setDisplayTeamNames] = useState([
+    "Red Team",
+    "Blue Team",
+  ]);
+  const [displayPositions, setDisplayPositions] = useState(
+    INITIAL_DISPLAY_POSITIONS,
+  );
   const [generatedTeams, setGeneratedTeams] = useState(null);
+  const [teamSchema, setTeamSchema] = useState("random");
+  const [teamFormation, setTeamFormation] = useState("random");
   const fileInputRef = useRef(null);
   const wasAnalyzingRef = useRef(false);
   const liveProbeTimerRef = useRef(null);
@@ -187,6 +197,8 @@ function App() {
     setTeamNicknames(["", "", "", ""]);
     setPlayerStatuses([null, null, null, null]);
     setTeamNames(["Red Team", "Blue Team"]);
+    setTeamSchema("random");
+    setTeamFormation("random");
     setIsGenerateTeamsOpen(true);
   };
 
@@ -195,7 +207,17 @@ function App() {
     setTeamNicknames(["", "", "", ""]);
     setPlayerStatuses([null, null, null, null]);
     setTeamNames(["Red Team", "Blue Team"]);
+    setTeamSchema("random");
+    setTeamFormation("random");
     setIsGenerateTeamsOpen(false);
+  };
+
+  const handleSaveTeams = () => {
+    setDisplayTeamNames(teamNames);
+    if (generatedTeams?.settings) {
+      setDisplayPositions(generatedTeams.settings);
+    }
+    closeGenerateTeams();
   };
 
   const handlePlayerBlur = async (index) => {
@@ -227,9 +249,9 @@ function App() {
     );
   };
 
-  const handleGenerateTeams = async (byElo) => {
+  const handleGenerateTeams = async () => {
     const response = await fetch(
-      `${API_ROUTE.TEAMS}?mode=${byElo ? "elo" : "random"}`,
+      `${API_ROUTE.TEAMS}?mode=${teamSchema}&formation=${teamFormation}`,
       {
         method: "POST",
         headers: { "Content-Type": "text/plain" },
@@ -280,7 +302,10 @@ function App() {
 
       <main className="viewer-panel">
         <div className="video-stage">
-          <VideoOverlayPanel />
+          <VideoOverlayPanel
+            teamNames={displayTeamNames}
+            positions={displayPositions}
+          />
 
           {mode === MODE.LIVE && (
             <>
@@ -344,6 +369,10 @@ function App() {
         playerStatuses={playerStatuses}
         teamNames={teamNames}
         teams={generatedTeams?.teams}
+        schema={teamSchema}
+        formation={teamFormation}
+        onSchemaChange={setTeamSchema}
+        onFormationChange={setTeamFormation}
         onNicknameChange={(index, value) => {
           setTeamNicknames((current) =>
             current.map((nicknameValue, nicknameIndex) =>
@@ -365,6 +394,7 @@ function App() {
           )
         }
         onGenerate={handleGenerateTeams}
+        onSave={handleSaveTeams}
         onCancel={closeGenerateTeams}
       />
       <ErrorModal error={status.error} onDismiss={dismissError} />

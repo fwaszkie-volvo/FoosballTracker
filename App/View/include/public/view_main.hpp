@@ -36,7 +36,8 @@ class ViewMain
     void SetOnCreatePlayer(std::function<bool(const std::string&)> callback);
     void SetOnCheckPlayer(std::function<std::optional<int>(const std::string&)> callback);
     void SetOnGenerateTeams(
-      std::function<std::pair<int, std::string>(const std::vector<std::string>&, bool)> callback);
+      std::function<std::pair<int, std::string>(
+        const std::vector<std::string>&, bool, const std::string&)> callback);
 
   private:
     void RegisterRoutes();
@@ -47,7 +48,8 @@ class ViewMain
     std::function<void(const std::string&)> on_save_;
     std::function<bool(const std::string&)> on_create_player_;
     std::function<std::optional<int>(const std::string&)> on_check_player_;
-    std::function<std::pair<int, std::string>(const std::vector<std::string>&, bool)>
+    std::function<std::pair<int, std::string>(
+      const std::vector<std::string>&, bool, const std::string&)>
       on_generate_teams_;
 
     std::unique_ptr<httplib::Server> server_;

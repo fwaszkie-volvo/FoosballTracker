@@ -34,6 +34,18 @@ std::string TeamJson(const model::Team& team)
     return "{\"players\":[" + PlayerJson(team.players.first) + "," +
            PlayerJson(team.players.second) + "]}";
 }
+
+std::string PositionJson(const model::Team& team)
+{
+    return "{\"defence\":\"" + JsonEscape(team.players.first.GetNickname()) +
+           "\",\"offence\":\"" + JsonEscape(team.players.second.GetNickname()) + "\"}";
+}
+
+std::string SettingsJson(const model::Teams& first_set)
+{
+    return "{\"red\":" + PositionJson(first_set.first) +
+           ",\"blue\":" + PositionJson(first_set.second) + "}";
+}
 }  // namespace
 
 int Controller::Run()
@@ -47,8 +59,9 @@ int Controller::Run()
         view_->SetOnCheckPlayer(
             [this](const std::string& nickname) { return CheckPlayer(nickname); });
         view_->SetOnGenerateTeams(
-            [this](const std::vector<std::string>& nicknames, const bool by_elo)
-            { return GenerateTeams(nicknames, by_elo); });
+            [this](const std::vector<std::string>& nicknames, const bool by_elo,
+                   const std::string& formation)
+            { return GenerateTeams(nicknames, by_elo, formation); });
     return view_->CreateAndRunMain();
 }
 
@@ -101,7 +114,7 @@ std::optional<int> Controller::CheckPlayer(const std::string& nickname)
 }
 
 std::pair<int, std::string> Controller::GenerateTeams(
-  const std::vector<std::string>& nicknames, const bool by_elo)
+  const std::vector<std::string>& nicknames, const bool by_elo, const std::string& formation)
 {
         std::array<std::optional<Player>, generator::kPlayersCount> registered_players;
         for (std::size_t index = 0U; index < registered_players.size(); ++index)
@@ -128,5 +141,31 @@ std::pair<int, std::string> Controller::GenerateTeams(
         return {400, "{\"error\":\"Unable to generate teams.\"}"};
     }
 
-    return {200, "{\"teams\":[" + TeamJson(teams->first) + "," + TeamJson(teams->second) + "]}"};
+    std::string settings_json;
+    if (formation == "standard")
+    {
+        const auto team_settings = model_->GenerateTeamSettingsStandard(*teams);
+        if (team_settings)
+        {
+            settings_json = SettingsJson(team_settings->at(0));
+        }
+    }
+    else if (formation == "random")
+    {
+        const auto team_settings = model_->GenerateTeamSettingsRandom(*teams);
+        if (team_settings)
+        {
+            settings_json = SettingsJson(team_settings->at(0));
+        }
+    }
+
+    std::string response = "{\"teams\":[" + TeamJson(teams->first) + "," +
+                           TeamJson(teams->second) + "]";
+    if (!settings_json.empty())
+    {
+        response += ",\"settings\":" + settings_json;
+    }
+    response += "}";
+
+    return {200, response};
 }
