@@ -15,4 +15,4 @@ std::optional<model::TeamFormations> GenerateTeamFormationsRandom(const model::T
 std::optional<model::TeamFormations> GenerateTeamFormationsStandard(const model::Teams& teams);
 }  // namespace generator
 
-#endif // FOOSBALL_TRACKER_APP_MODEL_INCLUDE_PRIVATE_GENERATOR_HPP_
+#endif  // FOOSBALL_TRACKER_APP_MODEL_INCLUDE_PRIVATE_GENERATOR_HPP_

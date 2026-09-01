@@ -4,13 +4,16 @@
 #include <functional>
 #include <memory>
 #include <mutex>
-#include <optional>
 #include <opencv2/core/mat.hpp>
+#include <optional>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace httplib
 {
+class Request;
+class Response;
 class Server;
 }  // namespace httplib
 
@@ -35,12 +38,23 @@ class ViewMain
     void SetOnSave(std::function<void(const std::string&)> callback);
     void SetOnCreatePlayer(std::function<bool(const std::string&)> callback);
     void SetOnCheckPlayer(std::function<std::optional<int>(const std::string&)> callback);
-    void SetOnGenerateTeams(
-      std::function<std::pair<int, std::string>(
-        const std::vector<std::string>&, bool, const std::string&)> callback);
+    void SetOnGenerateTeams(std::function<std::pair<int, std::string>(
+                              const std::vector<std::string>&, bool, const std::string&)> callback);
 
   private:
     void RegisterRoutes();
+    void HandleOptions(const httplib::Request& req, httplib::Response& res);
+    void HandleStatus(const httplib::Request& req, httplib::Response& res);
+    void HandleUpload(const httplib::Request& req, httplib::Response& res);
+    void HandleAnalyse(const httplib::Request& req, httplib::Response& res);
+    void HandleStartLive(const httplib::Request& req, httplib::Response& res);
+    void HandleCreatePlayer(const httplib::Request& req, httplib::Response& res);
+    void HandleGenerateTeams(const httplib::Request& req, httplib::Response& res);
+    void HandleCheckPlayer(const httplib::Request& req, httplib::Response& res);
+    void HandleSaveResult(const httplib::Request& req, httplib::Response& res);
+    void HandleCurrentVideo(const httplib::Request& req, httplib::Response& res);
+    void HandleLiveMjpg(const httplib::Request& req, httplib::Response& res);
+    void MountFrontend();
 
     std::function<void(const std::string&)> on_file_loaded_;
     std::function<void()> on_analyse_clicked_;

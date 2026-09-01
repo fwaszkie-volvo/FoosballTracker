@@ -2,9 +2,11 @@
 #define FOOSBALL_TRACKER_APP_CONTROLLER_INCLUDE_CONTROLLER_HPP_
 
 #include <memory>
+#include <optional>
 #include <string>
 #include <thread>
 #include <utility>
+#include <vector>
 
 #include "model_main.hpp"
 #include "view_main.hpp"
@@ -33,7 +35,8 @@ class Controller
     bool CreatePlayer(const std::string& nickname);
     std::optional<int> CheckPlayer(const std::string& nickname);
     std::pair<int, std::string> GenerateTeams(const std::vector<std::string>& nicknames,
-                          bool by_elo, const std::string& formation);
+                                              bool by_elo,
+                                              const std::string& formation);
 
   private:
     std::unique_ptr<ModelMain> model_;
