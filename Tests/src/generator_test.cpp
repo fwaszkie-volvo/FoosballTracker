@@ -108,7 +108,7 @@ TEST(ModelMainTest, GenerateTeamsByEloBalancesByElo)
 
     ASSERT_TRUE(draw.has_value());
 
-    const auto first_team_average = draw->first.GetAverageElo();
+    const auto first_team_average  = draw->first.GetAverageElo();
     const auto second_team_average = draw->second.GetAverageElo();
     EXPECT_DOUBLE_EQ(first_team_average, second_team_average);
 
@@ -136,24 +136,15 @@ TEST(ModelMainTest, GenerateTeamSettingsRandomCreatesFourNonRepeatingSettings)
 
     ASSERT_TRUE(settings.has_value());
 
-    std::array<model::PlayerPositionRotation, model::kSetsPerMatch> rotations{
-        settings->set1,
-        settings->set2,
-        settings->set3,
-        settings->set4,
-    };
-
-    for (const auto rotation : rotations)
+    for (const auto rotation : *settings)
     {
-        EXPECT_TRUE(
-            rotation == model::PlayerPositionRotation::None ||
-            rotation == model::PlayerPositionRotation::Team1Rotated ||
-            rotation == model::PlayerPositionRotation::Team2Rotated ||
-            rotation == model::PlayerPositionRotation::BothRotated
-        );
+        EXPECT_TRUE(rotation == model::TeamFormation::kStandard ||
+                    rotation == model::TeamFormation::kTeam1Shifted ||
+                    rotation == model::TeamFormation::kTeam2Shifted ||
+                    rotation == model::TeamFormation::kBothShifted);
     }
 
-    std::set<model::PlayerPositionRotation> unique_rotations(rotations.begin(), rotations.end());
+    std::set<model::TeamFormation> unique_rotations(settings->begin(), settings->end());
     EXPECT_GE(unique_rotations.size(), 1U);
 }
 
@@ -168,8 +159,8 @@ TEST(ModelMainTest, GenerateTeamSettingsStandardFollowsSwitchPattern)
 
     ASSERT_TRUE(settings.has_value());
 
-    EXPECT_EQ(settings->set1, model::PlayerPositionRotation::None);
-    EXPECT_EQ(settings->set2, model::PlayerPositionRotation::Team2Rotated);
-    EXPECT_EQ(settings->set3, model::PlayerPositionRotation::Team1Rotated);
-    EXPECT_EQ(settings->set4, model::PlayerPositionRotation::BothRotated);
+    EXPECT_EQ(settings->at(0), model::TeamFormation::kStandard);
+    EXPECT_EQ(settings->at(1), model::TeamFormation::kTeam2Shifted);
+    EXPECT_EQ(settings->at(2), model::TeamFormation::kTeam1Shifted);
+    EXPECT_EQ(settings->at(3), model::TeamFormation::kBothShifted);
 }

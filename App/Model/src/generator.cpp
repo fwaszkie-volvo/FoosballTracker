@@ -40,32 +40,27 @@ std::optional<model::Teams> GenerateTeamsByElo(const Players& players)
     };
 }
 
-std::optional<model::TeamSettings> GenerateTeamSettingsRandom(const model::Teams& teams)
+std::optional<model::TeamFormations> GenerateTeamSettingsRandom(const model::Teams& teams)
 {
-    std::array<model::PlayerPositionRotation, model::kSetsPerMatch> all_settings{
-      model::PlayerPositionRotation::None,
-      model::PlayerPositionRotation::Team1Rotated,
-      model::PlayerPositionRotation::Team2Rotated,
-      model::PlayerPositionRotation::BothRotated};
+    std::array<model::TeamFormation, model::kSetsPerMatch> all_settings{
+      model::TeamFormation::kStandard,
+      model::TeamFormation::kTeam1Shifted,
+      model::TeamFormation::kTeam2Shifted,
+      model::TeamFormation::kBothShifted};
 
     std::mt19937 random_generator{std::random_device{}()};
     std::ranges::shuffle(all_settings.begin(), all_settings.end(), random_generator);
 
-    return model::TeamSettings{
-      .set1 = all_settings.at(0),
-      .set2 = all_settings.at(1),
-      .set3 = all_settings.at(2),
-      .set4 = all_settings.at(3),
-    };
+    return all_settings;
 }
 
-std::optional<model::TeamSettings> GenerateTeamSettingsStandard(const model::Teams& teams)
+std::optional<model::TeamFormations> GenerateTeamSettingsStandard(const model::Teams& teams)
 {
-    return model::TeamSettings{
-      .set1 = model::PlayerPositionRotation::None,
-      .set2 = model::PlayerPositionRotation::Team2Rotated,
-      .set3 = model::PlayerPositionRotation::Team1Rotated,
-      .set4 = model::PlayerPositionRotation::BothRotated,
+    return model::TeamFormations{
+      model::TeamFormation::kStandard,
+      model::TeamFormation::kTeam2Shifted,
+      model::TeamFormation::kTeam1Shifted,
+      model::TeamFormation::kBothShifted,
     };
 }
 }  // namespace generator

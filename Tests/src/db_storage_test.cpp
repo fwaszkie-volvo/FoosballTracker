@@ -35,11 +35,11 @@ class DbStorageTest : public ::testing::Test
     {
         const model::Teams teams{model::Team{{Player{"Alice"}, Player{"Bob"}}},
                                  model::Team{{Player{"Carol"}, Player{"Dave"}}}};
-        const model::TeamSettings team_settings{
-            .set1 = model::PlayerPositionRotation::None,
-            .set2 = model::PlayerPositionRotation::None,
-            .set3 = model::PlayerPositionRotation::None,
-            .set4 = model::PlayerPositionRotation::None,
+        const model::TeamFormations team_settings{
+          model::TeamFormation::kStandard,
+          model::TeamFormation::kStandard,
+          model::TeamFormation::kStandard,
+          model::TeamFormation::kStandard,
         };
         ratings::MatchInput match{.teams_ = teams, .team_settings_ = team_settings};
         for (std::size_t s{0}; s < model::kSetsPerMatch; ++s)
@@ -106,7 +106,7 @@ TEST_F(DbStorageTest, RecordAndRetrieveMatch)
     CreateMatchPlayers();
     ASSERT_TRUE(storage_->InsertMatch(BuildMatch(3, 1)));
     ASSERT_TRUE(storage_->UpdateElos(model::PlayerEloMap{
-        {"Alice", kWinnerElo}, {"Bob", kWinnerElo}, {"Carol", kLoserElo}, {"Dave", kLoserElo}}));
+      {"Alice", kWinnerElo}, {"Bob", kWinnerElo}, {"Carol", kLoserElo}, {"Dave", kLoserElo}}));
 
     const auto history = storage_->GetMatchHistory();
     ASSERT_EQ(history.size(), 1U);
@@ -129,10 +129,10 @@ TEST_F(DbStorageTest, MultipleMatchesPreserveOrder)
     CreateMatchPlayers();
     ASSERT_TRUE(storage_->InsertMatch(BuildMatch(3, 0)));
     ASSERT_TRUE(storage_->UpdateElos(model::PlayerEloMap{
-        {"Alice", kWinnerElo}, {"Bob", kWinnerElo}, {"Carol", kLoserElo}, {"Dave", kLoserElo}}));
+      {"Alice", kWinnerElo}, {"Bob", kWinnerElo}, {"Carol", kLoserElo}, {"Dave", kLoserElo}}));
     ASSERT_TRUE(storage_->InsertMatch(BuildMatch(1, 2)));
     ASSERT_TRUE(storage_->UpdateElos(model::PlayerEloMap{
-        {"Alice", kLoserElo}, {"Bob", kLoserElo}, {"Carol", kWinnerElo}, {"Dave", kWinnerElo}}));
+      {"Alice", kLoserElo}, {"Bob", kLoserElo}, {"Carol", kWinnerElo}, {"Dave", kWinnerElo}}));
 
     const auto history = storage_->GetMatchHistory();
     ASSERT_EQ(history.size(), 2U);
@@ -149,7 +149,7 @@ TEST_F(DbStorageTest, RecordMatchDoesNothingWhenPlayerIsMissing)
 
     ASSERT_TRUE(storage_->InsertMatch(BuildMatch(3, 1)));
     EXPECT_FALSE(storage_->UpdateElos(model::PlayerEloMap{
-        {"Alice", kWinnerElo}, {"Bob", kWinnerElo}, {"Carol", kLoserElo}, {"Dave", kLoserElo}}));
+      {"Alice", kWinnerElo}, {"Bob", kWinnerElo}, {"Carol", kLoserElo}, {"Dave", kLoserElo}}));
     EXPECT_FALSE(storage_->GetMatchHistory().empty());
 }
 
@@ -159,12 +159,12 @@ TEST_F(DbStorageTest, RecordMatchUpdatesPlayersElo)
 
     ASSERT_TRUE(storage_->InsertMatch(BuildMatch(8, 5)));
     ASSERT_TRUE(storage_->UpdateElos(model::PlayerEloMap{
-        {"Alice", kWinnerElo}, {"Bob", kWinnerElo}, {"Carol", kLoserElo}, {"Dave", kLoserElo}}));
+      {"Alice", kWinnerElo}, {"Bob", kWinnerElo}, {"Carol", kLoserElo}, {"Dave", kLoserElo}}));
 
     const auto alice = storage_->GetPlayer("Alice");
-    const auto bob = storage_->GetPlayer("Bob");
+    const auto bob   = storage_->GetPlayer("Bob");
     const auto carol = storage_->GetPlayer("Carol");
-    const auto dave = storage_->GetPlayer("Dave");
+    const auto dave  = storage_->GetPlayer("Dave");
 
     ASSERT_TRUE(alice.has_value());
     ASSERT_TRUE(bob.has_value());
@@ -181,7 +181,7 @@ TEST_F(DbStorageTest, PersistsAcrossReopens)
     CreateMatchPlayers();
     ASSERT_TRUE(storage_->InsertMatch(BuildMatch(2, 1)));
     ASSERT_TRUE(storage_->UpdateElos(model::PlayerEloMap{
-        {"Alice", kWinnerElo}, {"Bob", kWinnerElo}, {"Carol", kLoserElo}, {"Dave", kLoserElo}}));
+      {"Alice", kWinnerElo}, {"Bob", kWinnerElo}, {"Carol", kLoserElo}, {"Dave", kLoserElo}}));
 
     const auto player_before_reopen = storage_->GetPlayer("Alice");
     ASSERT_TRUE(player_before_reopen.has_value());

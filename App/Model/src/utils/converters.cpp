@@ -31,43 +31,39 @@ ratings::MatchInput MatchInputFromPlayers(const ratings::MatchInput& match,
 
 nlohmann::json MatchToJson(const ratings::MatchInput& match)
 {
-    const auto names_from_teams = [](const model::Teams& teams)
-    {
-        return model::TeamNicknames{
-          {{teams.first.players.first.GetNickname(), teams.first.players.second.GetNickname()},
-           {teams.second.players.first.GetNickname(), teams.second.players.second.GetNickname()}}};
-    };
-
     nlohmann::json result{};
-    result["teams"]      = names_from_teams(match.teams_);
+    result["teams"] = nlohmann::json::array(
+      {nlohmann::json::array({match.teams_.first.players.first.GetNickname(),
+                              match.teams_.first.players.second.GetNickname()}),
+       nlohmann::json::array({match.teams_.second.players.first.GetNickname(),
+                              match.teams_.second.players.second.GetNickname()})});
     result["set_scores"] = match.set_scores_;
     result["team_settings"] =
-      nlohmann::json::array({static_cast<std::uint8_t>(match.team_settings_.set1),
-                             static_cast<std::uint8_t>(match.team_settings_.set2),
-                             static_cast<std::uint8_t>(match.team_settings_.set3),
-                             static_cast<std::uint8_t>(match.team_settings_.set4)});
+      nlohmann::json::array({static_cast<std::uint8_t>(match.team_settings_.at(0)),
+                             static_cast<std::uint8_t>(match.team_settings_.at(1)),
+                             static_cast<std::uint8_t>(match.team_settings_.at(2)),
+                             static_cast<std::uint8_t>(match.team_settings_.at(3))});
     return result;
 }
 
 ratings::MatchInput MatchFromJson(const nlohmann::json& json)
 {
-    const auto teams{json.at("teams").get<model::TeamNicknames>()};
+    const auto& teams_json{json.at("teams")};
+    const model::Teams teams{
+      model::Team{.players = {Player{teams_json.at(0).at(0).get<model::Nickname>()},
+                              Player{teams_json.at(0).at(1).get<model::Nickname>()}}},
+      model::Team{.players = {Player{teams_json.at(1).at(0).get<model::Nickname>()},
+                              Player{teams_json.at(1).at(1).get<model::Nickname>()}}}};
     const auto settings_array{
       json.at("team_settings").get<std::array<std::uint8_t, model::kSetsPerMatch>>()};
-    const auto make_teams = [](const model::TeamNicknames& names)
-    {
-        return model::Teams{
-          model::Team{.players = {Player{names.at(0).first}, Player{names.at(0).second}}},
-          model::Team{.players = {Player{names.at(1).first}, Player{names.at(1).second}}}};
-    };
 
     return ratings::MatchInput{
-      .teams_         = make_teams(teams),
+      .teams_         = teams,
       .set_scores_    = json.at("set_scores").get<ratings::SetScores>(),
-      .team_settings_ = {.set1 = static_cast<model::PlayerPositionRotation>(settings_array.at(0)),
-                         .set2 = static_cast<model::PlayerPositionRotation>(settings_array.at(1)),
-                         .set3 = static_cast<model::PlayerPositionRotation>(settings_array.at(2)),
-                         .set4 = static_cast<model::PlayerPositionRotation>(settings_array.at(3))},
+      .team_settings_ = {static_cast<model::TeamFormation>(settings_array.at(0)),
+                         static_cast<model::TeamFormation>(settings_array.at(1)),
+                         static_cast<model::TeamFormation>(settings_array.at(2)),
+                         static_cast<model::TeamFormation>(settings_array.at(3))},
     };
 }
 }  // namespace convert

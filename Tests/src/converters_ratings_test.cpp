@@ -27,14 +27,12 @@ ratings::MatchInput Make2v2Match(const model::Teams& teams,
                                  std::uint8_t goals2)
 {
     return ratings::MatchInput{
-      .teams_ = teams,
-      .set_scores_ = {{{goals1, goals1, goals1, goals1}, {goals2, goals2, goals2, goals2}}},
-      .team_settings_ = {
-          .set1 = model::PlayerPositionRotation::None,
-          .set2 = model::PlayerPositionRotation::None,
-          .set3 = model::PlayerPositionRotation::None,
-          .set4 = model::PlayerPositionRotation::None,
-      },
+      .teams_         = teams,
+      .set_scores_    = {{{goals1, goals1, goals1, goals1}, {goals2, goals2, goals2, goals2}}},
+      .team_settings_ = {model::TeamFormation::kStandard,
+                         model::TeamFormation::kStandard,
+                         model::TeamFormation::kStandard,
+                         model::TeamFormation::kStandard},
     };
 }
 
@@ -48,8 +46,8 @@ ratings::MatchInput MakeAliceMatch(std::uint8_t goals1, std::uint8_t goals2)
 bool ApplyMatch(model::PlayerMap& players, const ratings::MatchInput& match)
 {
     const auto result = convert::MatchInputFromPlayers(match, players);
-    const int delta = calculator::ComputeFirstTeamEloDelta(result);
-    const auto apply = [&](const Player& p, int d)
+    const int delta   = calculator::ComputeFirstTeamEloDelta(result);
+    const auto apply  = [&](const Player& p, int d)
     { players.at(p.GetNickname()).SetElo(p.GetElo() + d); };
     apply(result.teams_.first.players.first, delta);
     apply(result.teams_.first.players.second, delta);

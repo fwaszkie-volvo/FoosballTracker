@@ -19,7 +19,7 @@ struct MatchInput final
 {
     model::Teams teams_;
     SetScores set_scores_{};
-    model::TeamSettings team_settings_;
+    model::TeamFormations team_settings_;
 };
 }  // namespace ratings
 

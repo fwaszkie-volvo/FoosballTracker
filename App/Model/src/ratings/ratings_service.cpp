@@ -1,8 +1,8 @@
 #include "ratings_service.hpp"
 
-#include <initializer_list>
 #include <string>
 #include <utility>
+#include <vector>
 
 #include "converters.hpp"
 #include "match_elo_calculator.hpp"
@@ -13,11 +13,14 @@ std::optional<model::PlayerMap> RatingsService::LoadMatchPlayers(const MatchInpu
 {
     model::PlayerMap players_by_nickname{};
     const auto& match_teams{match.teams_};
+    const std::vector<model::Nickname> nicknames{
+      match_teams.first.players.first.GetNickname(),
+      match_teams.first.players.second.GetNickname(),
+      match_teams.second.players.first.GetNickname(),
+      match_teams.second.players.second.GetNickname(),
+    };
 
-    for (const auto& nickname : {match_teams.first.players.first.GetNickname(),
-                                 match_teams.first.players.second.GetNickname(),
-                                 match_teams.second.players.first.GetNickname(),
-                                 match_teams.second.players.second.GetNickname()})
+    for (const auto& nickname : nicknames)
     {
         const auto player{storage_.GetPlayer(nickname)};
         if (!player.has_value())
@@ -46,8 +49,10 @@ void RatingsService::RecordMatch(const MatchInput& match)
 
     const auto rated_match{convert::MatchInputFromPlayers(match, *players_by_nickname)};
     const int first_team_elo_delta{calculator::ComputeFirstTeamEloDelta(rated_match)};
+
     const auto& first_team_players{rated_match.teams_.first.players};
     const auto& second_team_players{rated_match.teams_.second.players};
+
     const model::PlayerEloMap updated_elos{
       {first_team_players.first.GetNickname(),
        first_team_players.first.GetElo() + first_team_elo_delta},

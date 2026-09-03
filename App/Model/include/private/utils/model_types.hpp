@@ -16,29 +16,20 @@ constexpr std::size_t kTeamSize{2};
 constexpr std::size_t kTeamsNumber{2};
 constexpr std::size_t kSetsPerMatch{4};
 
-enum class PlayerPositionRotation : std::uint8_t
+enum class TeamFormation : std::uint8_t
 {
-    None,
-    Team1Rotated,
-    Team2Rotated,
-    BothRotated
+    kStandard,
+    kTeam1Shifted,
+    kTeam2Shifted,
+    kBothShifted
 };
 
-struct TeamSettings final
-{
-    PlayerPositionRotation set1;
-    PlayerPositionRotation set2;
-    PlayerPositionRotation set3;
-    PlayerPositionRotation set4;
-};
+using TeamFormations = std::array<TeamFormation, kSetsPerMatch>;
+using Nickname       = std::string;
 
-using Nickname              = std::string;
-using NicknamePair          = std::pair<Nickname, Nickname>;
-using TeamNicknames         = std::array<NicknamePair, kTeamsNumber>;
-using TeamSettingsNicknames = std::array<TeamNicknames, kSetsPerMatch>;
-
-struct Team final
+class Team final
 {
+  public:
     std::pair<Player, Player> players;
 
     double GetAverageElo() const

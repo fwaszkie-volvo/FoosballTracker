@@ -11,8 +11,8 @@ namespace generator
 {
 std::optional<model::Teams> GenerateTeamsRandom(const Players& players);
 std::optional<model::Teams> GenerateTeamsByElo(const Players& players);
-std::optional<model::TeamSettings> GenerateTeamSettingsRandom(const model::Teams& teams);
-std::optional<model::TeamSettings> GenerateTeamSettingsStandard(const model::Teams& teams);
+std::optional<model::TeamFormations> GenerateTeamSettingsRandom(const model::Teams& teams);
+std::optional<model::TeamFormations> GenerateTeamSettingsStandard(const model::Teams& teams);
 }  // namespace generator
 
 #endif  // FOOSBALL_TRACKER_APP_MODEL_INCLUDE_PRIVATE_GENERATOR_HPP_
