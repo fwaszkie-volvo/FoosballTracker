@@ -108,7 +108,7 @@ TEST(ModelMainTest, GenerateTeamsByEloBalancesByElo)
 
     ASSERT_TRUE(draw.has_value());
 
-    const auto first_team_average = draw->first.GetAverageElo();
+    const auto first_team_average  = draw->first.GetAverageElo();
     const auto second_team_average = draw->second.GetAverageElo();
     EXPECT_DOUBLE_EQ(first_team_average, second_team_average);
 
@@ -125,60 +125,42 @@ TEST(ModelMainTest, GenerateTeamsByEloBalancesByElo)
     EXPECT_TRUE(first_team_is_top_low || second_team_is_top_low);
 }
 
-TEST(ModelMainTest, GenerateTeamSettingsRandomCreatesFourNonRepeatingSettings)
+TEST(ModelMainTest, GenerateTeamFormationsRandomCreatesFourNonRepeatingFormations)
 {
     const model::Teams input_teams{
       model::Team{{Player{"Alice"}, Player{"Bob"}}},
       model::Team{{Player{"Carol"}, Player{"Dave"}}},
     };
 
-    const auto settings = generator::GenerateTeamSettingsRandom(input_teams);
+    const auto formations = generator::GenerateTeamFormationsRandom(input_teams);
 
-    ASSERT_TRUE(settings.has_value());
-    ASSERT_EQ(settings->size(), model::kSetsPerMatch);
+    ASSERT_TRUE(formations.has_value());
 
-    const std::array<std::string, generator::kPlayersCount> expected_players{
-      "Alice", "Bob", "Carol", "Dave"};
-
-    std::set<std::string> signatures;
-    for (const auto& teams : *settings)
+    for (const auto formation : *formations)
     {
-        const std::array<std::string, generator::kPlayersCount> players{
-          teams.first.players.first.GetNickname(),
-          teams.first.players.second.GetNickname(),
-          teams.second.players.first.GetNickname(),
-          teams.second.players.second.GetNickname(),
-        };
-
-        EXPECT_TRUE(std::is_permutation(
-          players.begin(), players.end(), expected_players.begin(), expected_players.end()));
-
-        signatures.insert(players.at(0) + "|" + players.at(1) + "|" + players.at(2) + "|" +
-                          players.at(3));
+        EXPECT_TRUE(formation == model::TeamFormation::kStandard ||
+                    formation == model::TeamFormation::kTeam1Shifted ||
+                    formation == model::TeamFormation::kTeam2Shifted ||
+                    formation == model::TeamFormation::kBothShifted);
     }
 
-    EXPECT_EQ(signatures.size(), model::kSetsPerMatch);
+    std::set<model::TeamFormation> unique_formations(formations->begin(), formations->end());
+    EXPECT_GE(unique_formations.size(), 1U);
 }
 
-TEST(ModelMainTest, GenerateTeamSettingsStandardFollowsSwitchPattern)
+TEST(ModelMainTest, GenerateTeamFormationsStandardFollowsSwitchPattern)
 {
     const model::Teams input_teams{
       model::Team{{Player{"Alice"}, Player{"Bob"}}},
       model::Team{{Player{"Carol"}, Player{"Dave"}}},
     };
 
-    const auto settings = generator::GenerateTeamSettingsStandard(input_teams);
+    const auto formations = generator::GenerateTeamFormationsStandard(input_teams);
 
-    ASSERT_TRUE(settings.has_value());
-    ASSERT_EQ(settings->size(), model::kSetsPerMatch);
+    ASSERT_TRUE(formations.has_value());
 
-    const auto& first_set = settings->at(0);
-    const auto& second_set = settings->at(1);
-    const auto& third_set = settings->at(2);
-    const auto& fourth_set = settings->at(3);
-
-    ExpectSetPlayers(first_set, {"Alice", "Bob", "Carol", "Dave"});
-    ExpectSetPlayers(second_set, {"Alice", "Carol", "Bob", "Dave"});
-    ExpectSetPlayers(third_set, {"Carol", "Alice", "Bob", "Dave"});
-    ExpectSetPlayers(fourth_set, {"Carol", "Alice", "Dave", "Bob"});
+    EXPECT_EQ(formations->at(0), model::TeamFormation::kStandard);
+    EXPECT_EQ(formations->at(1), model::TeamFormation::kBothShifted);
+    EXPECT_EQ(formations->at(2), model::TeamFormation::kTeam1Shifted);
+    EXPECT_EQ(formations->at(3), model::TeamFormation::kTeam2Shifted);
 }
