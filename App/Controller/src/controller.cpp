@@ -26,15 +26,21 @@ nlohmann::json TeamJson(const model::Team& team)
     return {{"players", {PlayerJson(team.players.first), PlayerJson(team.players.second)}}};
 }
 
-nlohmann::json PositionJson(const model::Team& team)
+nlohmann::json PositionJson(const model::Team& team, const bool shifted)
 {
-    return {{"defence", team.players.first.GetNickname()},
-            {"offence", team.players.second.GetNickname()}};
+    const auto& defence_player = shifted ? team.players.second : team.players.first;
+    const auto& offence_player = shifted ? team.players.first : team.players.second;
+    return {{"defence", defence_player.GetNickname()}, {"offence", offence_player.GetNickname()}};
 }
 
-nlohmann::json SettingsJson(const model::Teams& first_set)
+nlohmann::json SettingsJson(const model::Teams& teams, const model::TeamFormation formation)
 {
-    return {{"red", PositionJson(first_set.first)}, {"blue", PositionJson(first_set.second)}};
+    const bool team_1_shifted = formation == model::TeamFormation::kTeam1Shifted ||
+                                formation == model::TeamFormation::kBothShifted;
+    const bool team_2_shifted = formation == model::TeamFormation::kTeam2Shifted ||
+                                formation == model::TeamFormation::kBothShifted;
+    return {{"red", PositionJson(teams.first, team_1_shifted)},
+            {"blue", PositionJson(teams.second, team_2_shifted)}};
 }
 }  // namespace
 
@@ -44,8 +50,16 @@ int Controller::Run()
     view_->SetOnAnalyseClicked([this]() { AnalyseOfflineFile(); });
     view_->SetOnLiveClicked([this]() { StartLive(); });
     view_->SetOnSave([this](const std::string& path) { SaveResult(path); });
-    view_->SetOnCreatePlayer([this](const std::string& nickname)
-                             { return CreatePlayer(nickname); });
+    view_->SetOnCreatePlayer(
+      [this](const std::string& nickname)
+      {
+          if (model_->GetPlayer(nickname))
+          {
+              return false;
+          }
+          CreatePlayer(nickname);
+          return true;
+      });
     view_->SetOnCheckPlayer([this](const std::string& nickname) { return CheckPlayer(nickname); });
     view_->SetOnGenerateTeams(
       [this](
@@ -91,10 +105,7 @@ void Controller::StartLive()
 
 void Controller::SaveResult(const std::string& path) { model_->SaveResult(path); }
 
-bool Controller::CreatePlayer(const std::string& nickname)
-{
-    return model_->CreatePlayer(nickname);
-}
+void Controller::CreatePlayer(const std::string& nickname) { model_->CreatePlayer(nickname); }
 
 std::optional<int> Controller::CheckPlayer(const std::string& nickname)
 {
@@ -136,18 +147,18 @@ std::pair<int, std::string> Controller::GenerateTeams(const std::vector<std::str
     std::optional<nlohmann::json> settings_json;
     if (formation == "standard")
     {
-        const auto team_settings = model_->GenerateTeamSettingsStandard(*teams);
-        if (team_settings)
+        const auto team_formations = model_->GenerateTeamFormationsStandard(*teams);
+        if (team_formations)
         {
-            settings_json = SettingsJson(team_settings->at(0));
+            settings_json = SettingsJson(*teams, team_formations->at(0));
         }
     }
     else if (formation == "random")
     {
-        const auto team_settings = model_->GenerateTeamSettingsRandom(*teams);
-        if (team_settings)
+        const auto team_formations = model_->GenerateTeamFormationsRandom(*teams);
+        if (team_formations)
         {
-            settings_json = SettingsJson(team_settings->at(0));
+            settings_json = SettingsJson(*teams, team_formations->at(0));
         }
     }
 

@@ -5,7 +5,6 @@
 
 #include "generator_types.hpp"
 #include "model_types.hpp"
-#include "ratings_types.hpp"
 
 namespace generator
 {

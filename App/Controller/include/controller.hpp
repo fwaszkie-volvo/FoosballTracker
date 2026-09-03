@@ -32,7 +32,7 @@ class Controller
     void AnalyseOfflineFile();
     void StartLive();
     void SaveResult(const std::string& path);
-    bool CreatePlayer(const std::string& nickname);
+    void CreatePlayer(const std::string& nickname);
     std::optional<int> CheckPlayer(const std::string& nickname);
     std::pair<int, std::string> GenerateTeams(const std::vector<std::string>& nicknames,
                                               bool by_elo,
