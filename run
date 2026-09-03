@@ -6,6 +6,7 @@ BUILD_DIR="$APP_DIR/build"
 APP_BINARY="$BUILD_DIR/foosball_tracker"
 TESTS_DIR="$SCRIPT_DIR/Tests"
 TESTS_BUILD_DIR="$TESTS_DIR/build"
+FRONTEND_BUILD_DIR="$APP_DIR/View/frontend/build"
 
 function help() {
   cat <<EOF
@@ -13,12 +14,12 @@ Uzycie: $0 <opcja>
 
 Dostepne opcje:
   configure        Instaluje komplet niezbednych pakietow (build, test, clang, format)
-                    [--no-ui-tools] - nie instaluje narzędzi do implementacji UI
+                    [--no-ui-tools] - nie instaluje Node.js/npm potrzebnych do zbudowania frontendu React
                     [--no-lfs] - nie konfiguruje ani nie pobiera plikow Git LFS
   build            Buduje projekt przy uzyciu CMake.
   clang-check      Uruchamia clang-tidy na plikach C++ projektu.
   include-check    Uruchamia include-what-you-use na plikach C++ projektu.
-  clean            Usuwa katalog build, katalog build testow i katalog test_outputs.
+  clean            Usuwa katalogi build aplikacji, testow i frontendu oraz test_outputs.
   format-check     Sprawdza formatowanie C++ oraz header guardy z auto-poprawkami.
   format-check-ci  Sprawdza formatowanie C++, header guardy, clang-tidy oraz include-what-you-use bez auto-poprawek.
   format-fix       Poprawia formatowanie C++ oraz header guardy.
@@ -70,21 +71,38 @@ function verify_min_iwyu_version() {
   return 0
 }
 
+function ensure_nodejs_from_nodesource() {
+  if command -v npm >/dev/null 2>&1 && command -v node >/dev/null 2>&1; then
+    return 0
+  fi
+
+  if dpkg -l npm 2>/dev/null | grep -q '^ii'; then
+    "${privilege_prefix[@]}" apt-get remove --purge -y npm || true
+  fi
+
+  if ! command -v curl >/dev/null 2>&1; then
+    "${privilege_prefix[@]}" apt-get install -y curl || return 1
+  fi
+
+  if ! grep -q "deb.nodesource.com/node_20" /etc/apt/sources.list.d/nodesource.list 2>/dev/null; then
+    curl -fsSL https://deb.nodesource.com/setup_20.x | "${privilege_prefix[@]}" bash - || return 1
+  fi
+
+  "${privilege_prefix[@]}" apt-get install -y nodejs || return 1
+
+  if ! command -v npm >/dev/null 2>&1 || ! command -v node >/dev/null 2>&1; then
+    echo "Nie udalo sie zainstalowac Node.js/npm z NodeSource." >&2
+    return 1
+  fi
+
+  return 0
+}
+
 function configure() {
   configure_mode=""
   lfs_enabled=true
   privilege_prefix=()
   install_packages=()
-  additional_packages=(
-    libgtk-4-1
-    libgtk-4-dev
-    libgtk-4-media-gstreamer
-    gstreamer1.0-plugins-base
-    gstreamer1.0-plugins-good
-    gstreamer1.0-plugins-bad
-    gstreamer1.0-libav
-    gstreamer1.0-gl
-  )
   llvm_major=18
   codename=""
 
@@ -141,7 +159,6 @@ function configure() {
       clang-tidy-18
       iwyu
       g++-14
-      "${additional_packages[@]}"
     )
 
     "${privilege_prefix[@]}" apt install -y "${install_packages[@]}"
@@ -192,11 +209,56 @@ function configure() {
       fi
     fi
 
+    if [[ "$configure_mode" != "--no-ui-tools" ]]; then
+      ensure_nodejs_from_nodesource || return 1
+      install_frontend_dependencies || return 1
+    fi
+
     return $?
   fi
 
-  echo "Nieobslugiwany menedzer pakietow. Zainstaluj recznie: build-essential, cmake, OpenCV, GoogleTest, spdlog, fmt, GTK4, clang-format, clang-tidy, include-what-you-use."
+  echo "Nieobslugiwany menedzer pakietow. Zainstaluj recznie: build-essential, cmake, OpenCV, GoogleTest, spdlog, fmt, Node.js/npm, clang-format, clang-tidy, include-what-you-use."
   return 1
+}
+
+function install_frontend_dependencies() {
+  local frontend_dir="$APP_DIR/View/frontend"
+  local react_scripts_bin="$frontend_dir/node_modules/.bin/react-scripts"
+
+  if ! command -v npm >/dev/null 2>&1; then
+    echo "Brak pakietu npm. Zainstaluj Node.js/npm i sprobuj ponownie."
+    return 1
+  fi
+
+  if [[ -x "$react_scripts_bin" ]]; then
+    return 0
+  fi
+
+  if [[ -d "$frontend_dir/node_modules" ]]; then
+    echo "Znaleziono niepelny katalog node_modules. Wznowienie instalacji zaleznosci frontendu."
+    rm -rf "$frontend_dir/node_modules"
+  fi
+
+  echo "Instalowanie zaleznosci frontendu w $frontend_dir"
+  (cd "$frontend_dir" && npm install --no-fund --no-audit --loglevel=error) || return 1
+
+  if [[ ! -x "$react_scripts_bin" ]]; then
+    echo "Nie udalo sie zainstalowac zaleznosci frontendu. Sprawdz npm i plik package.json." >&2
+    return 1
+  fi
+}
+
+function build_frontend() {
+  local frontend_dir="$APP_DIR/View/frontend"
+
+  install_frontend_dependencies || return 1
+
+  if ! command -v npm >/dev/null 2>&1; then
+    echo "Brak pakietu npm. Zainstaluj Node.js/npm i sprobuj ponownie."
+    return 1
+  fi
+
+  (cd "$frontend_dir" && CI=true npm run build) || return 1
 }
 
 function build() {
@@ -205,18 +267,20 @@ function build() {
     return 1
   fi
 
+  build_frontend || return 1
+
   mkdir -p "$BUILD_DIR"
   cmake -S "$APP_DIR" -B "$BUILD_DIR"
   cmake --build "$BUILD_DIR"
 }
 
 function clean() {
-  if [[ ! -d "$BUILD_DIR" && ! -d "$TESTS_BUILD_DIR" && ! -d "$TESTS_DIR/test_outputs" ]]; then
-    echo "Katalogi build nie istnieja: $BUILD_DIR, $TESTS_BUILD_DIR, $TESTS_DIR/test_outputs"
+  if [[ ! -d "$BUILD_DIR" && ! -d "$TESTS_BUILD_DIR" && ! -d "$FRONTEND_BUILD_DIR" && ! -d "$TESTS_DIR/test_outputs" ]]; then
+    echo "Katalogi build nie istnieja: $BUILD_DIR, $TESTS_BUILD_DIR, $FRONTEND_BUILD_DIR, $TESTS_DIR/test_outputs"
     return 0
   fi
 
-  rm -rf "$BUILD_DIR" "$TESTS_BUILD_DIR" "$TESTS_DIR/test_outputs"
+  rm -rf "$BUILD_DIR" "$TESTS_BUILD_DIR" "$FRONTEND_BUILD_DIR" "$TESTS_DIR/test_outputs"
 }
 
 function build_tests() {
@@ -280,12 +344,7 @@ function app() {
     export LOG_LEVEL="$log_level"
   fi
 
-  # WSLg + GTK4 GL renderer can crash on rapid file chooser repaints.
-  # Prefer software renderer unless user explicitly configured GSK_RENDERER.
-  if [[ -z "${GSK_RENDERER:-}" ]] && grep -qi "microsoft" /proc/version; then
-    export GSK_RENDERER="cairo"
-  fi
-
+  echo "Foosball Tracker dostepny pod adresem http://localhost:8080"
   "$APP_BINARY" "${args_for_app[@]}"
 }
 
