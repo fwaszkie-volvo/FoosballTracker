@@ -91,16 +91,16 @@ std::optional<model::Teams> ModelMain::GenerateTeamsByElo(const generator::Playe
     return generator::GenerateTeamsByElo(players);
 }
 
-std::optional<model::TeamFormations> ModelMain::GenerateTeamSettingsRandom(
+std::optional<model::TeamFormations> ModelMain::GenerateTeamFormationsRandom(
   const model::Teams& teams) const
 {
-    return generator::GenerateTeamSettingsRandom(teams);
+    return generator::GenerateTeamFormationsRandom(teams);
 }
 
-std::optional<model::TeamFormations> ModelMain::GenerateTeamSettingsStandard(
+std::optional<model::TeamFormations> ModelMain::GenerateTeamFormationsStandard(
   const model::Teams& teams) const
 {
-    return generator::GenerateTeamSettingsStandard(teams);
+    return generator::GenerateTeamFormationsStandard(teams);
 }
 
 void ModelMain::CreatePlayer(const model::Nickname& nickname) { ratings_.CreatePlayer(nickname); }

@@ -1,5 +1,6 @@
 #include "converters.hpp"
 
+#include <algorithm>
 #include <array>
 #include <cstdint>
 #include <nlohmann/detail/json_ref.hpp>
@@ -31,18 +32,20 @@ ratings::MatchInput MatchInputFromPlayers(const ratings::MatchInput& match,
 
 nlohmann::json MatchToJson(const ratings::MatchInput& match)
 {
+    std::array<std::uint8_t, model::kSetsPerMatch> formations{};
+    std::ranges::transform(match.team_settings_,
+                           formations.begin(),
+                           [](const model::TeamFormation formation)
+                           { return static_cast<std::uint8_t>(formation); });
+
     nlohmann::json result{};
     result["teams"] = nlohmann::json::array(
       {nlohmann::json::array({match.teams_.first.players.first.GetNickname(),
                               match.teams_.first.players.second.GetNickname()}),
        nlohmann::json::array({match.teams_.second.players.first.GetNickname(),
                               match.teams_.second.players.second.GetNickname()})});
-    result["set_scores"] = match.set_scores_;
-    result["team_settings"] =
-      nlohmann::json::array({static_cast<std::uint8_t>(match.team_settings_.at(0)),
-                             static_cast<std::uint8_t>(match.team_settings_.at(1)),
-                             static_cast<std::uint8_t>(match.team_settings_.at(2)),
-                             static_cast<std::uint8_t>(match.team_settings_.at(3))});
+    result["set_scores"]    = match.set_scores_;
+    result["team_settings"] = formations;
     return result;
 }
 
@@ -54,16 +57,18 @@ ratings::MatchInput MatchFromJson(const nlohmann::json& json)
                               Player{teams_json.at(0).at(1).get<model::Nickname>()}}},
       model::Team{.players = {Player{teams_json.at(1).at(0).get<model::Nickname>()},
                               Player{teams_json.at(1).at(1).get<model::Nickname>()}}}};
-    const auto settings_array{
+    const auto serialized_formations{
       json.at("team_settings").get<std::array<std::uint8_t, model::kSetsPerMatch>>()};
+    model::TeamFormations formations{};
+    std::ranges::transform(serialized_formations,
+                           formations.begin(),
+                           [](const std::uint8_t formation)
+                           { return static_cast<model::TeamFormation>(formation); });
 
     return ratings::MatchInput{
       .teams_         = teams,
       .set_scores_    = json.at("set_scores").get<ratings::SetScores>(),
-      .team_settings_ = {static_cast<model::TeamFormation>(settings_array.at(0)),
-                         static_cast<model::TeamFormation>(settings_array.at(1)),
-                         static_cast<model::TeamFormation>(settings_array.at(2)),
-                         static_cast<model::TeamFormation>(settings_array.at(3))},
+      .team_settings_ = formations,
     };
 }
 }  // namespace convert

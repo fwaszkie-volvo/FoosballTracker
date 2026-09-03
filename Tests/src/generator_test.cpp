@@ -125,42 +125,42 @@ TEST(ModelMainTest, GenerateTeamsByEloBalancesByElo)
     EXPECT_TRUE(first_team_is_top_low || second_team_is_top_low);
 }
 
-TEST(ModelMainTest, GenerateTeamSettingsRandomCreatesFourNonRepeatingSettings)
+TEST(ModelMainTest, GenerateTeamFormationsRandomCreatesFourNonRepeatingFormations)
 {
     const model::Teams input_teams{
       model::Team{{Player{"Alice"}, Player{"Bob"}}},
       model::Team{{Player{"Carol"}, Player{"Dave"}}},
     };
 
-    const auto settings = generator::GenerateTeamSettingsRandom(input_teams);
+    const auto formations = generator::GenerateTeamFormationsRandom(input_teams);
 
-    ASSERT_TRUE(settings.has_value());
+    ASSERT_TRUE(formations.has_value());
 
-    for (const auto rotation : *settings)
+    for (const auto formation : *formations)
     {
-        EXPECT_TRUE(rotation == model::TeamFormation::kStandard ||
-                    rotation == model::TeamFormation::kTeam1Shifted ||
-                    rotation == model::TeamFormation::kTeam2Shifted ||
-                    rotation == model::TeamFormation::kBothShifted);
+        EXPECT_TRUE(formation == model::TeamFormation::kStandard ||
+                    formation == model::TeamFormation::kTeam1Shifted ||
+                    formation == model::TeamFormation::kTeam2Shifted ||
+                    formation == model::TeamFormation::kBothShifted);
     }
 
-    std::set<model::TeamFormation> unique_rotations(settings->begin(), settings->end());
-    EXPECT_GE(unique_rotations.size(), 1U);
+    std::set<model::TeamFormation> unique_formations(formations->begin(), formations->end());
+    EXPECT_GE(unique_formations.size(), 1U);
 }
 
-TEST(ModelMainTest, GenerateTeamSettingsStandardFollowsSwitchPattern)
+TEST(ModelMainTest, GenerateTeamFormationsStandardFollowsSwitchPattern)
 {
     const model::Teams input_teams{
       model::Team{{Player{"Alice"}, Player{"Bob"}}},
       model::Team{{Player{"Carol"}, Player{"Dave"}}},
     };
 
-    const auto settings = generator::GenerateTeamSettingsStandard(input_teams);
+    const auto formations = generator::GenerateTeamFormationsStandard(input_teams);
 
-    ASSERT_TRUE(settings.has_value());
+    ASSERT_TRUE(formations.has_value());
 
-    EXPECT_EQ(settings->at(0), model::TeamFormation::kStandard);
-    EXPECT_EQ(settings->at(1), model::TeamFormation::kTeam2Shifted);
-    EXPECT_EQ(settings->at(2), model::TeamFormation::kTeam1Shifted);
-    EXPECT_EQ(settings->at(3), model::TeamFormation::kBothShifted);
+    EXPECT_EQ(formations->at(0), model::TeamFormation::kStandard);
+    EXPECT_EQ(formations->at(1), model::TeamFormation::kBothShifted);
+    EXPECT_EQ(formations->at(2), model::TeamFormation::kTeam1Shifted);
+    EXPECT_EQ(formations->at(3), model::TeamFormation::kTeam2Shifted);
 }

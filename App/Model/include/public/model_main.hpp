@@ -22,9 +22,9 @@ class ModelMain
     const bool CanAnalyzeOfflineFile() const { return can_analyze_offline_file_; }
     std::optional<model::Teams> GenerateTeamsRandom(const generator::Players& players) const;
     std::optional<model::Teams> GenerateTeamsByElo(const generator::Players& players) const;
-    std::optional<model::TeamFormations> GenerateTeamSettingsRandom(
+    std::optional<model::TeamFormations> GenerateTeamFormationsRandom(
       const model::Teams& teams) const;
-    std::optional<model::TeamFormations> GenerateTeamSettingsStandard(
+    std::optional<model::TeamFormations> GenerateTeamFormationsStandard(
       const model::Teams& teams) const;
     void CreatePlayer(const model::Nickname& nickname);
     void RecordMatch(const ratings::MatchInput& match);

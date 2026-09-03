@@ -13,8 +13,9 @@ namespace generator
 {
 std::optional<model::Teams> GenerateTeamsRandom(const Players& players)
 {
-    std::array<const Player*, kPlayersCount> shuffled_players{
-      &players.at(0), &players.at(1), &players.at(2), &players.at(3)};
+    std::array<const Player*, kPlayersCount> shuffled_players{};
+    std::ranges::transform(
+      players, shuffled_players.begin(), [](const Player& player) { return &player; });
 
     std::mt19937 random_generator{std::random_device{}()};
     std::shuffle(shuffled_players.begin(), shuffled_players.end(), random_generator);
@@ -27,8 +28,9 @@ std::optional<model::Teams> GenerateTeamsRandom(const Players& players)
 
 std::optional<model::Teams> GenerateTeamsByElo(const Players& players)
 {
-    std::array<const Player*, kPlayersCount> players_by_elo{
-      &players.at(0), &players.at(1), &players.at(2), &players.at(3)};
+    std::array<const Player*, kPlayersCount> players_by_elo{};
+    std::ranges::transform(
+      players, players_by_elo.begin(), [](const Player& player) { return &player; });
 
     std::ranges::sort(players_by_elo,
                       [](const Player* lhs, const Player* rhs)
@@ -40,7 +42,7 @@ std::optional<model::Teams> GenerateTeamsByElo(const Players& players)
     };
 }
 
-std::optional<model::TeamFormations> GenerateTeamSettingsRandom(const model::Teams& teams)
+std::optional<model::TeamFormations> GenerateTeamFormationsRandom(const model::Teams& teams)
 {
     std::array<model::TeamFormation, model::kSetsPerMatch> all_settings{
       model::TeamFormation::kStandard,
@@ -54,13 +56,13 @@ std::optional<model::TeamFormations> GenerateTeamSettingsRandom(const model::Tea
     return all_settings;
 }
 
-std::optional<model::TeamFormations> GenerateTeamSettingsStandard(const model::Teams& teams)
+std::optional<model::TeamFormations> GenerateTeamFormationsStandard(const model::Teams& teams)
 {
     return model::TeamFormations{
       model::TeamFormation::kStandard,
-      model::TeamFormation::kTeam2Shifted,
-      model::TeamFormation::kTeam1Shifted,
       model::TeamFormation::kBothShifted,
+      model::TeamFormation::kTeam1Shifted,
+      model::TeamFormation::kTeam2Shifted,
     };
 }
 }  // namespace generator
