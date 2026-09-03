@@ -56,6 +56,6 @@ export const INITIAL_STATUS = {
 };
 
 export const INITIAL_DISPLAY_POSITIONS = {
-  red: { defence: "Czarek", offence: "Bartek" },
-  blue: { defence: "Jarek", offence: "Marek" },
+  red: { defence: "------", offence: "------" },
+  blue: { defence: "------", offence: "------" },
 };

@@ -132,12 +132,7 @@ export function StatsPanel() {
   );
 }
 
-export function TablePositionPanel({
-  positions = {
-    red: { defence: "Czarek", offence: "Bartek" },
-    blue: { defence: "Jarek", offence: "Marek" },
-  },
-}) {
+export function TablePositionPanel({ positions }) {
   return (
     <article
       className="table-position-panel diagram-card"
