@@ -26,9 +26,9 @@ class ModelMain
       const model::Teams& teams) const;
     std::optional<model::TeamFormations> GenerateTeamFormationsStandard(
       const model::Teams& teams) const;
-    void CreatePlayer(const model::Nickname& nickname);
+    void CreatePlayer(const Nickname& nickname);
     void RecordMatch(const ratings::MatchInput& match);
-    std::optional<Player> GetPlayer(const model::Nickname& nickname) const;
+    std::optional<Player> GetPlayer(const Nickname& nickname) const;
     std::vector<ratings::MatchInput> GetMatchHistory() const;
 
   private:

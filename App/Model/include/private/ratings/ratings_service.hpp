@@ -14,9 +14,9 @@ namespace ratings
 class RatingsService
 {
   public:
-    void CreatePlayer(const model::Nickname& nickname);
+    void CreatePlayer(const Nickname& nickname);
     void RecordMatch(const MatchInput& match);
-    std::optional<Player> GetPlayer(const model::Nickname& nickname) const;
+    std::optional<Player> GetPlayer(const Nickname& nickname) const;
     std::vector<MatchInput> GetMatchHistory() const;
 
   private:

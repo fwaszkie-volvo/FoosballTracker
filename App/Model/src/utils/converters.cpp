@@ -53,10 +53,10 @@ ratings::MatchInput MatchFromJson(const nlohmann::json& json)
 {
     const auto& teams_json{json.at("teams")};
     const model::Teams teams{
-      model::Team{.players = {Player{teams_json.at(0).at(0).get<model::Nickname>()},
-                              Player{teams_json.at(0).at(1).get<model::Nickname>()}}},
-      model::Team{.players = {Player{teams_json.at(1).at(0).get<model::Nickname>()},
-                              Player{teams_json.at(1).at(1).get<model::Nickname>()}}}};
+      model::Team{.players = {Player{teams_json.at(0).at(0).get<Nickname>()},
+                              Player{teams_json.at(0).at(1).get<Nickname>()}}},
+      model::Team{.players = {Player{teams_json.at(1).at(0).get<Nickname>()},
+                              Player{teams_json.at(1).at(1).get<Nickname>()}}}};
     const auto serialized_formations{
       json.at("team_settings").get<std::array<std::uint8_t, model::kSetsPerMatch>>()};
     model::TeamFormations formations{};

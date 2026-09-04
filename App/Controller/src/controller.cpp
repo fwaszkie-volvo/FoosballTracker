@@ -51,7 +51,7 @@ int Controller::Run()
     view_->SetOnLiveClicked([this]() { StartLive(); });
     view_->SetOnSave([this](const std::string& path) { SaveResult(path); });
     view_->SetOnCreatePlayer(
-      [this](const std::string& nickname)
+      [this](const Nickname& nickname)
       {
           if (model_->GetPlayer(nickname))
           {
@@ -60,10 +60,10 @@ int Controller::Run()
           CreatePlayer(nickname);
           return true;
       });
-    view_->SetOnCheckPlayer([this](const std::string& nickname) { return CheckPlayer(nickname); });
+    view_->SetOnCheckPlayer([this](const Nickname& nickname) { return CheckPlayer(nickname); });
     view_->SetOnGenerateTeams(
       [this](
-        const std::vector<std::string>& nicknames, const bool by_elo, const std::string& formation)
+        const std::vector<Nickname>& nicknames, const bool by_elo, const std::string& formation)
       { return GenerateTeams(nicknames, by_elo, formation); });
     return view_->CreateAndRunMain();
 }
@@ -105,20 +105,20 @@ void Controller::StartLive()
 
 void Controller::SaveResult(const std::string& path) { model_->SaveResult(path); }
 
-void Controller::CreatePlayer(const std::string& nickname) { model_->CreatePlayer(nickname); }
+void Controller::CreatePlayer(const Nickname& nickname) { model_->CreatePlayer(nickname); }
 
-std::optional<int> Controller::CheckPlayer(const std::string& nickname)
+std::optional<int> Controller::CheckPlayer(const Nickname& nickname)
 {
     const auto player = model_->GetPlayer(nickname);
     return player ? std::optional<int>{player->GetElo()} : std::nullopt;
 }
 
-std::pair<int, std::string> Controller::GenerateTeams(const std::vector<std::string>& nicknames,
+std::pair<int, std::string> Controller::GenerateTeams(const std::vector<Nickname>& nicknames,
                                                       const bool by_elo,
                                                       const std::string& formation)
 {
     std::array<std::optional<Player>, generator::kPlayersCount> registered_players;
-    for (std::size_t index = 0U; index < registered_players.size(); ++index)
+    for (std::size_t index{0U}; index < registered_players.size(); ++index)
     {
         const auto player = model_->GetPlayer(nicknames.at(index));
         if (!player)
@@ -145,21 +145,19 @@ std::pair<int, std::string> Controller::GenerateTeams(const std::vector<std::str
     }
 
     std::optional<nlohmann::json> settings_json;
+    std::optional<model::TeamFormations> team_formations;
     if (formation == "standard")
     {
-        const auto team_formations = model_->GenerateTeamFormationsStandard(*teams);
-        if (team_formations)
-        {
-            settings_json = SettingsJson(*teams, team_formations->at(0));
-        }
+        team_formations = model_->GenerateTeamFormationsStandard(*teams);
     }
     else if (formation == "random")
     {
-        const auto team_formations = model_->GenerateTeamFormationsRandom(*teams);
-        if (team_formations)
-        {
-            settings_json = SettingsJson(*teams, team_formations->at(0));
-        }
+        team_formations = model_->GenerateTeamFormationsRandom(*teams);
+    }
+    
+    if (team_formations)
+    {
+        settings_json = SettingsJson(*teams, team_formations->at(0));
     }
 
     nlohmann::json response = {{"teams", {TeamJson(teams->first), TeamJson(teams->second)}}};

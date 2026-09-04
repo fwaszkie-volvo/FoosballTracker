@@ -10,6 +10,7 @@
 
 #include "model_main.hpp"
 #include "view_main.hpp"
+#include "model_types.hpp"
 
 class Controller
 {
@@ -29,12 +30,12 @@ class Controller
 
     int Run();
     void LoadFileToAnalysis(const std::string& path);
-    void AnalyseOfflineFile();
+    void AnalyseOfflineFile();  
     void StartLive();
     void SaveResult(const std::string& path);
-    void CreatePlayer(const std::string& nickname);
-    std::optional<int> CheckPlayer(const std::string& nickname);
-    std::pair<int, std::string> GenerateTeams(const std::vector<std::string>& nicknames,
+    void CreatePlayer(const Nickname& nickname);
+    std::optional<int> CheckPlayer(const Nickname& nickname);
+    std::pair<int, std::string> GenerateTeams(const std::vector<Nickname>& nicknames,
                                               bool by_elo,
                                               const std::string& formation);
 
