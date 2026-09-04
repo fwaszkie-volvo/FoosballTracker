@@ -44,16 +44,16 @@ std::optional<model::Teams> GenerateTeamsByElo(const Players& players)
 
 std::optional<model::TeamFormations> GenerateTeamFormationsRandom(const model::Teams& teams)
 {
-    std::array<model::TeamFormation, model::kSetsPerMatch> all_settings{
+    std::array<model::TeamFormation, model::kSetsPerMatch> all_formations{
       model::TeamFormation::kStandard,
       model::TeamFormation::kTeam1Shifted,
       model::TeamFormation::kTeam2Shifted,
       model::TeamFormation::kBothShifted};
 
     std::mt19937 random_generator{std::random_device{}()};
-    std::ranges::shuffle(all_settings.begin(), all_settings.end(), random_generator);
+    std::ranges::shuffle(all_formations.begin(), all_formations.end(), random_generator);
 
-    return all_settings;
+    return all_formations;
 }
 
 std::optional<model::TeamFormations> GenerateTeamFormationsStandard(const model::Teams& teams)

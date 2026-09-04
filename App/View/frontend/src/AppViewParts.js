@@ -2,13 +2,14 @@ export function AppHeader({
   mode,
   currentFileName,
   modeLabel,
-  analyzing,
   canAnalyse,
   canSave,
   onLiveClick,
   onLoadClick,
   onAnalClick,
   onSaveClick,
+  onCreatePlayerClick,
+  onGenerateTeamsClick,
 }) {
   return (
     <header className="topbar">
@@ -28,11 +29,16 @@ export function AppHeader({
           <button type="button" onClick={onSaveClick} disabled={!canSave}>
             Save Result
           </button>
+          <button type="button" onClick={onCreatePlayerClick}>
+            Create Player
+          </button>
+          <button type="button" onClick={onGenerateTeamsClick}>
+            Generate Teams
+          </button>
         </div>
       </div>
       <div className="status-row">
         <span className="status-pill">{modeLabel}</span>
-        {analyzing && <span className="status-pill warm">Analyzing</span>}
       </div>
       {mode !== "live" && (
         <p className="file-note header-file-note">Source: {currentFileName}</p>
@@ -41,19 +47,24 @@ export function AppHeader({
   );
 }
 
-export function VideoOverlayPanel() {
+export function VideoOverlayPanel({
+  teamNames = ["Red Team", "Blue Team"],
+  positions,
+}) {
   return (
     <div className="video-overlay">
       <div className="scoreboard-row">
         <div className="clock-pill">00:00</div>
         <div className="team-block red-team">
-          <strong>Red Team</strong>
+          <strong>{teamNames[0]}</strong>
         </div>
         <div className="score-pill">0 : 0</div>
         <div className="team-block blue-team">
-          <strong>Blue Team</strong>
+          <strong>{teamNames[1]}</strong>
         </div>
       </div>
+
+      <TablePositionPanel positions={positions} />
 
       <div className="diagram-stack">
         <article className="diagram-card">
@@ -119,6 +130,50 @@ export function StatsPanel() {
   );
 }
 
+export function TablePositionPanel({ positions }) {
+  return (
+    <article
+      className="table-position-panel diagram-card"
+      aria-label="Foosball table positions"
+    >
+      <div
+        className="table-image-frame"
+        aria-label="Foosball table image placement"
+      >
+        <img
+          src={`${process.env.PUBLIC_URL}/images/foosball-table.png`}
+          alt=""
+          onError={(event) => {
+            event.currentTarget.hidden = true;
+          }}
+        />
+        <div
+          className="table-marker-column table-marker-column-right"
+          aria-hidden="true"
+        >
+          <div className="table-marker team-block blue-team">
+            <strong>{positions.blue.offence}</strong>
+          </div>
+          <div className="table-marker team-block blue-team">
+            <strong>{positions.blue.defence}</strong>
+          </div>
+        </div>
+        <div
+          className="table-marker-column table-marker-column-left"
+          aria-hidden="true"
+        >
+          <div className="table-marker team-block red-team">
+            <strong>{positions.red.defence}</strong>
+          </div>
+          <div className="table-marker team-block red-team">
+            <strong>{positions.red.offence}</strong>
+          </div>
+        </div>
+      </div>
+    </article>
+  );
+}
+
 export function AnalysisModal({ visible }) {
   if (!visible) {
     return null;
@@ -141,6 +196,199 @@ export function ErrorModal({ error, onDismiss }) {
         <button type="button" onClick={onDismiss}>
           Dismiss
         </button>
+      </div>
+    </div>
+  );
+}
+
+export function CreatePlayerModal({
+  visible,
+  nickname,
+  successMessage,
+  onNicknameChange,
+  onSubmit,
+  onCancel,
+}) {
+  if (!visible) {
+    return null;
+  }
+
+  return (
+    <div className="modal-overlay">
+      <form className="modal player-modal" onSubmit={onSubmit}>
+        <h2>Create player</h2>
+        <div className="player-label-row">
+          <label htmlFor="player-nickname">common::Nickname</label>
+          {successMessage && <p className="player-success">{successMessage}</p>}
+        </div>
+        <input
+          id="player-nickname"
+          value={nickname}
+          onChange={(event) => onNicknameChange(event.target.value)}
+          autoFocus
+          required
+        />
+        <div className="modal-actions">
+          <button type="button" onClick={onCancel}>
+            Cancel
+          </button>
+          <button type="submit">Create</button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
+export function GenerateTeamsModal({
+  visible,
+  nicknames,
+  playerStatuses,
+  teamNames,
+  teams,
+  schema,
+  formation,
+  onNicknameChange,
+  onPlayerBlur,
+  onTeamNameChange,
+  onSchemaChange,
+  onFormationChange,
+  onGenerate,
+  onSave,
+  onCancel,
+}) {
+  if (!visible) {
+    return null;
+  }
+
+  return (
+    <div className="modal-overlay">
+      <div className="modal teams-modal">
+        <h2>Generate teams</h2>
+        <fieldset className="nickname-group">
+          <legend>Nicknames</legend>
+          <div className="nickname-list">
+            {nicknames.map((nickname, index) => (
+              <div className="nickname-row" key={index}>
+                <input
+                  value={nickname}
+                  placeholder={`Player ${index + 1}`}
+                  onChange={(event) =>
+                    onNicknameChange(index, event.target.value)
+                  }
+                  onBlur={() => onPlayerBlur(index)}
+                />
+                {playerStatuses[index]?.exists && (
+                  <span className="player-elo-status">
+                    Elo: {playerStatuses[index].elo}
+                  </span>
+                )}
+                {playerStatuses[index] && !playerStatuses[index].exists && (
+                  <span className="player-missing-status">Not exists</span>
+                )}
+              </div>
+            ))}
+          </div>
+        </fieldset>
+        <div className="team-options">
+          <fieldset className="option-group">
+            <legend>Schema</legend>
+            <label>
+              <input
+                type="checkbox"
+                checked={schema === "random"}
+                onChange={() => onSchemaChange("random")}
+              />
+              Random
+            </label>
+            <label>
+              <input
+                type="checkbox"
+                checked={schema === "elo"}
+                onChange={() =>
+                  onSchemaChange(schema === "elo" ? "random" : "elo")
+                }
+              />
+              By Elo
+            </label>
+          </fieldset>
+          <fieldset className="option-group">
+            <legend>Formation</legend>
+            {[
+              ["random", "Random"],
+              ["standard", "9th Standard"],
+              ["custom", "Custom"],
+            ].map(([value, label]) => (
+              <label key={value}>
+                <input
+                  type="checkbox"
+                  checked={formation === value}
+                  onChange={() => onFormationChange(value)}
+                />
+                {label}
+              </label>
+            ))}
+          </fieldset>
+        </div>
+        <div className="team-results">
+          <h3>Generation results</h3>
+          {teams
+            ? teams.map((team, index) => (
+                <article
+                  className={`generated-team team-block ${index === 0 ? "red-team" : "blue-team"}`}
+                  key={index}
+                >
+                  <input
+                    className="generated-team-name"
+                    value={teamNames[index]}
+                    onChange={(event) =>
+                      onTeamNameChange(index, event.target.value)
+                    }
+                    aria-label={`${index === 0 ? "Red" : "Blue"} team name`}
+                  />
+                  <div className="generated-team-players">
+                    <span className="generated-player generated-player-left">
+                      <span>{team.players[0].nickname}</span>
+                      <span>({team.players[0].elo})</span>
+                    </span>
+                    <span className="generated-player generated-player-right">
+                      <span>({team.players[1].elo})</span>
+                      <span>{team.players[1].nickname}</span>
+                    </span>
+                  </div>
+                </article>
+              ))
+            : [0, 1].map((index) => (
+                <article
+                  className={`generated-team team-block result-placeholder-team ${index === 0 ? "red-team" : "blue-team"}`}
+                  key={index}
+                >
+                  <span className="generated-team-name">
+                    {index === 0 ? "Red Team" : "Blue Team"}
+                  </span>
+                  <div className="generated-team-players">
+                    <span className="generated-player generated-player-left">
+                      <span>------</span>
+                      <span></span>
+                    </span>
+                    <span className="generated-player generated-player-right">
+                      <span></span>
+                      <span>------</span>
+                    </span>
+                  </div>
+                </article>
+              ))}
+        </div>
+        <div className="modal-actions">
+          <button type="button" onClick={onCancel}>
+            Cancel
+          </button>
+          <button type="button" onClick={onGenerate}>
+            Generate
+          </button>
+          <button type="button" onClick={onSave} disabled={!teams}>
+            Save
+          </button>
+        </div>
       </div>
     </div>
   );

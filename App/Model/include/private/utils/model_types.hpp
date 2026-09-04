@@ -8,6 +8,7 @@
 #include <unordered_map>
 #include <utility>
 
+#include "common_types.hpp"
 #include "player.hpp"
 
 namespace model
@@ -24,9 +25,6 @@ enum class TeamFormation : std::uint8_t
     kBothShifted
 };
 
-using TeamFormations = std::array<TeamFormation, kSetsPerMatch>;
-using Nickname       = std::string;
-
 class Team final
 {
   public:
@@ -40,10 +38,11 @@ class Team final
     }
 };
 
-using Teams         = std::pair<model::Team, model::Team>;
-using TeamSetScores = std::array<std::uint8_t, kSetsPerMatch>;
-using PlayerMap     = std::unordered_map<Nickname, Player>;
-using PlayerEloMap  = std::unordered_map<Nickname, int>;
+using Teams          = std::pair<model::Team, model::Team>;
+using TeamFormations = std::array<TeamFormation, kSetsPerMatch>;
+using TeamSetScores  = std::array<std::uint8_t, kSetsPerMatch>;
+using PlayerMap      = std::unordered_map<common::Nickname, Player>;
+using PlayerEloMap   = std::unordered_map<common::Nickname, int>;
 }  // namespace model
 
 #endif  // FOOSBALL_TRACKER_APP_MODEL_INCLUDE_PRIVATE_UTILS_MODEL_TYPES_HPP_

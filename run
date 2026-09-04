@@ -214,6 +214,11 @@ function configure() {
       install_frontend_dependencies || return 1
     fi
 
+    if [[ "$configure_mode" != "--no-ui-tools" ]]; then
+      ensure_nodejs_from_nodesource || return 1
+      install_frontend_dependencies || return 1
+    fi
+
     return $?
   fi
 
@@ -244,6 +249,17 @@ function install_frontend_dependencies() {
 
   if [[ ! -x "$react_scripts_bin" ]]; then
     echo "Nie udalo sie zainstalowac zaleznosci frontendu. Sprawdz npm i plik package.json." >&2
+    return 1
+  fi
+}
+
+function build_frontend() {
+  local frontend_dir="$APP_DIR/View/frontend"
+
+  install_frontend_dependencies || return 1
+
+  if ! command -v npm >/dev/null 2>&1; then
+    echo "Brak pakietu npm. Zainstaluj Node.js/npm i sprobuj ponownie."
     return 1
   fi
 }

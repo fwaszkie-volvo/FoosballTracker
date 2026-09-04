@@ -14,7 +14,7 @@ constexpr int kEloAfterHighMarginWin{1019};
 constexpr int kEloAfterHighMarginLoss{981};
 constexpr int kPreparationMatches{8};
 
-model::PlayerMap MakePlayers(std::initializer_list<model::Nickname> names)
+model::PlayerMap MakePlayers(std::initializer_list<common::Nickname> names)
 {
     model::PlayerMap players;
     for (const auto& n : names)
@@ -29,7 +29,7 @@ ratings::MatchInput Make2v2Match(const model::Teams& teams,
     return ratings::MatchInput{
       .teams_         = teams,
       .set_scores_    = {{{goals1, goals1, goals1, goals1}, {goals2, goals2, goals2, goals2}}},
-      .team_settings_ = {model::TeamFormation::kStandard,
+      .team_formations_ = {model::TeamFormation::kStandard,
                          model::TeamFormation::kStandard,
                          model::TeamFormation::kStandard,
                          model::TeamFormation::kStandard},

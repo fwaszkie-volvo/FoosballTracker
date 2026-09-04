@@ -334,9 +334,9 @@ function format_fix() {
 
   clang_format_bin=$(find_clang_format) || return 1
 
-  format_targets | xargs -0 "$clang_format_bin" -i --style=file
   fix_header_guards
   run_iwyu 1
+  format_targets | xargs -0 "$clang_format_bin" -i --style=file
 }
 
 function format_check() {

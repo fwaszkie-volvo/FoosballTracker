@@ -35,13 +35,13 @@ class DbStorageTest : public ::testing::Test
     {
         const model::Teams teams{model::Team{{Player{"Alice"}, Player{"Bob"}}},
                                  model::Team{{Player{"Carol"}, Player{"Dave"}}}};
-        const model::TeamFormations team_settings{
+        const model::TeamFormations team_formations{
           model::TeamFormation::kStandard,
           model::TeamFormation::kStandard,
           model::TeamFormation::kStandard,
           model::TeamFormation::kStandard,
         };
-        ratings::MatchInput match{.teams_ = teams, .team_settings_ = team_settings};
+        ratings::MatchInput match{.teams_ = teams, .team_formations_ = team_formations};
         for (std::size_t s{0}; s < model::kSetsPerMatch; ++s)
         {
             match.set_scores_.at(0).at(s) = first_goals;

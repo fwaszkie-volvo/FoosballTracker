@@ -8,3 +8,4 @@ Tests/test_outputs/
 
 App/View/frontend/node_modules/
 App/View/frontend/build/
+foosball_tracker.db/

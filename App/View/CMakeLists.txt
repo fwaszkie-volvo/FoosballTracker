@@ -30,6 +30,7 @@ target_include_directories(foosball_view
 	PUBLIC
 		${CMAKE_CURRENT_SOURCE_DIR}/include/public
 		${OpenCV_INCLUDE_DIRS}
+		${CMAKE_CURRENT_SOURCE_DIR}/../Common/include
 )
 
 target_compile_definitions(foosball_view

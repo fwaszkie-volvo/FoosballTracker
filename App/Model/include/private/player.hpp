@@ -4,22 +4,24 @@
 #include <string>
 #include <utility>
 
+#include "common_types.hpp"
+
 static constexpr int kDefaultElo{1000};
 
 class Player
 {
   public:
-    Player(std::string nickname, const int elo = kDefaultElo)
+    Player(common::Nickname nickname, const int elo = kDefaultElo)
         : nickname_(std::move(nickname)), elo_(elo)
     {
     }
 
-    const std::string& GetNickname() const { return nickname_; }
+    const common::Nickname& GetNickname() const { return nickname_; }
     int GetElo() const { return elo_; }
     void SetElo(const int elo) { elo_ = elo; }
 
   private:
-    const std::string nickname_;
+    const common::Nickname nickname_;
     int elo_;
 };
 

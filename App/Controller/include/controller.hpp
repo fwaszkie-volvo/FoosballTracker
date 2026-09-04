@@ -2,10 +2,13 @@
 #define FOOSBALL_TRACKER_APP_CONTROLLER_INCLUDE_CONTROLLER_HPP_
 
 #include <memory>
+#include <optional>
 #include <string>
 #include <thread>
 #include <utility>
+#include <vector>
 
+#include "common_types.hpp"
 #include "model_main.hpp"
 #include "view_main.hpp"
 
@@ -30,6 +33,11 @@ class Controller
     void AnalyseOfflineFile();
     void StartLive();
     void SaveResult(const std::string& path);
+    void CreatePlayer(const common::Nickname& nickname);
+    std::optional<int> CheckPlayer(const common::Nickname& nickname);
+    HttpResult GenerateTeams(const std::vector<common::Nickname>& nicknames,
+                             bool by_elo,
+                             const std::string& formation);
 
   private:
     std::unique_ptr<ModelMain> model_;

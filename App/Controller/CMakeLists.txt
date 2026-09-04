@@ -5,6 +5,7 @@ project(FoosballTrackerController)
 
 add_library(foosball_controller STATIC
 	src/controller.cpp
+	src/controller_json.cpp
 )
 
 target_link_libraries(foosball_controller

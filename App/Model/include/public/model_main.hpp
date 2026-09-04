@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 
+#include "common_types.hpp"
 #include "generator_types.hpp"
 #include "model_types.hpp"
 #include "player.hpp"
@@ -26,9 +27,9 @@ class ModelMain
       const model::Teams& teams) const;
     std::optional<model::TeamFormations> GenerateTeamFormationsStandard(
       const model::Teams& teams) const;
-    void CreatePlayer(const model::Nickname& nickname);
+    void CreatePlayer(const common::Nickname& nickname);
     void RecordMatch(const ratings::MatchInput& match);
-    std::optional<Player> GetPlayer(const model::Nickname& nickname) const;
+    std::optional<Player> GetPlayer(const common::Nickname& nickname) const;
     std::vector<ratings::MatchInput> GetMatchHistory() const;
 
   private:
