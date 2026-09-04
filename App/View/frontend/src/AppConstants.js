@@ -1,6 +1,7 @@
 export const STATUS_POLL_INTERVAL_MS = 1000;
 export const LIVE_STREAM_TIMEOUT_MS = 3000;
 export const FILE_ACCEPT_VIDEO_TYPE = "video/mp4";
+export const SETS_PER_MATCH = 4;
 
 export const MODE = {
   IDLE: "idle",
@@ -39,7 +40,6 @@ export const UI_TEXT = {
   MODE_LABEL_VIDEO: "Video playback",
   MODE_LABEL_IDLE: "Idle",
   CREATE_PLAYER: "Create Player",
-  CREATE_PLAYER_TITLE: "Create player",
   NICKNAME: "Nickname",
   CANCEL: "Cancel",
   CREATE: "Create",
@@ -47,6 +47,43 @@ export const UI_TEXT = {
   PLAYER_CREATE_ERROR: "Unable to create player.",
   GENERATE_TEAMS: "Generate Teams",
   TEAM_GENERATION_ERROR: "Unable to generate teams.",
+  APP_EYEBROW: "Foosball Tracker",
+  APP_TITLE: "Match Analysis Console",
+  GO_LIVE: "Go Live",
+  LOAD_VIDEO: "Load Video",
+  ANALYSE: "Anal",
+  SAVE_RESULT: "Save Result",
+  SOURCE_LABEL: "Source:",
+  BALL_POSSESSION: "Ball Possession",
+  PRESSURE_INDEX: "Pressure Index",
+  PRESSURE_CHART_ARIA: "Pressure index line chart placeholder",
+  PASSING_FLOW: "Passing Flow",
+  SHOTS_ON_GOAL: "Shots On Goal",
+  PASS_ACCURACY: "Pass Accuracy",
+  FASTEST_SHOT: "Fastest Shot",
+  TABLE_POSITIONS_ARIA: "Foosball table positions",
+  TABLE_IMAGE_ARIA: "Foosball table image placement",
+  ANALYSIS_IN_PROGRESS: "Analysis in progress",
+  DISMISS: "Dismiss",
+  PLAYER_PLACEHOLDER_PREFIX: "Player",
+  PLAYER_ELO_PREFIX: "Elo:",
+  PLAYER_NOT_EXISTS: "Not exists",
+  NICKNAMES_LEGEND: "Nicknames",
+  SCHEMA_LEGEND: "Schema",
+  RANDOM: "Random",
+  BY_ELO: "By Elo",
+  FORMATION_LEGEND: "Formation",
+  FORMATION_STANDARD: "9th Standard",
+  GENERATION_RESULTS: "Generation results",
+  RED_TEAM: "Red Team",
+  BLUE_TEAM: "Blue Team",
+  PLACEHOLDER_DASH: "------",
+  SAVE: "Save",
+  GENERATE: "Generate",
+  SET_LABEL_PREFIX: "Set",
+  SCORE_PLACEHOLDER: "- : -",
+  PREVIOUS_SET_ARIA: "Previous set",
+  NEXT_SET_ARIA: "Next set",
 };
 
 export const INITIAL_STATUS = {
@@ -55,7 +92,18 @@ export const INITIAL_STATUS = {
   videoUrl: null,
 };
 
-export const INITIAL_DISPLAY_POSITIONS = {
-  red: { defence: "------", offence: "------" },
-  blue: { defence: "------", offence: "------" },
-};
+export const INITIAL_DISPLAY_POSITIONS = Array.from(
+  { length: SETS_PER_MATCH },
+  () => ({
+    red: {
+      defence: UI_TEXT.PLACEHOLDER_DASH,
+      offence: UI_TEXT.PLACEHOLDER_DASH,
+    },
+    blue: {
+      defence: UI_TEXT.PLACEHOLDER_DASH,
+      offence: UI_TEXT.PLACEHOLDER_DASH,
+    },
+  }),
+);
+
+export const DEFAULT_TEAM_NAMES = [UI_TEXT.RED_TEAM, UI_TEXT.BLUE_TEAM];

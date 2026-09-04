@@ -1,3 +1,5 @@
+import { UI_TEXT } from "./AppConstants";
+
 export function AppHeader({
   mode,
   currentFileName,
@@ -14,26 +16,26 @@ export function AppHeader({
   return (
     <header className="topbar">
       <div className="top-left-cluster">
-        <p className="eyebrow">Foosball Tracker</p>
-        <h1>Match Analysis Console</h1>
+        <p className="eyebrow">{UI_TEXT.APP_EYEBROW}</p>
+        <h1>{UI_TEXT.APP_TITLE}</h1>
         <div className="button-grid">
           <button type="button" onClick={onLiveClick}>
-            Go Live
+            {UI_TEXT.GO_LIVE}
           </button>
           <button type="button" onClick={onLoadClick}>
-            Load Video
+            {UI_TEXT.LOAD_VIDEO}
           </button>
           <button type="button" onClick={onAnalClick} disabled={!canAnalyse}>
-            Anal
+            {UI_TEXT.ANALYSE}
           </button>
           <button type="button" onClick={onSaveClick} disabled={!canSave}>
-            Save Result
+            {UI_TEXT.SAVE_RESULT}
           </button>
           <button type="button" onClick={onCreatePlayerClick}>
-            Create Player
+            {UI_TEXT.CREATE_PLAYER}
           </button>
           <button type="button" onClick={onGenerateTeamsClick}>
-            Generate Teams
+            {UI_TEXT.GENERATE_TEAMS}
           </button>
         </div>
       </div>
@@ -41,7 +43,9 @@ export function AppHeader({
         <span className="status-pill">{modeLabel}</span>
       </div>
       {mode !== "live" && (
-        <p className="file-note header-file-note">Source: {currentFileName}</p>
+        <p className="file-note header-file-note">
+          {UI_TEXT.SOURCE_LABEL} {currentFileName}
+        </p>
       )}
     </header>
   );
@@ -50,6 +54,10 @@ export function AppHeader({
 export function VideoOverlayPanel({
   teamNames = ["Red Team", "Blue Team"],
   positions,
+  setIndex = 0,
+  setCount = 1,
+  onPrevSet,
+  onNextSet,
 }) {
   return (
     <div className="video-overlay">
@@ -64,11 +72,17 @@ export function VideoOverlayPanel({
         </div>
       </div>
 
-      <TablePositionPanel positions={positions} />
+      <TablePositionPanel
+        positions={positions}
+        setIndex={setIndex}
+        setCount={setCount}
+        onPrevSet={onPrevSet}
+        onNextSet={onNextSet}
+      />
 
       <div className="diagram-stack">
         <article className="diagram-card">
-          <p className="diagram-title">Ball Possession</p>
+          <p className="diagram-title">{UI_TEXT.BALL_POSSESSION}</p>
           <div className="diagram-bars">
             <span className="bar red" style={{ width: "52%" }} />
             <span className="bar blue" style={{ width: "48%" }} />
@@ -76,12 +90,12 @@ export function VideoOverlayPanel({
         </article>
 
         <article className="diagram-card">
-          <p className="diagram-title">Pressure Index</p>
+          <p className="diagram-title">{UI_TEXT.PRESSURE_INDEX}</p>
           <svg
             className="pressure-chart"
             viewBox="0 0 160 56"
             role="img"
-            aria-label="Pressure index line chart placeholder"
+            aria-label={UI_TEXT.PRESSURE_CHART_ARIA}
           >
             <polyline
               className="pressure-fill"
@@ -95,7 +109,7 @@ export function VideoOverlayPanel({
         </article>
 
         <article className="diagram-card">
-          <p className="diagram-title">Passing Flow</p>
+          <p className="diagram-title">{UI_TEXT.PASSING_FLOW}</p>
           <div className="flow-grid">
             <span className="node red" />
             <span className="node neutral" />
@@ -111,35 +125,52 @@ export function StatsPanel() {
   return (
     <section className="stats-panel">
       <article className="stat-card">
-        <p className="stat-label">Ball Possession</p>
+        <p className="stat-label">{UI_TEXT.BALL_POSSESSION}</p>
         <h3>52% - 48%</h3>
       </article>
       <article className="stat-card">
-        <p className="stat-label">Shots On Goal</p>
+        <p className="stat-label">{UI_TEXT.SHOTS_ON_GOAL}</p>
         <h3>12 - 10</h3>
       </article>
       <article className="stat-card">
-        <p className="stat-label">Pass Accuracy</p>
+        <p className="stat-label">{UI_TEXT.PASS_ACCURACY}</p>
         <h3>87% - 84%</h3>
       </article>
       <article className="stat-card">
-        <p className="stat-label">Fastest Shot</p>
+        <p className="stat-label">{UI_TEXT.FASTEST_SHOT}</p>
         <h3>31.8 km/h</h3>
       </article>
     </section>
   );
 }
 
-export function TablePositionPanel({ positions }) {
+export function TablePositionPanel({
+  positions,
+  setIndex = 0,
+  setCount = 1,
+  onPrevSet,
+  onNextSet,
+}) {
   return (
     <article
       className="table-position-panel diagram-card"
-      aria-label="Foosball table positions"
+      aria-label={UI_TEXT.TABLE_POSITIONS_ARIA}
     >
-      <div
-        className="table-image-frame"
-        aria-label="Foosball table image placement"
-      >
+      <div className="set-nav-col set-nav-col-left">
+        <button
+          type="button"
+          className="set-nav-arrow"
+          onClick={onPrevSet}
+          disabled={setIndex === 0}
+          aria-label={UI_TEXT.PREVIOUS_SET_ARIA}
+        >
+          &#8249;
+        </button>
+        <span className="set-nav-label">
+          {UI_TEXT.SET_LABEL_PREFIX} {setIndex + 1}/{setCount}
+        </span>
+      </div>
+      <div className="table-image-frame" aria-label={UI_TEXT.TABLE_IMAGE_ARIA}>
         <img
           src={`${process.env.PUBLIC_URL}/images/foosball-table.png`}
           alt=""
@@ -170,6 +201,18 @@ export function TablePositionPanel({ positions }) {
           </div>
         </div>
       </div>
+      <div className="set-nav-col set-nav-col-right">
+        <button
+          type="button"
+          className="set-nav-arrow"
+          onClick={onNextSet}
+          disabled={setIndex === setCount - 1}
+          aria-label={UI_TEXT.NEXT_SET_ARIA}
+        >
+          &#8250;
+        </button>
+        <span className="set-nav-score">{UI_TEXT.SCORE_PLACEHOLDER}</span>
+      </div>
     </article>
   );
 }
@@ -180,7 +223,7 @@ export function AnalysisModal({ visible }) {
   }
   return (
     <div className="modal-overlay">
-      <div className="modal">Analysis in progress</div>
+      <div className="modal">{UI_TEXT.ANALYSIS_IN_PROGRESS}</div>
     </div>
   );
 }
@@ -194,7 +237,7 @@ export function ErrorModal({ error, onDismiss }) {
       <div className="modal error">
         <p>{error}</p>
         <button type="button" onClick={onDismiss}>
-          Dismiss
+          {UI_TEXT.DISMISS}
         </button>
       </div>
     </div>
@@ -216,9 +259,9 @@ export function CreatePlayerModal({
   return (
     <div className="modal-overlay">
       <form className="modal player-modal" onSubmit={onSubmit}>
-        <h2>Create player</h2>
+        <h2>{UI_TEXT.CREATE_PLAYER}</h2>
         <div className="player-label-row">
-          <label htmlFor="player-nickname">common::Nickname</label>
+          <label htmlFor="player-nickname">{UI_TEXT.NICKNAME}</label>
           {successMessage && <p className="player-success">{successMessage}</p>}
         </div>
         <input
@@ -230,9 +273,9 @@ export function CreatePlayerModal({
         />
         <div className="modal-actions">
           <button type="button" onClick={onCancel}>
-            Cancel
+            {UI_TEXT.CANCEL}
           </button>
-          <button type="submit">Create</button>
+          <button type="submit">{UI_TEXT.CREATE}</button>
         </div>
       </form>
     </div>
@@ -263,15 +306,15 @@ export function GenerateTeamsModal({
   return (
     <div className="modal-overlay">
       <div className="modal teams-modal">
-        <h2>Generate teams</h2>
+        <h2>{UI_TEXT.GENERATE_TEAMS}</h2>
         <fieldset className="nickname-group">
-          <legend>Nicknames</legend>
+          <legend>{UI_TEXT.NICKNAMES_LEGEND}</legend>
           <div className="nickname-list">
             {nicknames.map((nickname, index) => (
               <div className="nickname-row" key={index}>
                 <input
                   value={nickname}
-                  placeholder={`Player ${index + 1}`}
+                  placeholder={`${UI_TEXT.PLAYER_PLACEHOLDER_PREFIX} ${index + 1}`}
                   onChange={(event) =>
                     onNicknameChange(index, event.target.value)
                   }
@@ -279,11 +322,13 @@ export function GenerateTeamsModal({
                 />
                 {playerStatuses[index]?.exists && (
                   <span className="player-elo-status">
-                    Elo: {playerStatuses[index].elo}
+                    {UI_TEXT.PLAYER_ELO_PREFIX} {playerStatuses[index].elo}
                   </span>
                 )}
                 {playerStatuses[index] && !playerStatuses[index].exists && (
-                  <span className="player-missing-status">Not exists</span>
+                  <span className="player-missing-status">
+                    {UI_TEXT.PLAYER_NOT_EXISTS}
+                  </span>
                 )}
               </div>
             ))}
@@ -291,14 +336,14 @@ export function GenerateTeamsModal({
         </fieldset>
         <div className="team-options">
           <fieldset className="option-group">
-            <legend>Schema</legend>
+            <legend>{UI_TEXT.SCHEMA_LEGEND}</legend>
             <label>
               <input
                 type="checkbox"
                 checked={schema === "random"}
                 onChange={() => onSchemaChange("random")}
               />
-              Random
+              {UI_TEXT.RANDOM}
             </label>
             <label>
               <input
@@ -308,15 +353,14 @@ export function GenerateTeamsModal({
                   onSchemaChange(schema === "elo" ? "random" : "elo")
                 }
               />
-              By Elo
+              {UI_TEXT.BY_ELO}
             </label>
           </fieldset>
           <fieldset className="option-group">
-            <legend>Formation</legend>
+            <legend>{UI_TEXT.FORMATION_LEGEND}</legend>
             {[
-              ["random", "Random"],
-              ["standard", "9th Standard"],
-              ["custom", "Custom"],
+              ["random", UI_TEXT.RANDOM],
+              ["standard", UI_TEXT.FORMATION_STANDARD],
             ].map(([value, label]) => (
               <label key={value}>
                 <input
@@ -330,7 +374,7 @@ export function GenerateTeamsModal({
           </fieldset>
         </div>
         <div className="team-results">
-          <h3>Generation results</h3>
+          <h3>{UI_TEXT.GENERATION_RESULTS}</h3>
           {teams
             ? teams.map((team, index) => (
                 <article
@@ -343,7 +387,7 @@ export function GenerateTeamsModal({
                     onChange={(event) =>
                       onTeamNameChange(index, event.target.value)
                     }
-                    aria-label={`${index === 0 ? "Red" : "Blue"} team name`}
+                    aria-label={`${index === 0 ? UI_TEXT.RED_TEAM : UI_TEXT.BLUE_TEAM} name`}
                   />
                   <div className="generated-team-players">
                     <span className="generated-player generated-player-left">
@@ -363,16 +407,16 @@ export function GenerateTeamsModal({
                   key={index}
                 >
                   <span className="generated-team-name">
-                    {index === 0 ? "Red Team" : "Blue Team"}
+                    {index === 0 ? UI_TEXT.RED_TEAM : UI_TEXT.BLUE_TEAM}
                   </span>
                   <div className="generated-team-players">
                     <span className="generated-player generated-player-left">
-                      <span>------</span>
+                      <span>{UI_TEXT.PLACEHOLDER_DASH}</span>
                       <span></span>
                     </span>
                     <span className="generated-player generated-player-right">
                       <span></span>
-                      <span>------</span>
+                      <span>{UI_TEXT.PLACEHOLDER_DASH}</span>
                     </span>
                   </div>
                 </article>
@@ -380,13 +424,13 @@ export function GenerateTeamsModal({
         </div>
         <div className="modal-actions">
           <button type="button" onClick={onCancel}>
-            Cancel
+            {UI_TEXT.CANCEL}
           </button>
           <button type="button" onClick={onGenerate}>
-            Generate
+            {UI_TEXT.GENERATE}
           </button>
           <button type="button" onClick={onSave} disabled={!teams}>
-            Save
+            {UI_TEXT.SAVE}
           </button>
         </div>
       </div>

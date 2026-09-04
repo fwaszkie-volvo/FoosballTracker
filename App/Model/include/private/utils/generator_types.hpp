@@ -12,4 +12,4 @@ constexpr std::size_t kPlayersCount{4};
 using Players = std::array<Player, generator::kPlayersCount>;
 }  // namespace generator
 
-#endif  // FOOSBALL_TRACKER_APP_MODEL_INCLUDE_PRIVATE_UTILS_GENERATOR_TYPES_HPP_
+#endif // FOOSBALL_TRACKER_APP_MODEL_INCLUDE_PRIVATE_UTILS_GENERATOR_TYPES_HPP_
