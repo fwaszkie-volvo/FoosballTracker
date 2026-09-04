@@ -35,9 +35,9 @@ class Controller
     void SaveResult(const std::string& path);
     void CreatePlayer(const Nickname& nickname);
     std::optional<int> CheckPlayer(const Nickname& nickname);
-    std::pair<int, std::string> GenerateTeams(const std::vector<Nickname>& nicknames,
-                                              bool by_elo,
-                                              const std::string& formation);
+    HttpResult GenerateTeams(const std::vector<Nickname>& nicknames,
+                              bool by_elo,
+                              const std::string& formation);
 
   private:
     std::unique_ptr<ModelMain> model_;

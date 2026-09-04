@@ -113,9 +113,9 @@ std::optional<int> Controller::CheckPlayer(const Nickname& nickname)
     return player ? std::optional<int>{player->GetElo()} : std::nullopt;
 }
 
-std::pair<int, std::string> Controller::GenerateTeams(const std::vector<Nickname>& nicknames,
-                                                      const bool by_elo,
-                                                      const std::string& formation)
+HttpResult Controller::GenerateTeams(const std::vector<Nickname>& nicknames,
+                                      const bool by_elo,
+                                      const std::string& formation)
 {
     std::array<std::optional<Player>, generator::kPlayersCount> registered_players;
     for (std::size_t index{0U}; index < registered_players.size(); ++index)

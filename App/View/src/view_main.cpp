@@ -91,19 +91,18 @@ void ViewMain::SetOnSave(std::function<void(const std::string&)> callback)
     on_save_ = std::move(callback);
 }
 
-void ViewMain::SetOnCreatePlayer(std::function<bool(const std::string&)> callback)
+void ViewMain::SetOnCreatePlayer(std::function<bool(const Nickname&)> callback)
 {
     on_create_player_ = std::move(callback);
 }
 
-void ViewMain::SetOnCheckPlayer(std::function<std::optional<int>(const std::string&)> callback)
+void ViewMain::SetOnCheckPlayer(std::function<std::optional<int>(const Nickname&)> callback)
 {
     on_check_player_ = std::move(callback);
 }
 
 void ViewMain::SetOnGenerateTeams(
-  std::function<std::pair<int, std::string>(
-    const std::vector<std::string>&, bool, const std::string&)> callback)
+  std::function<HttpResult(const std::vector<Nickname>&, bool, const std::string&)> callback)
 {
     on_generate_teams_ = std::move(callback);
 }
