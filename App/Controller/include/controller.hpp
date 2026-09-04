@@ -10,7 +10,6 @@
 
 #include "common_types.hpp"
 #include "model_main.hpp"
-#include "model_types.hpp"
 #include "view_main.hpp"
 
 class Controller

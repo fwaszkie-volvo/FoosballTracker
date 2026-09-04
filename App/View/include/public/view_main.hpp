@@ -7,7 +7,6 @@
 #include <opencv2/core/mat.hpp>
 #include <optional>
 #include <string>
-#include <utility>
 #include <vector>
 
 #include "common_types.hpp"
