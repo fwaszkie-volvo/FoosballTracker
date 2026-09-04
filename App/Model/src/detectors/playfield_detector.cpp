@@ -91,23 +91,17 @@ void PlayfieldDetector::Detect(const cv::Mat& frame)
     std::vector<cv::Mat> bgr_channels;
     cv::split(frame, bgr_channels);
 
-    cv::Mat green_minus_red;
-    cv::Mat green_minus_blue;
-    cv::subtract(bgr_channels[1], bgr_channels[2], green_minus_red);
-    cv::subtract(bgr_channels[1], bgr_channels[0], green_minus_blue);
+    cv::Mat green_channel;
+    cv::Mat scaled_red_channel;
+    cv::Mat scaled_blue_channel;
+    bgr_channels[1].convertTo(green_channel, CV_32F);
+    bgr_channels[2].convertTo(scaled_red_channel, CV_32F, detector_types::kGreenDominanceRatio);
+    bgr_channels[0].convertTo(scaled_blue_channel, CV_32F, detector_types::kGreenDominanceRatio);
 
     cv::Mat green_over_red_mask;
     cv::Mat green_over_blue_mask;
-    cv::threshold(green_minus_red,
-                  green_over_red_mask,
-                  detector_types::kGreenDominanceThreshold,
-                  255,
-                  cv::THRESH_BINARY);
-    cv::threshold(green_minus_blue,
-                  green_over_blue_mask,
-                  detector_types::kGreenDominanceThreshold,
-                  255,
-                  cv::THRESH_BINARY);
+    cv::compare(green_channel, scaled_red_channel, green_over_red_mask, cv::CMP_GT);
+    cv::compare(green_channel, scaled_blue_channel, green_over_blue_mask, cv::CMP_GT);
     cv::bitwise_and(green_over_red_mask, green_over_blue_mask, green_dominance_mask);
     cv::bitwise_and(green_mask, green_dominance_mask, green_mask);
 
@@ -131,8 +125,32 @@ void PlayfieldDetector::Detect(const cv::Mat& frame)
         return;
     }
 
+    const double minimum_contour_area{cv::contourArea(largest_contour) *
+                                      detector_types::kPlayfieldContourMinAreaRatio};
+    cv::Mat column_coverage;
+    cv::reduce(green_mask, column_coverage, 0, cv::REDUCE_SUM, CV_32S);
+    double maximum_column_coverage{};
+    cv::minMaxLoc(column_coverage, nullptr, &maximum_column_coverage);
+    const double minimum_column_coverage{
+      maximum_column_coverage * detector_types::kPlayfieldColumnMinCoverageRatio};
+
+    Contour playfield_points;
+    for (const auto& contour : contours)
+    {
+        if (cv::contourArea(contour) >= minimum_contour_area)
+        {
+            for (const auto& point : contour)
+            {
+                if (column_coverage.at<int>(0, point.x) >= minimum_column_coverage)
+                {
+                    playfield_points.push_back(point);
+                }
+            }
+        }
+    }
+
     Contour hull{};
-    cv::convexHull(largest_contour, hull);
+    cv::convexHull(playfield_points, hull);
 
     playfield_mask_ = cv::Mat::zeros(frame.size(), CV_8UC1);
     cv::fillConvexPoly(playfield_mask_, hull, cv::Scalar(255));

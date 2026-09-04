@@ -10,7 +10,7 @@ using Contour = std::vector<cv::Point>;
 
 namespace detector_types
 {
-const cv::Scalar kLowerGreen(17, 22, 22);
+const cv::Scalar kLowerGreen(17, 22, 5);
 const cv::Scalar kUpperGreen(100, 255, 255);
 
 const cv::Scalar kLowerWhite(0, 0, 170);
@@ -33,7 +33,9 @@ constexpr int kPlayfieldKernelSize{15};
 constexpr int kBallKernelSize{7};
 constexpr int kPlayersKernelSize{5};
 constexpr int kPlayfieldDilateIterations{1};
-constexpr int kGreenDominanceThreshold{5};
+constexpr double kGreenDominanceRatio{1.05};
+constexpr double kPlayfieldContourMinAreaRatio{0.1};
+constexpr double kPlayfieldColumnMinCoverageRatio{0.52};
 
 constexpr double kPlayfieldApproxStart{0.01};
 constexpr double kPlayfieldApproxEnd{0.08};
