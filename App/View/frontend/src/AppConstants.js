@@ -40,7 +40,7 @@ export const UI_TEXT = {
   MODE_LABEL_IDLE: "Idle",
   CREATE_PLAYER: "Create Player",
   CREATE_PLAYER_TITLE: "Create player",
-  NICKNAME: "Nickname",
+  NICKNAME: "common::Nickname",
   CANCEL: "Cancel",
   CREATE: "Create",
   PLAYER_CREATED: "Player created",

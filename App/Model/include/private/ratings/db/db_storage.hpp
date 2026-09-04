@@ -8,6 +8,7 @@
 #include <optional>
 #include <vector>
 
+#include "common_types.hpp"
 #include "model_types.hpp"
 #include "player.hpp"
 #include "ratings_types.hpp"
@@ -23,9 +24,9 @@ class DbStorage
     DbStorage(const DbStorage&)            = delete;
     DbStorage& operator=(const DbStorage&) = delete;
 
-    void CreatePlayer(const Nickname& nickname);
-    bool TryUpdatePlayerElo(const Nickname& nickname, const int elo);
-    std::optional<Player> GetPlayer(const Nickname& nickname) const;
+    void CreatePlayer(const common::Nickname& nickname);
+    bool TryUpdatePlayerElo(const common::Nickname& nickname, const int elo);
+    std::optional<Player> GetPlayer(const common::Nickname& nickname) const;
     bool InsertMatch(const ratings::MatchInput& match);
     bool UpdateElos(const model::PlayerEloMap& new_elos);
     std::vector<ratings::MatchInput> GetMatchHistory() const;

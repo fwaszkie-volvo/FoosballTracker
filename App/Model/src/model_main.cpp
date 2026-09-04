@@ -103,11 +103,11 @@ std::optional<model::TeamFormations> ModelMain::GenerateTeamFormationsStandard(
     return generator::GenerateTeamFormationsStandard(teams);
 }
 
-void ModelMain::CreatePlayer(const Nickname& nickname) { ratings_.CreatePlayer(nickname); }
+void ModelMain::CreatePlayer(const common::Nickname& nickname) { ratings_.CreatePlayer(nickname); }
 
 void ModelMain::RecordMatch(const ratings::MatchInput& match) { ratings_.RecordMatch(match); }
 
-std::optional<Player> ModelMain::GetPlayer(const Nickname& nickname) const
+std::optional<Player> ModelMain::GetPlayer(const common::Nickname& nickname) const
 {
     return ratings_.GetPlayer(nickname);
 }

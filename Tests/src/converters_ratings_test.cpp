@@ -14,7 +14,7 @@ constexpr int kEloAfterHighMarginWin{1019};
 constexpr int kEloAfterHighMarginLoss{981};
 constexpr int kPreparationMatches{8};
 
-model::PlayerMap MakePlayers(std::initializer_list<Nickname> names)
+model::PlayerMap MakePlayers(std::initializer_list<common::Nickname> names)
 {
     model::PlayerMap players;
     for (const auto& n : names)

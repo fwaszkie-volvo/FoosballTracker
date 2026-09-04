@@ -56,6 +56,7 @@ target_include_directories(foosball_model
 		${CMAKE_CURRENT_SOURCE_DIR}/include/private/detectors
 		${CMAKE_CURRENT_SOURCE_DIR}/include/private/readers
 		${CMAKE_CURRENT_SOURCE_DIR}/include/private/utils
+		${CMAKE_CURRENT_SOURCE_DIR}/../Common/include
 )
 
 target_include_directories(foosball_input_readers

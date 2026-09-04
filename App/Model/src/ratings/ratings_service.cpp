@@ -13,7 +13,7 @@ std::optional<model::PlayerMap> RatingsService::LoadMatchPlayers(const MatchInpu
 {
     model::PlayerMap players_by_nickname{};
     const auto& match_teams{match.teams_};
-    const std::vector<Nickname> nicknames{
+    const std::vector<common::Nickname> nicknames{
       match_teams.first.players.first.GetNickname(),
       match_teams.first.players.second.GetNickname(),
       match_teams.second.players.first.GetNickname(),
@@ -34,7 +34,7 @@ std::optional<model::PlayerMap> RatingsService::LoadMatchPlayers(const MatchInpu
     return players_by_nickname;
 }
 
-void RatingsService::CreatePlayer(const Nickname& nickname)
+void RatingsService::CreatePlayer(const common::Nickname& nickname)
 {
     storage_.CreatePlayer(nickname);
 }
@@ -68,7 +68,7 @@ void RatingsService::RecordMatch(const MatchInput& match)
     storage_.UpdateElos(updated_elos);
 }
 
-std::optional<Player> RatingsService::GetPlayer(const Nickname& nickname) const
+std::optional<Player> RatingsService::GetPlayer(const common::Nickname& nickname) const
 {
     return storage_.GetPlayer(nickname);
 }

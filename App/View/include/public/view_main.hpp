@@ -9,7 +9,8 @@
 #include <string>
 #include <utility>
 #include <vector>
-#include "model_types.hpp"
+
+#include "common_types.hpp"
 
 namespace httplib
 {
@@ -18,8 +19,7 @@ class Response;
 class Server;
 }  // namespace httplib
 
-// HTTP status code paired with a JSON-encoded response body.
-using HttpResult = std::pair<int, std::string>;
+using common::HttpResult;
 
 // Web-based view: hosts an HTTP API + the built React frontend and exposes the
 // same callback-driven interface the Controller previously used with the GTK
@@ -40,10 +40,11 @@ class ViewMain
     void SetOnAnalyseClicked(std::function<void()> callback);
     void SetOnLiveClicked(std::function<void()> callback);
     void SetOnSave(std::function<void(const std::string&)> callback);
-    void SetOnCreatePlayer(std::function<bool(const Nickname&)> callback);
-    void SetOnCheckPlayer(std::function<std::optional<int>(const Nickname&)> callback);
-    void SetOnGenerateTeams(std::function<HttpResult(
-                              const std::vector<Nickname>&, bool, const std::string&)> callback);
+    void SetOnCreatePlayer(std::function<bool(const common::Nickname&)> callback);
+    void SetOnCheckPlayer(std::function<std::optional<int>(const common::Nickname&)> callback);
+    void SetOnGenerateTeams(
+      std::function<HttpResult(const std::vector<common::Nickname>&, bool, const std::string&)>
+        callback);
 
   private:
     void RegisterRoutes();
@@ -64,9 +65,9 @@ class ViewMain
     std::function<void()> on_analyse_clicked_;
     std::function<void()> on_live_clicked_;
     std::function<void(const std::string&)> on_save_;
-    std::function<bool(const Nickname&)> on_create_player_;
-    std::function<std::optional<int>(const Nickname&)> on_check_player_;
-    std::function<HttpResult(const std::vector<Nickname>&, bool, const std::string&)>
+    std::function<bool(const common::Nickname&)> on_create_player_;
+    std::function<std::optional<int>(const common::Nickname&)> on_check_player_;
+    std::function<HttpResult(const std::vector<common::Nickname>&, bool, const std::string&)>
       on_generate_teams_;
 
     std::unique_ptr<httplib::Server> server_;

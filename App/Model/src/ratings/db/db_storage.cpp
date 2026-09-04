@@ -30,7 +30,7 @@ namespace
 constexpr std::string_view kMatchKeyPrefix{"match:"};
 constexpr std::string_view kMatchKeyUpperBound{"match;"};
 
-std::string PlayerKey(const Nickname& nickname)
+std::string PlayerKey(const common::Nickname& nickname)
 {
     return std::format("player:{}", nickname);
 }
@@ -59,7 +59,7 @@ DbStorage::DbStorage()
     db_.reset(db);
 }
 
-void DbStorage::CreatePlayer(const Nickname& nickname)
+void DbStorage::CreatePlayer(const common::Nickname& nickname)
 {
     if (GetPlayer(nickname).has_value())
     {
@@ -69,7 +69,7 @@ void DbStorage::CreatePlayer(const Nickname& nickname)
     db_->Put(leveldb::WriteOptions(), PlayerKey(nickname), std::format("{}", kDefaultElo));
 }
 
-bool DbStorage::TryUpdatePlayerElo(const Nickname& nickname, const int elo)
+bool DbStorage::TryUpdatePlayerElo(const common::Nickname& nickname, const int elo)
 {
     if (!GetPlayer(nickname).has_value())
     {
@@ -79,7 +79,7 @@ bool DbStorage::TryUpdatePlayerElo(const Nickname& nickname, const int elo)
     return db_->Put(leveldb::WriteOptions(), PlayerKey(nickname), std::format("{}", elo)).ok();
 }
 
-std::optional<Player> DbStorage::GetPlayer(const Nickname& nickname) const
+std::optional<Player> DbStorage::GetPlayer(const common::Nickname& nickname) const
 {
     std::string value{};
     if (!db_->Get(leveldb::ReadOptions(), PlayerKey(nickname), &value).ok())

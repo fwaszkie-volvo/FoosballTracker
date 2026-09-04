@@ -91,18 +91,19 @@ void ViewMain::SetOnSave(std::function<void(const std::string&)> callback)
     on_save_ = std::move(callback);
 }
 
-void ViewMain::SetOnCreatePlayer(std::function<bool(const Nickname&)> callback)
+void ViewMain::SetOnCreatePlayer(std::function<bool(const common::Nickname&)> callback)
 {
     on_create_player_ = std::move(callback);
 }
 
-void ViewMain::SetOnCheckPlayer(std::function<std::optional<int>(const Nickname&)> callback)
+void ViewMain::SetOnCheckPlayer(std::function<std::optional<int>(const common::Nickname&)> callback)
 {
     on_check_player_ = std::move(callback);
 }
 
 void ViewMain::SetOnGenerateTeams(
-  std::function<HttpResult(const std::vector<Nickname>&, bool, const std::string&)> callback)
+  std::function<HttpResult(const std::vector<common::Nickname>&, bool, const std::string&)>
+    callback)
 {
     on_generate_teams_ = std::move(callback);
 }
@@ -231,7 +232,7 @@ void ViewMain::HandleCreatePlayer(const httplib::Request& req, httplib::Response
     if (nickname.empty())
     {
         res.status = 400;
-        res.set_content(nlohmann::json{{"error", "Nickname is required."}}.dump(),
+        res.set_content(nlohmann::json{{"error", "common::Nickname is required."}}.dump(),
                         "application/json");
         return;
     }
@@ -287,7 +288,7 @@ void ViewMain::HandleCheckPlayer(const httplib::Request& req, httplib::Response&
     if (!req.has_param("nickname") || !on_check_player_)
     {
         res.status = 400;
-        res.set_content(nlohmann::json{{"error", "Nickname is required."}}.dump(),
+        res.set_content(nlohmann::json{{"error", "common::Nickname is required."}}.dump(),
                         "application/json");
         return;
     }

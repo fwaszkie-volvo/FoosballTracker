@@ -220,7 +220,7 @@ export function CreatePlayerModal({
       <form className="modal player-modal" onSubmit={onSubmit}>
         <h2>Create player</h2>
         <div className="player-label-row">
-          <label htmlFor="player-nickname">Nickname</label>
+          <label htmlFor="player-nickname">common::Nickname</label>
           {successMessage && <p className="player-success">{successMessage}</p>}
         </div>
         <input

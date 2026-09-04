@@ -4,6 +4,7 @@
 #include <optional>
 #include <vector>
 
+#include "common_types.hpp"
 #include "db_storage.hpp"
 #include "model_types.hpp"
 #include "player.hpp"
@@ -14,9 +15,9 @@ namespace ratings
 class RatingsService
 {
   public:
-    void CreatePlayer(const Nickname& nickname);
+    void CreatePlayer(const common::Nickname& nickname);
     void RecordMatch(const MatchInput& match);
-    std::optional<Player> GetPlayer(const Nickname& nickname) const;
+    std::optional<Player> GetPlayer(const common::Nickname& nickname) const;
     std::vector<MatchInput> GetMatchHistory() const;
 
   private:
