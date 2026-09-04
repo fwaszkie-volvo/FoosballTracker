@@ -23,7 +23,7 @@ nlohmann::json PositionJson(const model::Team& team, const bool shifted)
     return {{"defence", defence_player.GetNickname()}, {"offence", offence_player.GetNickname()}};
 }
 
-nlohmann::json SettingsJson(const model::Teams& teams, const model::TeamFormation formation)
+nlohmann::json FormationJson(const model::Teams& teams, const model::TeamFormation formation)
 {
     const bool team_1_shifted = formation == model::TeamFormation::kTeam1Shifted ||
                                 formation == model::TeamFormation::kBothShifted;

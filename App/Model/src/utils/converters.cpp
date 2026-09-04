@@ -26,15 +26,15 @@ ratings::MatchInput MatchInputFromPlayers(const ratings::MatchInput& match,
     const auto make_teams = [&](const model::Teams& teams)
     { return model::Teams{make_team(teams.first), make_team(teams.second)}; };
 
-    return ratings::MatchInput{.teams_         = make_teams(match.teams_),
-                               .set_scores_    = match.set_scores_,
-                               .team_settings_ = match.team_settings_};
+    return ratings::MatchInput{.teams_           = make_teams(match.teams_),
+                               .set_scores_      = match.set_scores_,
+                               .team_formations_ = match.team_formations_};
 }
 
 nlohmann::json MatchToJson(const ratings::MatchInput& match)
 {
     std::array<std::uint8_t, model::kSetsPerMatch> formations{};
-    std::ranges::transform(match.team_settings_,
+    std::ranges::transform(match.team_formations_,
                            formations.begin(),
                            [](const model::TeamFormation formation)
                            { return static_cast<std::uint8_t>(formation); });
@@ -45,8 +45,8 @@ nlohmann::json MatchToJson(const ratings::MatchInput& match)
                               match.teams_.first.players.second.GetNickname()}),
        nlohmann::json::array({match.teams_.second.players.first.GetNickname(),
                               match.teams_.second.players.second.GetNickname()})});
-    result["set_scores"]    = match.set_scores_;
-    result["team_settings"] = formations;
+    result["set_scores"]      = match.set_scores_;
+    result["team_formations"] = formations;
     return result;
 }
 
@@ -59,7 +59,7 @@ ratings::MatchInput MatchFromJson(const nlohmann::json& json)
       model::Team{.players = {Player{teams_json.at(1).at(0).get<common::Nickname>()},
                               Player{teams_json.at(1).at(1).get<common::Nickname>()}}}};
     const auto serialized_formations{
-      json.at("team_settings").get<std::array<std::uint8_t, model::kSetsPerMatch>>()};
+      json.at("team_formations").get<std::array<std::uint8_t, model::kSetsPerMatch>>()};
     model::TeamFormations formations{};
     std::ranges::transform(serialized_formations,
                            formations.begin(),
@@ -67,9 +67,9 @@ ratings::MatchInput MatchFromJson(const nlohmann::json& json)
                            { return static_cast<model::TeamFormation>(formation); });
 
     return ratings::MatchInput{
-      .teams_         = teams,
-      .set_scores_    = json.at("set_scores").get<ratings::SetScores>(),
-      .team_settings_ = formations,
+      .teams_           = teams,
+      .set_scores_      = json.at("set_scores").get<ratings::SetScores>(),
+      .team_formations_ = formations,
     };
 }
 }  // namespace convert

@@ -2,7 +2,6 @@ export function AppHeader({
   mode,
   currentFileName,
   modeLabel,
-  analyzing,
   canAnalyse,
   canSave,
   onLiveClick,
@@ -40,7 +39,6 @@ export function AppHeader({
       </div>
       <div className="status-row">
         <span className="status-pill">{modeLabel}</span>
-        {analyzing && <span className="status-pill warm">Analyzing</span>}
       </div>
       {mode !== "live" && (
         <p className="file-note header-file-note">Source: {currentFileName}</p>

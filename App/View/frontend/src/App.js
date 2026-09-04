@@ -214,8 +214,8 @@ function App() {
 
   const handleSaveTeams = () => {
     setDisplayTeamNames(teamNames);
-    if (generatedTeams?.settings) {
-      setDisplayPositions(generatedTeams.settings);
+    if (generatedTeams?.formation) {
+      setDisplayPositions(generatedTeams.formation);
     }
     closeGenerateTeams();
   };
@@ -289,7 +289,6 @@ function App() {
         mode={mode}
         currentFileName={currentFileName}
         modeLabel={modeLabel}
-        analyzing={status.analyzing}
         canAnalyse={canAnalyse}
         canSave={canSave}
         onLiveClick={handleLiveClick}

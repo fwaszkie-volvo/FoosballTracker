@@ -116,7 +116,7 @@ HttpResult Controller::GenerateTeams(const std::vector<common::Nickname>& nickna
         return {400, nlohmann::json{{"error", "Unable to generate teams."}}.dump()};
     }
 
-    std::optional<nlohmann::json> settings_json;
+    std::optional<nlohmann::json> formation_json;
     std::optional<model::TeamFormations> team_formations;
     if (formation == "standard")
     {
@@ -127,17 +127,13 @@ HttpResult Controller::GenerateTeams(const std::vector<common::Nickname>& nickna
         team_formations = model_->GenerateTeamFormationsRandom(*teams);
     }
 
-    if (team_formations)
-    {
-        settings_json = controller_json::SettingsJson(*teams, team_formations->at(0));
-    }
-
     nlohmann::json response = {
       {"teams",
        {controller_json::TeamJson(teams->first), controller_json::TeamJson(teams->second)}}};
-    if (settings_json)
+    if (team_formations)
     {
-        response["settings"] = *settings_json;
+        formation_json        = controller_json::FormationJson(*teams, team_formations->at(0));
+        response["formation"] = *formation_json;
     }
 
     return {200, response.dump()};
