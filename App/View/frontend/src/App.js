@@ -13,6 +13,7 @@ import {
 } from "./AppViewParts";
 import {
   API_ROUTE,
+  DEFAULT_TEAM_NAMES,
   FILE_ACCEPT_VIDEO_TYPE,
   INITIAL_DISPLAY_POSITIONS,
   INITIAL_STATUS,
@@ -20,6 +21,7 @@ import {
   LIVE_STREAM_TIMEOUT_MS,
   MEDIA_SRC,
   MODE,
+  SETS_PER_MATCH,
   STATUS_POLL_INTERVAL_MS,
   UI_TEXT,
 } from "./AppConstants";
@@ -45,14 +47,12 @@ function App() {
     null,
     null,
   ]);
-  const [teamNames, setTeamNames] = useState(["Red Team", "Blue Team"]);
-  const [displayTeamNames, setDisplayTeamNames] = useState([
-    "Red Team",
-    "Blue Team",
-  ]);
+  const [teamNames, setTeamNames] = useState(DEFAULT_TEAM_NAMES);
+  const [displayTeamNames, setDisplayTeamNames] = useState(DEFAULT_TEAM_NAMES);
   const [displayPositions, setDisplayPositions] = useState(
     INITIAL_DISPLAY_POSITIONS,
   );
+  const [currentSetIndex, setCurrentSetIndex] = useState(0);
   const [generatedTeams, setGeneratedTeams] = useState(null);
   const [teamSchema, setTeamSchema] = useState("random");
   const [teamFormation, setTeamFormation] = useState("random");
@@ -196,7 +196,7 @@ function App() {
     setGeneratedTeams(null);
     setTeamNicknames(["", "", "", ""]);
     setPlayerStatuses([null, null, null, null]);
-    setTeamNames(["Red Team", "Blue Team"]);
+    setTeamNames(DEFAULT_TEAM_NAMES);
     setTeamSchema("random");
     setTeamFormation("random");
     setIsGenerateTeamsOpen(true);
@@ -206,7 +206,7 @@ function App() {
     setGeneratedTeams(null);
     setTeamNicknames(["", "", "", ""]);
     setPlayerStatuses([null, null, null, null]);
-    setTeamNames(["Red Team", "Blue Team"]);
+    setTeamNames(DEFAULT_TEAM_NAMES);
     setTeamSchema("random");
     setTeamFormation("random");
     setIsGenerateTeamsOpen(false);
@@ -217,8 +217,15 @@ function App() {
     if (generatedTeams?.formation) {
       setDisplayPositions(generatedTeams.formation);
     }
+    setCurrentSetIndex(0);
     closeGenerateTeams();
   };
+
+  const handlePrevSet = () =>
+    setCurrentSetIndex((current) => Math.max(current - 1, 0));
+
+  const handleNextSet = () =>
+    setCurrentSetIndex((current) => Math.min(current + 1, SETS_PER_MATCH - 1));
 
   const handlePlayerBlur = async (index) => {
     const nicknameValue = teamNicknames[index].trim();
@@ -303,7 +310,11 @@ function App() {
         <div className="video-stage">
           <VideoOverlayPanel
             teamNames={displayTeamNames}
-            positions={displayPositions}
+            positions={displayPositions[currentSetIndex]}
+            setIndex={currentSetIndex}
+            setCount={SETS_PER_MATCH}
+            onPrevSet={handlePrevSet}
+            onNextSet={handleNextSet}
           />
 
           {mode === MODE.LIVE && (
