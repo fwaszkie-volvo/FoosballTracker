@@ -32,10 +32,10 @@ const cv::Scalar kPlayersUpperRed2(180, 255, 255);
 constexpr int kPlayfieldKernelSize{15};
 constexpr int kBallKernelSize{7};
 constexpr int kPlayersKernelSize{5};
-constexpr int kPlayfieldDilateIterations{1};
 constexpr double kGreenDominanceRatio{1.05};
 constexpr double kPlayfieldContourMinAreaRatio{0.1};
 constexpr double kPlayfieldColumnMinCoverageRatio{0.52};
+constexpr double kPlayfieldMinFrameAreaRatio{0.3};
 
 constexpr double kPlayfieldApproxStart{0.01};
 constexpr double kPlayfieldApproxEnd{0.08};

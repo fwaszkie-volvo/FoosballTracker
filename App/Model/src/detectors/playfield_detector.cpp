@@ -109,11 +109,6 @@ void PlayfieldDetector::Detect(const cv::Mat& frame)
       mask_utils::create_kernel(detector_types::kPlayfieldKernelSize, cv::MORPH_ELLIPSE)};
     cv::morphologyEx(green_mask, green_mask, cv::MORPH_CLOSE, kernel);
     cv::morphologyEx(green_mask, green_mask, cv::MORPH_OPEN, kernel);
-    cv::dilate(green_mask,
-               green_mask,
-               kernel,
-               cv::Point(-1, -1),
-               detector_types::kPlayfieldDilateIterations);
 
     std::vector<Contour> contours;
     std::vector<cv::Vec4i> hierarchy;
@@ -131,8 +126,8 @@ void PlayfieldDetector::Detect(const cv::Mat& frame)
     cv::reduce(green_mask, column_coverage, 0, cv::REDUCE_SUM, CV_32S);
     double maximum_column_coverage{};
     cv::minMaxLoc(column_coverage, nullptr, &maximum_column_coverage);
-    const double minimum_column_coverage{
-      maximum_column_coverage * detector_types::kPlayfieldColumnMinCoverageRatio};
+    const double minimum_column_coverage{maximum_column_coverage *
+                                         detector_types::kPlayfieldColumnMinCoverageRatio};
 
     Contour playfield_points;
     for (const auto& contour : contours)
@@ -149,8 +144,18 @@ void PlayfieldDetector::Detect(const cv::Mat& frame)
         }
     }
 
+    if (playfield_points.empty())
+    {
+        return;
+    }
+
     Contour hull{};
     cv::convexHull(playfield_points, hull);
+    const double frame_area{static_cast<double>(frame.rows) * static_cast<double>(frame.cols)};
+    if (cv::contourArea(hull) < frame_area * detector_types::kPlayfieldMinFrameAreaRatio)
+    {
+        return;
+    }
 
     playfield_mask_ = cv::Mat::zeros(frame.size(), CV_8UC1);
     cv::fillConvexPoly(playfield_mask_, hull, cv::Scalar(255));

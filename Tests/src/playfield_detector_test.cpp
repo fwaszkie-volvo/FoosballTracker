@@ -14,6 +14,8 @@ constexpr int kGoalWidth{25};
 constexpr int kGoalHalfHeight{40};
 constexpr int kTaperedEndHalfHeight{50};
 constexpr int kTaperTransitionInset{70};
+constexpr int kFalseRegionWidth{160};
+constexpr int kFalseRegionHeight{120};
 constexpr double kMinimumPlayfieldCoverage{0.9};
 const cv::Scalar kBackgroundColor{3, 3, 3};
 const cv::Scalar kNormalLightGreen{20, 100, 20};
@@ -40,7 +42,28 @@ TEST(PlayfieldDetectorTest, DetectsGreenPlayfieldAtDifferentBrightnessLevels)
 
         EXPECT_TRUE(detector.HasDetection());
         EXPECT_FALSE(detector.GetPolygon().empty());
+        const cv::Rect expected_bounds{kPlayfieldMargin,
+                                       kPlayfieldMargin,
+                                       kFrameSize.width - (2 * kPlayfieldMargin) + 1,
+                                       kFrameSize.height - (2 * kPlayfieldMargin) + 1};
+        EXPECT_EQ(cv::boundingRect(detector.GetMask()), expected_bounds);
     }
+}
+
+TEST(PlayfieldDetectorTest, RejectsSmallGreenRegionInFrameCorner)
+{
+    cv::Mat frame{kFrameSize, CV_8UC3, kBackgroundColor};
+    cv::rectangle(frame,
+                  cv::Point{0, 0},
+                  cv::Point{kFalseRegionWidth, kFalseRegionHeight},
+                  kNormalLightGreen,
+                  cv::FILLED);
+
+    PlayfieldDetector detector;
+    detector.Detect(frame);
+
+    EXPECT_FALSE(detector.HasDetection());
+    EXPECT_TRUE(detector.GetMask().empty());
 }
 
 TEST(PlayfieldDetectorTest, CoversPlayfieldSplitByUnevenLighting)
@@ -86,26 +109,25 @@ TEST(PlayfieldDetectorTest, ExcludesGreenSideGoalFromPlayfield)
 
 TEST(PlayfieldDetectorTest, KeepsTaperedPlayfieldEndsBehindGoalkeepers)
 {
-        cv::Mat frame{kFrameSize, CV_8UC3, kBackgroundColor};
-        const int center_y{kFrameSize.height / 2};
-        const Contour tapered_playfield{
-            cv::Point{kPlayfieldMargin, center_y - kTaperedEndHalfHeight},
-            cv::Point{kPlayfieldMargin + kTaperTransitionInset, kPlayfieldMargin},
-            cv::Point{kFrameSize.width - kPlayfieldMargin - kTaperTransitionInset, kPlayfieldMargin},
-    cv::Point{kFrameSize.width - kPlayfieldMargin, center_y - kTaperedEndHalfHeight},
-    cv::Point{kFrameSize.width - kPlayfieldMargin, center_y + kTaperedEndHalfHeight},
-            cv::Point{kFrameSize.width - kPlayfieldMargin - kTaperTransitionInset,
-                                kFrameSize.height - kPlayfieldMargin},
-            cv::Point{kPlayfieldMargin + kTaperTransitionInset,
-                                kFrameSize.height - kPlayfieldMargin},
-            cv::Point{kPlayfieldMargin, center_y + kTaperedEndHalfHeight}};
-        cv::fillConvexPoly(frame, tapered_playfield, kNormalLightGreen);
+    cv::Mat frame{kFrameSize, CV_8UC3, kBackgroundColor};
+    const int center_y{kFrameSize.height / 2};
+    const Contour tapered_playfield{
+      cv::Point{kPlayfieldMargin, center_y - kTaperedEndHalfHeight},
+      cv::Point{kPlayfieldMargin + kTaperTransitionInset, kPlayfieldMargin},
+      cv::Point{kFrameSize.width - kPlayfieldMargin - kTaperTransitionInset, kPlayfieldMargin},
+      cv::Point{kFrameSize.width - kPlayfieldMargin, center_y - kTaperedEndHalfHeight},
+      cv::Point{kFrameSize.width - kPlayfieldMargin, center_y + kTaperedEndHalfHeight},
+      cv::Point{kFrameSize.width - kPlayfieldMargin - kTaperTransitionInset,
+                kFrameSize.height - kPlayfieldMargin},
+      cv::Point{kPlayfieldMargin + kTaperTransitionInset, kFrameSize.height - kPlayfieldMargin},
+      cv::Point{kPlayfieldMargin, center_y + kTaperedEndHalfHeight}};
+    cv::fillConvexPoly(frame, tapered_playfield, kNormalLightGreen);
 
-        PlayfieldDetector detector;
-        detector.Detect(frame);
+    PlayfieldDetector detector;
+    detector.Detect(frame);
 
-        ASSERT_TRUE(detector.HasDetection());
-        const cv::Rect bounds{cv::boundingRect(detector.GetMask())};
-        EXPECT_LE(bounds.x, kPlayfieldMargin);
-        EXPECT_GE(bounds.x + bounds.width, kFrameSize.width - kPlayfieldMargin);
+    ASSERT_TRUE(detector.HasDetection());
+    const cv::Rect bounds{cv::boundingRect(detector.GetMask())};
+    EXPECT_LE(bounds.x, kPlayfieldMargin);
+    EXPECT_GE(bounds.x + bounds.width, kFrameSize.width - kPlayfieldMargin);
 }
