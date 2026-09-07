@@ -13,6 +13,7 @@ import {
 } from "./AppViewParts";
 import {
   API_ROUTE,
+  DEFAULT_TEAM_COLORS,
   DEFAULT_TEAM_NAMES,
   FILE_ACCEPT_VIDEO_TYPE,
   INITIAL_DISPLAY_POSITIONS,
@@ -49,6 +50,9 @@ function App() {
   ]);
   const [teamNames, setTeamNames] = useState(DEFAULT_TEAM_NAMES);
   const [displayTeamNames, setDisplayTeamNames] = useState(DEFAULT_TEAM_NAMES);
+  const [teamColors, setTeamColors] = useState(DEFAULT_TEAM_COLORS);
+  const [displayTeamColors, setDisplayTeamColors] =
+    useState(DEFAULT_TEAM_COLORS);
   const [displayPositions, setDisplayPositions] = useState(
     INITIAL_DISPLAY_POSITIONS,
   );
@@ -197,6 +201,7 @@ function App() {
     setTeamNicknames(["", "", "", ""]);
     setPlayerStatuses([null, null, null, null]);
     setTeamNames(DEFAULT_TEAM_NAMES);
+    setTeamColors(DEFAULT_TEAM_COLORS);
     setTeamSchema("random");
     setTeamFormation("random");
     setIsGenerateTeamsOpen(true);
@@ -207,6 +212,7 @@ function App() {
     setTeamNicknames(["", "", "", ""]);
     setPlayerStatuses([null, null, null, null]);
     setTeamNames(DEFAULT_TEAM_NAMES);
+    setTeamColors(DEFAULT_TEAM_COLORS);
     setTeamSchema("random");
     setTeamFormation("random");
     setIsGenerateTeamsOpen(false);
@@ -214,6 +220,7 @@ function App() {
 
   const handleSaveTeams = () => {
     setDisplayTeamNames(teamNames);
+    setDisplayTeamColors(teamColors);
     if (generatedTeams?.formation) {
       setDisplayPositions(generatedTeams.formation);
     }
@@ -222,10 +229,12 @@ function App() {
   };
 
   const handlePrevSet = () =>
-    setCurrentSetIndex((current) => Math.max(current - 1, 0));
+    setCurrentSetIndex(
+      (current) => (current - 1 + SETS_PER_MATCH) % SETS_PER_MATCH,
+    );
 
   const handleNextSet = () =>
-    setCurrentSetIndex((current) => Math.min(current + 1, SETS_PER_MATCH - 1));
+    setCurrentSetIndex((current) => (current + 1) % SETS_PER_MATCH);
 
   const handlePlayerBlur = async (index) => {
     const nicknameValue = teamNicknames[index].trim();
@@ -257,12 +266,29 @@ function App() {
   };
 
   const handleGenerateTeams = async () => {
+    const trimmedNicknames = teamNicknames.map((value) => value.trim());
+    const duplicateNickname = trimmedNicknames.find(
+      (nickname, index) =>
+        nickname &&
+        trimmedNicknames.some(
+          (otherNickname, otherIndex) =>
+            otherIndex < index &&
+            otherNickname.toLowerCase() === nickname.toLowerCase(),
+        ),
+    );
+    if (duplicateNickname) {
+      setStatus((current) => ({
+        ...current,
+        error: `${UI_TEXT.PLAYER_DUPLICATE_ERROR_PREFIX}${duplicateNickname}${UI_TEXT.PLAYER_DUPLICATE_ERROR_SUFFIX}`,
+      }));
+      return;
+    }
     const response = await fetch(
       `${API_ROUTE.TEAMS}?mode=${teamSchema}&formation=${teamFormation}`,
       {
         method: "POST",
         headers: { "Content-Type": "text/plain" },
-        body: teamNicknames.map((value) => value.trim()).join("\n"),
+        body: trimmedNicknames.join("\n"),
       },
     );
     if (response.ok) {
@@ -310,6 +336,7 @@ function App() {
         <div className="video-stage">
           <VideoOverlayPanel
             teamNames={displayTeamNames}
+            teamColors={displayTeamColors}
             positions={displayPositions[currentSetIndex]}
             setIndex={currentSetIndex}
             setCount={SETS_PER_MATCH}
@@ -378,6 +405,7 @@ function App() {
         nicknames={teamNicknames}
         playerStatuses={playerStatuses}
         teamNames={teamNames}
+        teamColors={teamColors}
         teams={generatedTeams?.teams}
         schema={teamSchema}
         formation={teamFormation}
@@ -401,6 +429,15 @@ function App() {
             current.map((teamName, teamIndex) =>
               teamIndex === index ? value : teamName,
             ),
+          )
+        }
+        onTeamColorChange={(index, colorId) =>
+          setTeamColors((current) =>
+            current[index === 0 ? 1 : 0] === colorId
+              ? current
+              : current.map((color, colorIndex) =>
+                  colorIndex === index ? colorId : color,
+                ),
           )
         }
         onGenerate={handleGenerateTeams}

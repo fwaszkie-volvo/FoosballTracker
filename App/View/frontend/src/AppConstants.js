@@ -68,6 +68,9 @@ export const UI_TEXT = {
   PLAYER_PLACEHOLDER_PREFIX: "Player",
   PLAYER_ELO_PREFIX: "Elo:",
   PLAYER_NOT_EXISTS: "Not exists",
+  NICKNAME_DUPLICATE: "Duplicate",
+  PLAYER_DUPLICATE_ERROR_PREFIX: "Player '",
+  PLAYER_DUPLICATE_ERROR_SUFFIX: "' is dupplicated.",
   NICKNAMES_LEGEND: "Nicknames",
   SCHEMA_LEGEND: "Schema",
   RANDOM: "Random",
@@ -75,8 +78,8 @@ export const UI_TEXT = {
   FORMATION_LEGEND: "Formation",
   FORMATION_STANDARD: "9th Standard",
   GENERATION_RESULTS: "Generation results",
-  RED_TEAM: "Red Team",
-  BLUE_TEAM: "Blue Team",
+  FIRST_TEAM: "1st Team",
+  SECOND_TEAM: "2nd Team",
   PLACEHOLDER_DASH: "------",
   SAVE: "Save",
   GENERATE: "Generate",
@@ -84,6 +87,7 @@ export const UI_TEXT = {
   SCORE_PLACEHOLDER: "- : -",
   PREVIOUS_SET_ARIA: "Previous set",
   NEXT_SET_ARIA: "Next set",
+  COLOR_TAKEN: "Already used by the other team",
 };
 
 export const INITIAL_STATUS = {
@@ -106,4 +110,19 @@ export const INITIAL_DISPLAY_POSITIONS = Array.from(
   }),
 );
 
-export const DEFAULT_TEAM_NAMES = [UI_TEXT.RED_TEAM, UI_TEXT.BLUE_TEAM];
+export const DEFAULT_TEAM_NAMES = [UI_TEXT.FIRST_TEAM, UI_TEXT.SECOND_TEAM];
+
+export const TEAM_COLOR_PALETTE = [
+  { id: "cyan", label: "Cyan", rgb: "33, 183, 242" },
+  { id: "amber", label: "Amber", rgb: "245, 158, 11" },
+  { id: "violet", label: "Violet", rgb: "168, 85, 247" },
+  { id: "emerald", label: "Emerald", rgb: "16, 185, 129" },
+  { id: "rose", label: "Rose", rgb: "244, 63, 94" },
+  { id: "teal", label: "Teal", rgb: "45, 212, 191" },
+];
+
+export const DEFAULT_TEAM_COLORS = ["violet", "emerald"];
+
+export const getTeamColorRgb = (colorId) =>
+  TEAM_COLOR_PALETTE.find((color) => color.id === colorId)?.rgb ??
+  TEAM_COLOR_PALETTE[0].rgb;

@@ -1,4 +1,9 @@
-import { UI_TEXT } from "./AppConstants";
+import {
+  DEFAULT_TEAM_COLORS,
+  TEAM_COLOR_PALETTE,
+  UI_TEXT,
+  getTeamColorRgb,
+} from "./AppConstants";
 
 export function AppHeader({
   mode,
@@ -53,6 +58,7 @@ export function AppHeader({
 
 export function VideoOverlayPanel({
   teamNames = ["Red Team", "Blue Team"],
+  teamColors = DEFAULT_TEAM_COLORS,
   positions,
   setIndex = 0,
   setCount = 1,
@@ -63,17 +69,24 @@ export function VideoOverlayPanel({
     <div className="video-overlay">
       <div className="scoreboard-row">
         <div className="clock-pill">00:00</div>
-        <div className="team-block red-team">
+        <div
+          className="team-block"
+          style={{ "--team-color": getTeamColorRgb(teamColors[0]) }}
+        >
           <strong>{teamNames[0]}</strong>
         </div>
         <div className="score-pill">0 : 0</div>
-        <div className="team-block blue-team">
+        <div
+          className="team-block"
+          style={{ "--team-color": getTeamColorRgb(teamColors[1]) }}
+        >
           <strong>{teamNames[1]}</strong>
         </div>
       </div>
 
       <TablePositionPanel
         positions={positions}
+        teamColors={teamColors}
         setIndex={setIndex}
         setCount={setCount}
         onPrevSet={onPrevSet}
@@ -84,8 +97,20 @@ export function VideoOverlayPanel({
         <article className="diagram-card">
           <p className="diagram-title">{UI_TEXT.BALL_POSSESSION}</p>
           <div className="diagram-bars">
-            <span className="bar red" style={{ width: "52%" }} />
-            <span className="bar blue" style={{ width: "48%" }} />
+            <span
+              className="bar"
+              style={{
+                width: "52%",
+                "--team-color": getTeamColorRgb(teamColors[0]),
+              }}
+            />
+            <span
+              className="bar"
+              style={{
+                width: "48%",
+                "--team-color": getTeamColorRgb(teamColors[1]),
+              }}
+            />
           </div>
         </article>
 
@@ -111,9 +136,15 @@ export function VideoOverlayPanel({
         <article className="diagram-card">
           <p className="diagram-title">{UI_TEXT.PASSING_FLOW}</p>
           <div className="flow-grid">
-            <span className="node red" />
+            <span
+              className="node"
+              style={{ "--team-color": getTeamColorRgb(teamColors[0]) }}
+            />
             <span className="node neutral" />
-            <span className="node blue" />
+            <span
+              className="node"
+              style={{ "--team-color": getTeamColorRgb(teamColors[1]) }}
+            />
           </div>
         </article>
       </div>
@@ -146,6 +177,7 @@ export function StatsPanel() {
 
 export function TablePositionPanel({
   positions,
+  teamColors = DEFAULT_TEAM_COLORS,
   setIndex = 0,
   setCount = 1,
   onPrevSet,
@@ -161,7 +193,6 @@ export function TablePositionPanel({
           type="button"
           className="set-nav-arrow"
           onClick={onPrevSet}
-          disabled={setIndex === 0}
           aria-label={UI_TEXT.PREVIOUS_SET_ARIA}
         >
           &#8249;
@@ -172,6 +203,7 @@ export function TablePositionPanel({
       </div>
       <div className="table-image-frame" aria-label={UI_TEXT.TABLE_IMAGE_ARIA}>
         <img
+          className={setIndex % 2 === 1 ? "table-image-flipped" : ""}
           src={`${process.env.PUBLIC_URL}/images/foosball-table.png`}
           alt=""
           onError={(event) => {
@@ -182,10 +214,16 @@ export function TablePositionPanel({
           className="table-marker-column table-marker-column-right"
           aria-hidden="true"
         >
-          <div className="table-marker team-block blue-team">
+          <div
+            className="table-marker team-block"
+            style={{ "--team-color": getTeamColorRgb(teamColors[1]) }}
+          >
             <strong>{positions.blue.offence}</strong>
           </div>
-          <div className="table-marker team-block blue-team">
+          <div
+            className="table-marker team-block"
+            style={{ "--team-color": getTeamColorRgb(teamColors[1]) }}
+          >
             <strong>{positions.blue.defence}</strong>
           </div>
         </div>
@@ -193,10 +231,16 @@ export function TablePositionPanel({
           className="table-marker-column table-marker-column-left"
           aria-hidden="true"
         >
-          <div className="table-marker team-block red-team">
+          <div
+            className="table-marker team-block"
+            style={{ "--team-color": getTeamColorRgb(teamColors[0]) }}
+          >
             <strong>{positions.red.defence}</strong>
           </div>
-          <div className="table-marker team-block red-team">
+          <div
+            className="table-marker team-block"
+            style={{ "--team-color": getTeamColorRgb(teamColors[0]) }}
+          >
             <strong>{positions.red.offence}</strong>
           </div>
         </div>
@@ -206,7 +250,6 @@ export function TablePositionPanel({
           type="button"
           className="set-nav-arrow"
           onClick={onNextSet}
-          disabled={setIndex === setCount - 1}
           aria-label={UI_TEXT.NEXT_SET_ARIA}
         >
           &#8250;
@@ -282,17 +325,41 @@ export function CreatePlayerModal({
   );
 }
 
+export function TeamColorPicker({ selectedColor, disabledColor, onSelect }) {
+  return (
+    <div className="team-color-picker">
+      {TEAM_COLOR_PALETTE.map((color) => {
+        const isTaken = color.id === disabledColor;
+        return (
+          <button
+            key={color.id}
+            type="button"
+            className={`team-color-swatch ${color.id === selectedColor ? "active" : ""}`}
+            style={{ "--swatch-color": color.rgb }}
+            onClick={() => onSelect(color.id)}
+            disabled={isTaken}
+            aria-label={`${color.label}${isTaken ? ` (${UI_TEXT.COLOR_TAKEN})` : ""}`}
+            title={isTaken ? UI_TEXT.COLOR_TAKEN : color.label}
+          />
+        );
+      })}
+    </div>
+  );
+}
+
 export function GenerateTeamsModal({
   visible,
   nicknames,
   playerStatuses,
   teamNames,
+  teamColors = DEFAULT_TEAM_COLORS,
   teams,
   schema,
   formation,
   onNicknameChange,
   onPlayerBlur,
   onTeamNameChange,
+  onTeamColorChange,
   onSchemaChange,
   onFormationChange,
   onGenerate,
@@ -302,6 +369,17 @@ export function GenerateTeamsModal({
   if (!visible) {
     return null;
   }
+
+  const duplicateIndexes = nicknames.map((nickname, index) => {
+    const trimmed = nickname.trim().toLowerCase();
+    if (!trimmed) {
+      return false;
+    }
+    return nicknames.some(
+      (otherNickname, otherIndex) =>
+        otherIndex < index && otherNickname.trim().toLowerCase() === trimmed,
+    );
+  });
 
   return (
     <div className="modal-overlay">
@@ -320,14 +398,21 @@ export function GenerateTeamsModal({
                   }
                   onBlur={() => onPlayerBlur(index)}
                 />
-                {playerStatuses[index]?.exists && (
+                {!duplicateIndexes[index] && playerStatuses[index]?.exists && (
                   <span className="player-elo-status">
                     {UI_TEXT.PLAYER_ELO_PREFIX} {playerStatuses[index].elo}
                   </span>
                 )}
-                {playerStatuses[index] && !playerStatuses[index].exists && (
-                  <span className="player-missing-status">
-                    {UI_TEXT.PLAYER_NOT_EXISTS}
+                {!duplicateIndexes[index] &&
+                  playerStatuses[index] &&
+                  !playerStatuses[index].exists && (
+                    <span className="player-missing-status">
+                      {UI_TEXT.PLAYER_NOT_EXISTS}
+                    </span>
+                  )}
+                {duplicateIndexes[index] && (
+                  <span className="player-duplicate-status">
+                    {UI_TEXT.NICKNAME_DUPLICATE}
                   </span>
                 )}
               </div>
@@ -378,17 +463,25 @@ export function GenerateTeamsModal({
           {teams
             ? teams.map((team, index) => (
                 <article
-                  className={`generated-team team-block ${index === 0 ? "red-team" : "blue-team"}`}
+                  className="generated-team team-block"
+                  style={{ "--team-color": getTeamColorRgb(teamColors[index]) }}
                   key={index}
                 >
-                  <input
-                    className="generated-team-name"
-                    value={teamNames[index]}
-                    onChange={(event) =>
-                      onTeamNameChange(index, event.target.value)
-                    }
-                    aria-label={`${index === 0 ? UI_TEXT.RED_TEAM : UI_TEXT.BLUE_TEAM} name`}
-                  />
+                  <div className="generated-team-header">
+                    <input
+                      className="generated-team-name"
+                      value={teamNames[index]}
+                      onChange={(event) =>
+                        onTeamNameChange(index, event.target.value)
+                      }
+                      aria-label={`${index === 0 ? UI_TEXT.FIRST_TEAM : UI_TEXT.SECOND_TEAM} name`}
+                    />
+                    <TeamColorPicker
+                      selectedColor={teamColors[index]}
+                      disabledColor={teamColors[index === 0 ? 1 : 0]}
+                      onSelect={(colorId) => onTeamColorChange(index, colorId)}
+                    />
+                  </div>
                   <div className="generated-team-players">
                     <span className="generated-player generated-player-left">
                       <span>{team.players[0].nickname}</span>
@@ -403,12 +496,20 @@ export function GenerateTeamsModal({
               ))
             : [0, 1].map((index) => (
                 <article
-                  className={`generated-team team-block result-placeholder-team ${index === 0 ? "red-team" : "blue-team"}`}
+                  className="generated-team team-block result-placeholder-team"
+                  style={{ "--team-color": getTeamColorRgb(teamColors[index]) }}
                   key={index}
                 >
-                  <span className="generated-team-name">
-                    {index === 0 ? UI_TEXT.RED_TEAM : UI_TEXT.BLUE_TEAM}
-                  </span>
+                  <div className="generated-team-header">
+                    <span className="generated-team-name">
+                      {index === 0 ? UI_TEXT.FIRST_TEAM : UI_TEXT.SECOND_TEAM}
+                    </span>
+                    <TeamColorPicker
+                      selectedColor={teamColors[index]}
+                      disabledColor={teamColors[index === 0 ? 1 : 0]}
+                      onSelect={(colorId) => onTeamColorChange(index, colorId)}
+                    />
+                  </div>
                   <div className="generated-team-players">
                     <span className="generated-player generated-player-left">
                       <span>{UI_TEXT.PLACEHOLDER_DASH}</span>
