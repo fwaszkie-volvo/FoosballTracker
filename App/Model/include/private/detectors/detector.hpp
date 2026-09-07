@@ -11,6 +11,4 @@ class Detector
     virtual void Draw(cv::Mat& frame) const   = 0;
 };
 
-cv::Mat detect_ball(cv::Mat& frame);
-
 #endif  // FOOSBALL_TRACKER_APP_MODEL_INCLUDE_PRIVATE_DETECTORS_DETECTOR_HPP_

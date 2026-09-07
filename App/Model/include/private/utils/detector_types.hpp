@@ -30,17 +30,16 @@ const cv::Scalar kPlayersLowerRed2(170, 120, 70);
 const cv::Scalar kPlayersUpperRed2(180, 255, 255);
 
 constexpr int kPlayfieldKernelSize{15};
+const cv::Size kPlayfieldHorizontalCloseKernelSize{31, 1};
 constexpr int kBallKernelSize{7};
 constexpr int kPlayersKernelSize{5};
 constexpr double kGreenDominanceRatio{1.05};
-constexpr double kPlayfieldContourMinAreaRatio{0.1};
-constexpr double kPlayfieldColumnMinCoverageRatio{0.52};
+constexpr double kPlayfieldColumnMinCoverageRatio{0.3};
 constexpr double kPlayfieldMinFrameAreaRatio{0.3};
+constexpr double kPlayfieldMinFrameWidthRatio{0.65};
+constexpr double kPlayfieldMinFrameHeightRatio{0.55};
 
-constexpr double kPlayfieldApproxStart{0.01};
-constexpr double kPlayfieldApproxEnd{0.08};
-constexpr double kPlayfieldApproxStep{0.005};
-constexpr int kPlayfieldTargetVertices{8};
+constexpr double kPlayfieldApproximationRatio{0.002};
 
 constexpr int kPlayersMinArea{500};
 constexpr float kBallFixedRadius{19.0f};
@@ -93,6 +92,8 @@ inline const std::string kInputImagePath{kTestFilesDir + "ball_unobscured.jpg"};
 inline const std::string kInputVideoPath{kTestFilesDir + "test_video.mp4"};
 inline const std::string kOutputImagePath{kTestOutputsDir + "output.jpg"};
 inline const std::string kOutputVideoPath{kTestOutputsDir + "output.mp4"};
+inline const std::string kPlayfieldGreenMaskPath{kTestOutputsDir + "playfield_green_mask.jpg"};
+inline const std::string kPlayfieldPolygonMaskPath{kTestOutputsDir + "playfield_polygon_mask.jpg"};
 inline const std::string kFieldMaskPath{kTestOutputsDir + "field_mask.jpg"};
 inline const std::string kBallMaskPath{kTestOutputsDir + "ball_mask.jpg"};
 inline const std::string kGrayMaskPath{kTestOutputsDir + "gray_mask.jpg"};

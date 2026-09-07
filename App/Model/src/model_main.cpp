@@ -7,7 +7,7 @@
 #include <optional>
 #include <system_error>
 
-#include "detector.hpp"
+#include "ball_detector.hpp"
 #include "frame_processor.hpp"
 #include "generator.hpp"
 #include "processing_config.hpp"
@@ -20,9 +20,14 @@ void ModelMain::CalculateFromStream()
 
     FrameProcessor frame_processor;
     frame_processor.SetReaderType(config.reader_type);
+    BallDetector detector;
 
     frame_processor.ProcessFrames(config.target,
-                                  [&](cv::Mat& current_frame) { detect_ball(current_frame); });
+                                  [&](cv::Mat& current_frame)
+                                  {
+                                      detector.Detect(current_frame);
+                                      detector.Draw(current_frame);
+                                  });
 
     temp_output_path_ = frame_processor.GetTempOutputPath();
     spdlog::info("CalculateFromStream: zapisano tymczasowo do: {}", temp_output_path_);
@@ -46,9 +51,14 @@ void ModelMain::CalculateFromFile()
 
     FrameProcessor frame_processor;
     frame_processor.SetReaderType(ReaderType::kRecording);
+    BallDetector detector;
 
     frame_processor.ProcessFrames(loaded_file_path_,
-                                  [&](cv::Mat& current_frame) { detect_ball(current_frame); });
+                                  [&](cv::Mat& current_frame)
+                                  {
+                                      detector.Detect(current_frame);
+                                      detector.Draw(current_frame);
+                                  });
 
     temp_output_path_         = frame_processor.GetTempOutputPath();
     can_analyze_offline_file_ = false;

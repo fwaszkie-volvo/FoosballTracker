@@ -4,6 +4,9 @@
 
 #include <opencv2/core.hpp>
 #include <opencv2/imgproc.hpp>
+#include <opencv2/videoio.hpp>
+
+#include "utils.hpp"
 
 namespace
 {
@@ -14,9 +17,16 @@ constexpr int kGoalWidth{25};
 constexpr int kGoalHalfHeight{40};
 constexpr int kTaperedEndHalfHeight{50};
 constexpr int kTaperTransitionInset{70};
-constexpr int kFalseRegionWidth{160};
-constexpr int kFalseRegionHeight{120};
+constexpr int kFalseRegionWidth{190};
+constexpr int kFalseRegionHeight{150};
+constexpr int kGoalRecessWidth{30};
+constexpr int kGoalRecessHalfHeight{35};
 constexpr double kMinimumPlayfieldCoverage{0.9};
+constexpr double kGoal1MinFrameWidthRatio{0.75};
+constexpr double kGoal1MinFrameHeightRatio{0.75};
+constexpr double kGoal1MinFrameAreaRatio{0.52};
+constexpr double kGoal1GoalOpeningTimestampMilliseconds{36000.0};
+const cv::Point kGoal1RightGoalOpeningPoint{1785, 555};
 const cv::Scalar kBackgroundColor{3, 3, 3};
 const cv::Scalar kNormalLightGreen{20, 100, 20};
 const cv::Scalar kLowLightGreen{3, 8, 3};
@@ -48,6 +58,38 @@ TEST(PlayfieldDetectorTest, DetectsGreenPlayfieldAtDifferentBrightnessLevels)
                                        kFrameSize.height - (2 * kPlayfieldMargin) + 1};
         EXPECT_EQ(cv::boundingRect(detector.GetMask()), expected_bounds);
     }
+}
+
+TEST(PlayfieldDetectorTest, DetectsFullPlayfieldInGoal1Video)
+{
+    cv::VideoCapture video{test_utils::TestFilePath("test_video_goal_1.mp4")};
+    cv::Mat frame;
+    ASSERT_TRUE(video.read(frame));
+
+    PlayfieldDetector detector;
+    detector.Detect(frame);
+
+    ASSERT_TRUE(detector.HasDetection());
+    const cv::Rect bounds{cv::boundingRect(detector.GetMask())};
+    const double frame_area{static_cast<double>(frame.rows) * static_cast<double>(frame.cols)};
+    EXPECT_GE(bounds.width, frame.cols * kGoal1MinFrameWidthRatio);
+    EXPECT_GE(bounds.height, frame.rows * kGoal1MinFrameHeightRatio);
+    EXPECT_GE(cv::countNonZero(detector.GetMask()), frame_area * kGoal1MinFrameAreaRatio);
+    EXPECT_GE(detector.GetPolygon().size(), 8U);
+}
+
+TEST(PlayfieldDetectorTest, ExcludesGoalOpeningInGoal1Video)
+{
+    cv::VideoCapture video{test_utils::TestFilePath("test_video_goal_1.mp4")};
+    video.set(cv::CAP_PROP_POS_MSEC, kGoal1GoalOpeningTimestampMilliseconds);
+    cv::Mat frame;
+    ASSERT_TRUE(video.read(frame));
+
+    PlayfieldDetector detector;
+    detector.Detect(frame);
+
+    ASSERT_TRUE(detector.HasDetection());
+    EXPECT_EQ(detector.GetMask().at<std::uint8_t>(kGoal1RightGoalOpeningPoint), 0);
 }
 
 TEST(PlayfieldDetectorTest, RejectsSmallGreenRegionInFrameCorner)
@@ -86,11 +128,10 @@ TEST(PlayfieldDetectorTest, CoversPlayfieldSplitByUnevenLighting)
               static_cast<int>(kMinimumPlayfieldCoverage * playfield_area));
 }
 
-TEST(PlayfieldDetectorTest, ExcludesGreenSideGoalFromPlayfield)
+TEST(PlayfieldDetectorTest, IncludesGreenPlayfieldEndsNearGoals)
 {
     PlayfieldDetector baseline_detector;
     baseline_detector.Detect(MakePlayfieldFrame(kNormalLightGreen));
-    const cv::Rect baseline_bounds{cv::boundingRect(baseline_detector.GetMask())};
 
     cv::Mat frame{MakePlayfieldFrame(kNormalLightGreen)};
     const int center_y{kFrameSize.height / 2};
@@ -104,7 +145,27 @@ TEST(PlayfieldDetectorTest, ExcludesGreenSideGoalFromPlayfield)
     detector.Detect(frame);
 
     ASSERT_TRUE(detector.HasDetection());
-    EXPECT_EQ(cv::boundingRect(detector.GetMask()), baseline_bounds);
+    EXPECT_LT(cv::boundingRect(detector.GetMask()).x,
+              cv::boundingRect(baseline_detector.GetMask()).x);
+}
+
+TEST(PlayfieldDetectorTest, FillsPlayfieldBetweenFragmentsNearGoal)
+{
+    cv::Mat frame{MakePlayfieldFrame(kNormalLightGreen)};
+    const int center_y{kFrameSize.height / 2};
+    const cv::Rect goal_recess{kPlayfieldMargin,
+                               center_y - kGoalRecessHalfHeight,
+                               kGoalRecessWidth,
+                               2 * kGoalRecessHalfHeight};
+    cv::rectangle(frame, goal_recess, kBackgroundColor, cv::FILLED);
+
+    PlayfieldDetector detector;
+    detector.Detect(frame);
+
+    ASSERT_TRUE(detector.HasDetection());
+    EXPECT_EQ(detector.GetMask().at<std::uint8_t>(goal_recess.y + (goal_recess.height / 2),
+                                                  goal_recess.x + (goal_recess.width / 2)),
+              255);
 }
 
 TEST(PlayfieldDetectorTest, KeepsTaperedPlayfieldEndsBehindGoalkeepers)

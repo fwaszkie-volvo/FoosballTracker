@@ -427,11 +427,3 @@ void BallDetector::Detect(const cv::Mat& frame)
     UpdateTrackingState();
     ball_position_recorder_.RecordSample(measurement_.position.y);
 }
-
-cv::Mat detect_ball(cv::Mat& frame)
-{
-    static BallDetector detector;
-    detector.Detect(frame);
-    detector.Draw(frame);
-    return frame;
-}
