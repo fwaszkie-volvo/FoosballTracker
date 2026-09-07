@@ -1,0 +1,13 @@
+.video-view,
+.live-view {
+  object-fit: contain;
+  background: #020408;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .set-nav-arrow,
+  .button-grid button,
+  .team-color-swatch {
+    transition: none;
+  }
+}

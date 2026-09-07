@@ -232,7 +232,7 @@ void ViewMain::HandleCreatePlayer(const httplib::Request& req, httplib::Response
     if (nickname.empty())
     {
         res.status = 400;
-        res.set_content(nlohmann::json{{"error", "common::Nickname is required."}}.dump(),
+        res.set_content(nlohmann::json{{"error", "Nickname is required."}}.dump(),
                         "application/json");
         return;
     }
@@ -288,7 +288,7 @@ void ViewMain::HandleCheckPlayer(const httplib::Request& req, httplib::Response&
     if (!req.has_param("nickname") || !on_check_player_)
     {
         res.status = 400;
-        res.set_content(nlohmann::json{{"error", "common::Nickname is required."}}.dump(),
+        res.set_content(nlohmann::json{{"error", "Nickname is required."}}.dump(),
                         "application/json");
         return;
     }

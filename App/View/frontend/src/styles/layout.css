@@ -1,0 +1,9 @@
+.topbar {
+  container-type: inline-size;
+}
+
+@container (max-width: 560px) {
+  .topbar h1 {
+    max-width: 15rem;
+  }
+}

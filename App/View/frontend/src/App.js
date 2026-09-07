@@ -1,33 +1,32 @@
 import "./App.css";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
-import {
-  AnalysisModal,
-  AppHeader,
-  CreatePlayerModal,
-  ErrorModal,
-  GenerateTeamsModal,
-  StatsPanel,
-  VideoOverlayPanel,
-} from "./AppViewParts";
+import { AppHeader } from "./components/layout/AppHeader";
+import { AnalysisModal } from "./components/modals/AnalysisModal";
+import { CreatePlayerModal } from "./components/modals/CreatePlayerModal";
+import { ErrorModal } from "./components/modals/ErrorModal";
+import { GenerateTeamsModal } from "./components/modals/GenerateTeamsModal";
+import { StatsPanel } from "./components/video/StatsPanel";
+import { VideoStage } from "./components/video/VideoStage";
+import { useStatusPolling } from "./hooks/useStatusPolling";
 import {
   API_ROUTE,
+  DEFAULT_TEAM_COLORS,
+  DEFAULT_TEAM_NAMES,
   FILE_ACCEPT_VIDEO_TYPE,
   INITIAL_DISPLAY_POSITIONS,
-  INITIAL_STATUS,
   LIVE_STREAM_STATE,
   LIVE_STREAM_TIMEOUT_MS,
-  MEDIA_SRC,
   MODE,
-  STATUS_POLL_INTERVAL_MS,
+  SETS_PER_MATCH,
   UI_TEXT,
 } from "./AppConstants";
 
 function App() {
-  const [status, setStatus] = useState(INITIAL_STATUS);
   const [mode, setMode] = useState(MODE.IDLE);
-  const [videoVersion, setVideoVersion] = useState(0);
+  const { status, setStatus, videoVersion, setVideoVersion, refreshStatus } =
+    useStatusPolling(setMode);
   const [currentFileName, setCurrentFileName] = useState(
     UI_TEXT.DEFAULT_FILE_NAME,
   );
@@ -45,48 +44,20 @@ function App() {
     null,
     null,
   ]);
-  const [teamNames, setTeamNames] = useState(["Red Team", "Blue Team"]);
-  const [displayTeamNames, setDisplayTeamNames] = useState([
-    "Red Team",
-    "Blue Team",
-  ]);
+  const [teamNames, setTeamNames] = useState(DEFAULT_TEAM_NAMES);
+  const [displayTeamNames, setDisplayTeamNames] = useState(DEFAULT_TEAM_NAMES);
+  const [teamColors, setTeamColors] = useState(DEFAULT_TEAM_COLORS);
+  const [displayTeamColors, setDisplayTeamColors] =
+    useState(DEFAULT_TEAM_COLORS);
   const [displayPositions, setDisplayPositions] = useState(
     INITIAL_DISPLAY_POSITIONS,
   );
+  const [currentSetIndex, setCurrentSetIndex] = useState(0);
   const [generatedTeams, setGeneratedTeams] = useState(null);
   const [teamSchema, setTeamSchema] = useState("random");
   const [teamFormation, setTeamFormation] = useState("random");
   const fileInputRef = useRef(null);
-  const wasAnalyzingRef = useRef(false);
   const liveProbeTimerRef = useRef(null);
-
-  const refreshStatus = useCallback(async () => {
-    try {
-      const response = await fetch(API_ROUTE.STATUS);
-      const data = await response.json();
-      setStatus((current) => ({
-        ...data,
-        error: data.error ?? current.error,
-      }));
-      if (data.videoUrl) {
-        setMode((current) => (current === MODE.LIVE ? current : MODE.VIDEO));
-      }
-      // The analysis result file only changes once the backend finishes the
-      // asynchronous analysis job, so bump the video cache-buster then.
-      if (wasAnalyzingRef.current && !data.analyzing) {
-        setVideoVersion((current) => current + 1);
-      }
-      wasAnalyzingRef.current = data.analyzing;
-    } catch {
-      // Backend temporarily unreachable; keep last known status.
-    }
-  }, []);
-
-  useEffect(() => {
-    refreshStatus();
-    const interval = setInterval(refreshStatus, STATUS_POLL_INTERVAL_MS);
-    return () => clearInterval(interval);
-  }, [refreshStatus]);
 
   useEffect(() => {
     if (mode !== MODE.LIVE) {
@@ -196,7 +167,8 @@ function App() {
     setGeneratedTeams(null);
     setTeamNicknames(["", "", "", ""]);
     setPlayerStatuses([null, null, null, null]);
-    setTeamNames(["Red Team", "Blue Team"]);
+    setTeamNames(DEFAULT_TEAM_NAMES);
+    setTeamColors(DEFAULT_TEAM_COLORS);
     setTeamSchema("random");
     setTeamFormation("random");
     setIsGenerateTeamsOpen(true);
@@ -206,7 +178,8 @@ function App() {
     setGeneratedTeams(null);
     setTeamNicknames(["", "", "", ""]);
     setPlayerStatuses([null, null, null, null]);
-    setTeamNames(["Red Team", "Blue Team"]);
+    setTeamNames(DEFAULT_TEAM_NAMES);
+    setTeamColors(DEFAULT_TEAM_COLORS);
     setTeamSchema("random");
     setTeamFormation("random");
     setIsGenerateTeamsOpen(false);
@@ -214,11 +187,21 @@ function App() {
 
   const handleSaveTeams = () => {
     setDisplayTeamNames(teamNames);
+    setDisplayTeamColors(teamColors);
     if (generatedTeams?.formation) {
       setDisplayPositions(generatedTeams.formation);
     }
+    setCurrentSetIndex(0);
     closeGenerateTeams();
   };
+
+  const handlePrevSet = () =>
+    setCurrentSetIndex(
+      (current) => (current - 1 + SETS_PER_MATCH) % SETS_PER_MATCH,
+    );
+
+  const handleNextSet = () =>
+    setCurrentSetIndex((current) => (current + 1) % SETS_PER_MATCH);
 
   const handlePlayerBlur = async (index) => {
     const nicknameValue = teamNicknames[index].trim();
@@ -250,12 +233,29 @@ function App() {
   };
 
   const handleGenerateTeams = async () => {
+    const trimmedNicknames = teamNicknames.map((value) => value.trim());
+    const duplicateNickname = trimmedNicknames.find(
+      (nickname, index) =>
+        nickname &&
+        trimmedNicknames.some(
+          (otherNickname, otherIndex) =>
+            otherIndex < index &&
+            otherNickname.toLowerCase() === nickname.toLowerCase(),
+        ),
+    );
+    if (duplicateNickname) {
+      setStatus((current) => ({
+        ...current,
+        error: `${UI_TEXT.PLAYER_DUPLICATE_ERROR_PREFIX}${duplicateNickname}${UI_TEXT.PLAYER_DUPLICATE_ERROR_SUFFIX}`,
+      }));
+      return;
+    }
     const response = await fetch(
       `${API_ROUTE.TEAMS}?mode=${teamSchema}&formation=${teamFormation}`,
       {
         method: "POST",
         headers: { "Content-Type": "text/plain" },
-        body: teamNicknames.map((value) => value.trim()).join("\n"),
+        body: trimmedNicknames.join("\n"),
       },
     );
     if (response.ok) {
@@ -300,47 +300,21 @@ function App() {
       />
 
       <main className="viewer-panel">
-        <div className="video-stage">
-          <VideoOverlayPanel
-            teamNames={displayTeamNames}
-            positions={displayPositions}
-          />
-
-          {mode === MODE.LIVE && (
-            <>
-              {liveStreamState !== LIVE_STREAM_STATE.UNAVAILABLE && (
-                <img
-                  className={`live-view ${liveStreamState === LIVE_STREAM_STATE.CHECKING ? "live-view-probing" : ""}`}
-                  src={MEDIA_SRC.LIVE_STREAM}
-                  alt="Live view"
-                  onLoad={() => setLiveStreamState(LIVE_STREAM_STATE.READY)}
-                  onError={() =>
-                    setLiveStreamState(LIVE_STREAM_STATE.UNAVAILABLE)
-                  }
-                />
-              )}
-              {liveStreamState === LIVE_STREAM_STATE.CHECKING && (
-                <p className="placeholder">{UI_TEXT.CONNECTING_STREAM}</p>
-              )}
-              {liveStreamState === LIVE_STREAM_STATE.UNAVAILABLE && (
-                <p className="placeholder">{UI_TEXT.STREAM_UNAVAILABLE}</p>
-              )}
-            </>
-          )}
-
-          {mode === MODE.VIDEO && status.videoUrl && (
-            <video
-              className="video-view"
-              src={`${status.videoUrl}?v=${videoVersion}`}
-              controls
-              autoPlay
-            />
-          )}
-
-          {mode === MODE.IDLE && (
-            <p className="placeholder">{UI_TEXT.IDLE_PLACEHOLDER}</p>
-          )}
-        </div>
+        <VideoStage
+          mode={mode}
+          status={status}
+          videoVersion={videoVersion}
+          liveStreamState={liveStreamState}
+          teamNames={displayTeamNames}
+          teamColors={displayTeamColors}
+          positions={displayPositions[currentSetIndex]}
+          setIndex={currentSetIndex}
+          setCount={SETS_PER_MATCH}
+          onPrevSet={handlePrevSet}
+          onNextSet={handleNextSet}
+          onLiveReady={() => setLiveStreamState(LIVE_STREAM_STATE.READY)}
+          onLiveError={() => setLiveStreamState(LIVE_STREAM_STATE.UNAVAILABLE)}
+        />
 
         <StatsPanel />
       </main>
@@ -367,6 +341,7 @@ function App() {
         nicknames={teamNicknames}
         playerStatuses={playerStatuses}
         teamNames={teamNames}
+        teamColors={teamColors}
         teams={generatedTeams?.teams}
         schema={teamSchema}
         formation={teamFormation}
@@ -390,6 +365,15 @@ function App() {
             current.map((teamName, teamIndex) =>
               teamIndex === index ? value : teamName,
             ),
+          )
+        }
+        onTeamColorChange={(index, colorId) =>
+          setTeamColors((current) =>
+            current[index === 0 ? 1 : 0] === colorId
+              ? current
+              : current.map((color, colorIndex) =>
+                  colorIndex === index ? colorId : color,
+                ),
           )
         }
         onGenerate={handleGenerateTeams}
