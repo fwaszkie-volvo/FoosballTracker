@@ -20,7 +20,12 @@ class PlayfieldDetector : public Detector
     void Reset();
 
   private:
+    cv::Mat BuildGreenMask(const cv::Mat& frame) const;
     bool ChooseLargestContour(const std::vector<Contour>& contours, Contour& largest_contour) const;
+    bool SelectPlayfieldPoints(const cv::Mat& green_mask,
+                               const Contour& largest_contour,
+                               Contour& playfield_points) const;
+    bool IsValidPlayfield(const Contour& playfield_contour, const cv::Size& frame_size) const;
     Contour ApproximatePolygon(const Contour& hull) const;
 
     Contour playfield_polygon_;

@@ -1,10 +1,12 @@
 #ifndef FOOSBALL_TRACKER_APP_MODEL_INCLUDE_PUBLIC_MODEL_MAIN_HPP_
 #define FOOSBALL_TRACKER_APP_MODEL_INCLUDE_PUBLIC_MODEL_MAIN_HPP_
 
+#include <opencv2/core/mat.hpp>
 #include <optional>
 #include <string>
 #include <vector>
 
+#include "ball_detector.hpp"
 #include "common_types.hpp"
 #include "generator_types.hpp"
 #include "model_types.hpp"
@@ -33,6 +35,8 @@ class ModelMain
     std::vector<ratings::MatchInput> GetMatchHistory() const;
 
   private:
+    void ProcessFrame(cv::Mat& frame, BallDetector& detector) const;
+
     std::string loaded_file_path_;
     std::string temp_output_path_;
     bool can_analyze_offline_file_{false};

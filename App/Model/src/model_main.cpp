@@ -14,6 +14,12 @@
 #include "ratings_service.hpp"
 #include "reader_factory.hpp"
 
+void ModelMain::ProcessFrame(cv::Mat& frame, BallDetector& detector) const
+{
+    detector.Detect(frame);
+    detector.Draw(frame);
+}
+
 void ModelMain::CalculateFromStream()
 {
     const auto config = config::kProcessingConfigOnline;
@@ -22,12 +28,8 @@ void ModelMain::CalculateFromStream()
     frame_processor.SetReaderType(config.reader_type);
     BallDetector detector;
 
-    frame_processor.ProcessFrames(config.target,
-                                  [&](cv::Mat& current_frame)
-                                  {
-                                      detector.Detect(current_frame);
-                                      detector.Draw(current_frame);
-                                  });
+    frame_processor.ProcessFrames(
+      config.target, [&](cv::Mat& current_frame) { ProcessFrame(current_frame, detector); });
 
     temp_output_path_ = frame_processor.GetTempOutputPath();
     spdlog::info("CalculateFromStream: zapisano tymczasowo do: {}", temp_output_path_);
@@ -53,12 +55,8 @@ void ModelMain::CalculateFromFile()
     frame_processor.SetReaderType(ReaderType::kRecording);
     BallDetector detector;
 
-    frame_processor.ProcessFrames(loaded_file_path_,
-                                  [&](cv::Mat& current_frame)
-                                  {
-                                      detector.Detect(current_frame);
-                                      detector.Draw(current_frame);
-                                  });
+    frame_processor.ProcessFrames(
+      loaded_file_path_, [&](cv::Mat& current_frame) { ProcessFrame(current_frame, detector); });
 
     temp_output_path_         = frame_processor.GetTempOutputPath();
     can_analyze_offline_file_ = false;

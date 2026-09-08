@@ -92,8 +92,6 @@ inline const std::string kInputImagePath{kTestFilesDir + "ball_unobscured.jpg"};
 inline const std::string kInputVideoPath{kTestFilesDir + "test_video.mp4"};
 inline const std::string kOutputImagePath{kTestOutputsDir + "output.jpg"};
 inline const std::string kOutputVideoPath{kTestOutputsDir + "output.mp4"};
-inline const std::string kPlayfieldGreenMaskPath{kTestOutputsDir + "playfield_green_mask.jpg"};
-inline const std::string kPlayfieldPolygonMaskPath{kTestOutputsDir + "playfield_polygon_mask.jpg"};
 inline const std::string kFieldMaskPath{kTestOutputsDir + "field_mask.jpg"};
 inline const std::string kBallMaskPath{kTestOutputsDir + "ball_mask.jpg"};
 inline const std::string kGrayMaskPath{kTestOutputsDir + "gray_mask.jpg"};
