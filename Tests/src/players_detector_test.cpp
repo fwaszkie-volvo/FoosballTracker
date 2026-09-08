@@ -6,13 +6,11 @@
 #include <iostream>
 #include <opencv2/opencv.hpp>
 
-using namespace player_detector;
-
 TEST(PlayersDetector, CorrectPlayersAmount)
 {
     std::string image_path = std::string(TEST_SOURCE_DIR) + "/test_files/ball_unobscured.jpg";
-    const auto output_dir = std::filesystem::path(TEST_SOURCE_DIR) / "test_outputs";
-    cv::Mat frame = cv::imread(image_path, cv::IMREAD_COLOR);
+    const auto output_dir  = std::filesystem::path(TEST_SOURCE_DIR) / "test_outputs";
+    cv::Mat frame          = cv::imread(image_path, cv::IMREAD_COLOR);
     if (frame.empty())
     {
         std::cerr << "Error: Could not open or find the image." << std::endl;
@@ -24,15 +22,15 @@ TEST(PlayersDetector, CorrectPlayersAmount)
     players_detector.Draw(frame);
     cv::imwrite(output_dir / "detect_players_output.jpg", frame);
 
-    const Players& players{players_detector.GetPlayers()};
+    const model::PlayersPositions& players{players_detector.GetPlayers()};
 
-    size_t team_red_count{players.red_team_.offense_.size() + players.red_team_.defense_.size()};
-    size_t team_blue_count{players.blue_team_.offense_.size() + players.blue_team_.defense_.size()};
+    size_t team_red_count{players.red.offense.size() + players.red.defense.size()};
+    size_t team_blue_count{players.blue.offense.size() + players.blue.defense.size()};
 
-    size_t team_blue_defense_count{players.blue_team_.defense_.size()};
-    size_t team_blue_offense_count{players.blue_team_.offense_.size()};
-    size_t team_red_defense_count{players.red_team_.defense_.size()};
-    size_t team_red_offense_count{players.red_team_.offense_.size()};
+    size_t team_blue_defense_count{players.blue.defense.size()};
+    size_t team_blue_offense_count{players.blue.offense.size()};
+    size_t team_red_defense_count{players.red.defense.size()};
+    size_t team_red_offense_count{players.red.offense.size()};
 
     constexpr size_t actual_team_count = 11;
     EXPECT_EQ(team_blue_count, actual_team_count);

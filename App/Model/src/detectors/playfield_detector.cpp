@@ -1,7 +1,11 @@
 #include "playfield_detector.hpp"
 
-#include <cmath>
+#include <opencv2/core/hal/interface.h>
+
 #include <opencv2/core.hpp>
+#include <opencv2/core/base.hpp>
+#include <opencv2/core/mat.inl.hpp>
+#include <opencv2/core/traits.hpp>
 #include <opencv2/imgproc.hpp>
 #include <vector>
 

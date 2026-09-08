@@ -7,31 +7,19 @@
 #include <opencv2/core/types.hpp>
 #include <vector>
 
+#include "detector.hpp"
 #include "detector_types.hpp"
+#include "model_types.hpp"
 
-namespace player_detector
-{
-struct Team
-{
-    std::vector<cv::Rect> offense_;
-    std::vector<cv::Rect> defense_;
-};
-
-struct Players
-{
-    Team red_team_;
-    Team blue_team_;
-};
-
-class PlayersDetector
+class PlayersDetector : public IDetector
 {
   public:
-    void Detect(const cv::Mat& frame);
-    void Draw(const cv::Mat& frame);
-    const Players& GetPlayers() const;
+    void Detect(const cv::Mat& frame) override;
+    void Draw(cv::Mat& frame) const override;
+    const model::PlayersPositions& GetPlayers() const;
 
   private:
-    Players players_{};
+    model::PlayersPositions players_{};
 
     std::vector<Contour> contours_blue_;
     std::vector<Contour> contours_red_;
@@ -47,10 +35,9 @@ class PlayersDetector
     static void RemoveInvalidPlayers(std::vector<cv::Rect>& rectangles,
                                      const cv::Point& first_corner,
                                      const cv::Point& second_corner);
-    void SeperateTeamIntoOffenseAndDefense(Team& team,
+    void SeperateTeamIntoOffenseAndDefense(model::PlayerPositions& team,
                                            const std::vector<cv::Rect>& rectangles,
                                            const uint32_t mask,
                                            const int64_t frame_width);
 };
-}  // namespace player_detector
 #endif  // FOOSBALL_TRACKER_APP_MODEL_INCLUDE_PRIVATE_DETECTORS_PLAYERS_DETECTOR_HPP_

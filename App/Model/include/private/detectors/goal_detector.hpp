@@ -12,7 +12,7 @@
 #include "detector_types.hpp"
 #include "playfield_detector.hpp"
 
-class GoalDetector : public Detector
+class GoalDetector : public IDetector
 {
   public:
     enum class GoalSide : std::uint8_t

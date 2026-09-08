@@ -2,12 +2,13 @@
 #define FOOSBALL_TRACKER_APP_MODEL_INCLUDE_PRIVATE_DETECTORS_PLAYFIELD_DETECTOR_HPP_
 
 #include <opencv2/core/mat.hpp>
+#include <opencv2/core/types.hpp>
 #include <vector>
 
 #include "detector.hpp"
 #include "detector_types.hpp"
 
-class PlayfieldDetector : public Detector
+class PlayfieldDetector : public IDetector
 {
   public:
     void Detect(const cv::Mat& frame) override;

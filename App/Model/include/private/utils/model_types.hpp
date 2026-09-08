@@ -4,6 +4,7 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <opencv2/core/types.hpp>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -16,6 +17,18 @@ namespace model
 constexpr std::size_t kTeamSize{2};
 constexpr std::size_t kTeamsNumber{2};
 constexpr std::size_t kSetsPerMatch{4};
+
+struct PlayerPositions
+{
+    std::vector<cv::Rect> offense;
+    std::vector<cv::Rect> defense;
+};
+
+struct PlayersPositions
+{
+    PlayerPositions red;
+    PlayerPositions blue;
+};
 
 enum class TeamFormation : std::uint8_t
 {

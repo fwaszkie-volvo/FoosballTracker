@@ -3,10 +3,10 @@
 
 #include <opencv2/opencv.hpp>
 
-class Detector
+class IDetector
 {
   public:
-    virtual ~Detector()                       = default;
+    virtual ~IDetector()                      = default;
     virtual void Detect(const cv::Mat& frame) = 0;
     virtual void Draw(cv::Mat& frame) const   = 0;
 };

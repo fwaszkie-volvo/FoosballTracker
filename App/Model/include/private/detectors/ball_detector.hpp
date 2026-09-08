@@ -9,7 +9,7 @@
 #include "detector.hpp"
 #include "playfield_detector.hpp"
 
-class BallDetector : public Detector
+class BallDetector : public IDetector
 {
   public:
     struct BallMeasurement
