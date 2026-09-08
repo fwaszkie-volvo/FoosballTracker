@@ -9,7 +9,7 @@
 #include "detector.hpp"
 #include "playfield_detector.hpp"
 
-class BallDetector : public Detector
+class BallDetector : public IDetector
 {
   public:
     struct BallMeasurement
@@ -53,6 +53,10 @@ class BallDetector : public Detector
                                const cv::Point& center,
                                const int radius);
     cv::Mat BuildForegroundMask(const cv::Mat& gray, const cv::Mat& playfield_mask);
+    cv::Rect GetDetectionRoi(const cv::Mat& frame) const;
+    void DetectInRoi(const cv::Mat& frame,
+                     const cv::Mat& playfield_mask,
+                     const cv::Rect& detection_roi);
     double ComputeMetersPerPixel() const;
     double ComputeBallSpeedMetersPerSecond() const;
 

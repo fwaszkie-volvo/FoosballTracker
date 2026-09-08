@@ -12,7 +12,7 @@
 #include "detector_types.hpp"
 #include "playfield_detector.hpp"
 
-class GoalDetector : public Detector
+class GoalDetector : public IDetector
 {
   public:
     enum class GoalSide : std::uint8_t
@@ -31,6 +31,8 @@ class GoalDetector : public Detector
     bool HasRightGoal() const { return has_right_goal_; }
     const cv::Vec4f& GetLeftGoalLine() const { return left_goal_line_; }
     const cv::Vec4f& GetRightGoalLine() const { return right_goal_line_; }
+
+    void Reset();
 
   private:
     void DetectGoals(const cv::Mat& frame);
@@ -61,6 +63,7 @@ class GoalDetector : public Detector
     GoalSide pending_goal_side_{GoalSide::kNone};
     bool goal_scored_{false};
     GoalSide scored_side_{GoalSide::kNone};
+    bool goal_lines_locked_{false};
 };
 
 #endif  // FOOSBALL_TRACKER_APP_MODEL_INCLUDE_PRIVATE_DETECTORS_GOAL_DETECTOR_HPP_

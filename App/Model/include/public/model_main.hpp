@@ -1,11 +1,14 @@
 #ifndef FOOSBALL_TRACKER_APP_MODEL_INCLUDE_PUBLIC_MODEL_MAIN_HPP_
 #define FOOSBALL_TRACKER_APP_MODEL_INCLUDE_PUBLIC_MODEL_MAIN_HPP_
 
+#include <memory>
+#include <opencv2/core/mat.hpp>
 #include <optional>
 #include <string>
 #include <vector>
 
 #include "common_types.hpp"
+#include "detector.hpp"
 #include "generator_types.hpp"
 #include "model_types.hpp"
 #include "player.hpp"
@@ -15,6 +18,8 @@
 class ModelMain
 {
   public:
+    ModelMain();
+
     void CalculateFromStream();
     void CalculateFromFile();
     void LoadFile(const std::string& path);
@@ -33,6 +38,10 @@ class ModelMain
     std::vector<ratings::MatchInput> GetMatchHistory() const;
 
   private:
+    void ProcessFrame(cv::Mat& frame) const;
+
+    std::vector<std::unique_ptr<IDetector>> detectors_;
+
     std::string loaded_file_path_;
     std::string temp_output_path_;
     bool can_analyze_offline_file_{false};

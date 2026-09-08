@@ -234,12 +234,15 @@ void BallDetector::CollectHoughCandidate(const cv::Mat& frame,
         return;
     }
 
-    cv::Mat circle_mask{cv::Mat::zeros(mask.size(), CV_8UC1)};
+    const cv::Rect circle_bounds{center.x - radius, center.y - radius, 2 * radius, 2 * radius};
+    const cv::Point local_center{radius, radius};
+
+    cv::Mat circle_mask{cv::Mat::zeros(circle_bounds.size(), CV_8UC1)};
     cv::circle(
-      circle_mask, center, radius, cv::Scalar(detector_types::kWhitePixelValue), cv::FILLED);
+      circle_mask, local_center, radius, cv::Scalar(detector_types::kWhitePixelValue), cv::FILLED);
 
     cv::Mat white_overlap;
-    cv::bitwise_and(mask, circle_mask, white_overlap);
+    cv::bitwise_and(mask(circle_bounds), circle_mask, white_overlap);
 
     const double circle_area{static_cast<double>(cv::countNonZero(circle_mask))};
     if (circle_area <= 0.0)
@@ -253,7 +256,7 @@ void BallDetector::CollectHoughCandidate(const cv::Mat& frame,
         return;
     }
 
-    const cv::Scalar mean_bgr{cv::mean(frame, circle_mask)};
+    const cv::Scalar mean_bgr{cv::mean(frame(circle_bounds), circle_mask)};
     const double brightness{
       (mean_bgr[0] + mean_bgr[1] + mean_bgr[2]) /
       (detector_types::kColorChannels * detector_types::kBrightnessNormalization)};
@@ -327,6 +330,66 @@ double BallDetector::ComputeBallSpeedMetersPerSecond() const
     return speed_pixels_per_frame * detector_types::kDefaultProcessingFps * meters_per_pixel;
 }
 
+cv::Rect BallDetector::GetDetectionRoi(const cv::Mat& frame) const
+{
+    if (!playfield_detector_.HasDetection())
+    {
+        return cv::Rect{0, 0, frame.cols, frame.rows};
+    }
+
+    const cv::Rect playfield_bounds{cv::boundingRect(playfield_detector_.GetPolygon())};
+    cv::Rect clamped_bounds{playfield_bounds & cv::Rect{0, 0, frame.cols, frame.rows}};
+    if (clamped_bounds.width > 0 && clamped_bounds.height > 0)
+    {
+        return clamped_bounds;
+    }
+
+    return cv::Rect{0, 0, frame.cols, frame.rows};
+}
+
+void BallDetector::DetectInRoi(const cv::Mat& frame,
+                               const cv::Mat& playfield_mask,
+                               const cv::Rect& detection_roi)
+{
+    const cv::Mat frame_roi{frame(detection_roi)};
+    const cv::Mat playfield_mask_roi{playfield_mask.empty() ? cv::Mat{}
+                                                            : playfield_mask(detection_roi)};
+
+    cv::Mat color_mask{BuildColorMask(frame_roi)};
+    if (!playfield_mask_roi.empty())
+    {
+        mask_utils::write_mask_if_verbose(detector_types::kFieldMaskPath, playfield_mask_roi);
+        cv::bitwise_and(color_mask, playfield_mask_roi, color_mask);
+    }
+
+    cv::Mat gray{BuildGrayFrame(frame_roi, playfield_mask_roi)};
+    mask_utils::write_mask_if_verbose(detector_types::kGrayMaskPath, gray);
+    bool has_reliable_foreground{false};
+    cv::Mat mask{BuildDetectionMask(color_mask, gray, playfield_mask_roi, has_reliable_foreground)};
+    mask_utils::write_mask_if_verbose(detector_types::kBallMaskPath, mask);
+
+    if (has_reliable_foreground &&
+        foreground_confirmed_frames_ < detector_types::kBallStartupForegroundWarmupFrames)
+    {
+        ++foreground_confirmed_frames_;
+    }
+
+    if (foreground_confirmed_frames_ < detector_types::kBallStartupForegroundWarmupFrames)
+    {
+        ResetTrackingState();
+        return;
+    }
+
+    ResetBestCandidate();
+    ScoreHoughCandidates(frame_roi, gray, mask);
+    if (best_candidate_.found)
+    {
+        best_candidate_.center += detection_roi.tl();
+    }
+    UpdateTrackingState();
+    ball_position_recorder_.RecordSample(measurement_.position.y);
+}
+
 void BallDetector::Draw(cv::Mat& frame) const
 {
     playfield_detector_.Draw(frame);
@@ -372,44 +435,7 @@ void BallDetector::Detect(const cv::Mat& frame)
 {
     measurement_ = BallMeasurement{};
 
-    cv::Mat color_mask{BuildColorMask(frame)};
-
     playfield_detector_.Detect(frame);
     const cv::Mat& playfield_mask{playfield_detector_.GetMask()};
-    if (playfield_detector_.HasDetection())
-    {
-        mask_utils::write_mask_if_verbose(detector_types::kFieldMaskPath, playfield_mask);
-        cv::bitwise_and(color_mask, playfield_mask, color_mask);
-    }
-
-    cv::Mat gray{BuildGrayFrame(frame, playfield_mask)};
-    mask_utils::write_mask_if_verbose(detector_types::kGrayMaskPath, gray);
-    bool has_reliable_foreground{false};
-    cv::Mat mask{BuildDetectionMask(color_mask, gray, playfield_mask, has_reliable_foreground)};
-    mask_utils::write_mask_if_verbose(detector_types::kBallMaskPath, mask);
-
-    if (has_reliable_foreground &&
-        foreground_confirmed_frames_ < detector_types::kBallStartupForegroundWarmupFrames)
-    {
-        ++foreground_confirmed_frames_;
-    }
-
-    if (foreground_confirmed_frames_ < detector_types::kBallStartupForegroundWarmupFrames)
-    {
-        ResetTrackingState();
-        return;
-    }
-
-    ResetBestCandidate();
-    ScoreHoughCandidates(frame, gray, mask);
-    UpdateTrackingState();
-    ball_position_recorder_.RecordSample(measurement_.position.y);
-}
-
-cv::Mat detect_ball(cv::Mat& frame)
-{
-    static BallDetector detector;
-    detector.Detect(frame);
-    detector.Draw(frame);
-    return frame;
+    DetectInRoi(frame, playfield_mask, GetDetectionRoi(frame));
 }

@@ -7,12 +7,36 @@
 #include <optional>
 #include <system_error>
 
-#include "detector.hpp"
+#include "ball_detector.hpp"
 #include "frame_processor.hpp"
 #include "generator.hpp"
+#include "goal_detector.hpp"
+#include "players_detector.hpp"
+#include "playfield_detector.hpp"
 #include "processing_config.hpp"
 #include "ratings_service.hpp"
 #include "reader_factory.hpp"
+
+ModelMain::ModelMain()
+{
+    detectors_.emplace_back(std::make_unique<PlayfieldDetector>());
+    detectors_.emplace_back(std::make_unique<BallDetector>());
+    detectors_.emplace_back(std::make_unique<GoalDetector>());
+    detectors_.emplace_back(std::make_unique<PlayersDetector>());
+}
+
+void ModelMain::ProcessFrame(cv::Mat& frame) const
+{
+    for (const auto& detector : detectors_)
+    {
+        detector->Detect(frame);
+    }
+
+    for (const auto& detector : detectors_)
+    {
+        detector->Draw(frame);
+    }
+}
 
 void ModelMain::CalculateFromStream()
 {
@@ -22,7 +46,7 @@ void ModelMain::CalculateFromStream()
     frame_processor.SetReaderType(config.reader_type);
 
     frame_processor.ProcessFrames(config.target,
-                                  [&](cv::Mat& current_frame) { detect_ball(current_frame); });
+                                  [&](cv::Mat& current_frame) { ProcessFrame(current_frame); });
 
     temp_output_path_ = frame_processor.GetTempOutputPath();
     spdlog::info("CalculateFromStream: zapisano tymczasowo do: {}", temp_output_path_);
@@ -48,7 +72,7 @@ void ModelMain::CalculateFromFile()
     frame_processor.SetReaderType(ReaderType::kRecording);
 
     frame_processor.ProcessFrames(loaded_file_path_,
-                                  [&](cv::Mat& current_frame) { detect_ball(current_frame); });
+                                  [&](cv::Mat& current_frame) { ProcessFrame(current_frame); });
 
     temp_output_path_         = frame_processor.GetTempOutputPath();
     can_analyze_offline_file_ = false;

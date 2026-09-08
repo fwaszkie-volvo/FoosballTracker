@@ -1,16 +1,11 @@
 #include "playfield_detector.hpp"
 
-#include <bits/std_abs.h>
 #include <opencv2/core/hal/interface.h>
 
-#include <cmath>
-#include <cstdlib>
 #include <opencv2/core.hpp>
-#include <opencv2/core/mat.hpp>
+#include <opencv2/core/base.hpp>
 #include <opencv2/core/mat.inl.hpp>
-#include <opencv2/core/matx.hpp>
 #include <opencv2/core/traits.hpp>
-#include <opencv2/core/types.hpp>
 #include <opencv2/imgproc.hpp>
 #include <vector>
 
@@ -37,73 +32,33 @@ bool PlayfieldDetector::ChooseLargestContour(const std::vector<Contour>& contour
 
 Contour PlayfieldDetector::ApproximatePolygon(const Contour& hull) const
 {
-    Contour best_polygon{hull};
-    int best_vertex_delta{
-      std::abs(static_cast<int>(hull.size()) - detector_types::kPlayfieldTargetVertices)};
     const double hull_perimeter{cv::arcLength(hull, true)};
-    const int epsilon_steps{static_cast<int>(
-      std::lround((detector_types::kPlayfieldApproxEnd - detector_types::kPlayfieldApproxStart) /
-                  detector_types::kPlayfieldApproxStep))};
+    Contour polygon;
+    cv::approxPolyDP(
+      hull, polygon, detector_types::kPlayfieldApproximationRatio * hull_perimeter, true);
 
-    for (int epsilon_step{0}; epsilon_step <= epsilon_steps; ++epsilon_step)
-    {
-        const double epsilon_scale{detector_types::kPlayfieldApproxStart +
-                                   (epsilon_step * detector_types::kPlayfieldApproxStep)};
-        Contour polygon;
-        cv::approxPolyDP(hull, polygon, epsilon_scale * hull_perimeter, true);
-
-        if (polygon.size() < 4)
-        {
-            continue;
-        }
-
-        const int vertex_delta{
-          std::abs(static_cast<int>(polygon.size()) - detector_types::kPlayfieldTargetVertices)};
-        if (vertex_delta < best_vertex_delta)
-        {
-            best_vertex_delta = vertex_delta;
-            best_polygon      = polygon;
-        }
-
-        if (polygon.size() == detector_types::kPlayfieldTargetVertices)
-        {
-            return polygon;
-        }
-    }
-
-    return best_polygon;
+    return polygon.size() >= 4 ? polygon : hull;
 }
 
-void PlayfieldDetector::Detect(const cv::Mat& frame)
+cv::Mat PlayfieldDetector::BuildGreenMask(const cv::Mat& frame) const
 {
-    detected_ = false;
-    playfield_polygon_.clear();
-    playfield_mask_.release();
-
     cv::Mat green_mask{
       mask_utils::build_hsv_mask(frame, detector_types::kLowerGreen, detector_types::kUpperGreen)};
     cv::Mat green_dominance_mask;
-
     std::vector<cv::Mat> bgr_channels;
     cv::split(frame, bgr_channels);
 
-    cv::Mat green_minus_red;
-    cv::Mat green_minus_blue;
-    cv::subtract(bgr_channels[1], bgr_channels[2], green_minus_red);
-    cv::subtract(bgr_channels[1], bgr_channels[0], green_minus_blue);
+    cv::Mat green_channel;
+    cv::Mat scaled_red_channel;
+    cv::Mat scaled_blue_channel;
+    bgr_channels[1].convertTo(green_channel, CV_32F);
+    bgr_channels[2].convertTo(scaled_red_channel, CV_32F, detector_types::kGreenDominanceRatio);
+    bgr_channels[0].convertTo(scaled_blue_channel, CV_32F, detector_types::kGreenDominanceRatio);
 
     cv::Mat green_over_red_mask;
     cv::Mat green_over_blue_mask;
-    cv::threshold(green_minus_red,
-                  green_over_red_mask,
-                  detector_types::kGreenDominanceThreshold,
-                  255,
-                  cv::THRESH_BINARY);
-    cv::threshold(green_minus_blue,
-                  green_over_blue_mask,
-                  detector_types::kGreenDominanceThreshold,
-                  255,
-                  cv::THRESH_BINARY);
+    cv::compare(green_channel, scaled_red_channel, green_over_red_mask, cv::CMP_GT);
+    cv::compare(green_channel, scaled_blue_channel, green_over_blue_mask, cv::CMP_GT);
     cv::bitwise_and(green_over_red_mask, green_over_blue_mask, green_dominance_mask);
     cv::bitwise_and(green_mask, green_dominance_mask, green_mask);
 
@@ -111,15 +66,57 @@ void PlayfieldDetector::Detect(const cv::Mat& frame)
       mask_utils::create_kernel(detector_types::kPlayfieldKernelSize, cv::MORPH_ELLIPSE)};
     cv::morphologyEx(green_mask, green_mask, cv::MORPH_CLOSE, kernel);
     cv::morphologyEx(green_mask, green_mask, cv::MORPH_OPEN, kernel);
-    cv::dilate(green_mask,
-               green_mask,
-               kernel,
-               cv::Point(-1, -1),
-               detector_types::kPlayfieldDilateIterations);
+    cv::Mat horizontal_kernel{cv::getStructuringElement(
+      cv::MORPH_RECT, detector_types::kPlayfieldHorizontalCloseKernelSize)};
+    cv::morphologyEx(green_mask, green_mask, cv::MORPH_CLOSE, horizontal_kernel);
+    return green_mask;
+}
+
+bool PlayfieldDetector::SelectPlayfieldPoints(const cv::Mat& green_mask,
+                                              const Contour& largest_contour,
+                                              Contour& playfield_points) const
+{
+    cv::Mat column_coverage;
+    cv::reduce(green_mask, column_coverage, 0, cv::REDUCE_SUM, CV_32S);
+    double maximum_column_coverage{};
+    cv::minMaxLoc(column_coverage, nullptr, &maximum_column_coverage);
+    const double minimum_column_coverage{maximum_column_coverage *
+                                         detector_types::kPlayfieldColumnMinCoverageRatio};
+    for (const auto& point : largest_contour)
+    {
+        if (column_coverage.at<int>(0, point.x) >= minimum_column_coverage)
+        {
+            playfield_points.push_back(point);
+        }
+    }
+    return !playfield_points.empty();
+}
+
+bool PlayfieldDetector::IsValidPlayfield(const Contour& playfield_contour,
+                                         const cv::Size& frame_size) const
+{
+    const double frame_area{static_cast<double>(frame_size.height) * frame_size.width};
+    const cv::Rect hull_bounds{cv::boundingRect(playfield_contour)};
+    return cv::contourArea(playfield_contour) >=
+             frame_area * detector_types::kPlayfieldMinFrameAreaRatio &&
+           hull_bounds.width >= frame_size.width * detector_types::kPlayfieldMinFrameWidthRatio &&
+           hull_bounds.height >= frame_size.height * detector_types::kPlayfieldMinFrameHeightRatio;
+}
+
+void PlayfieldDetector::Detect(const cv::Mat& frame)
+{
+    if (detected_)
+    {
+        return;
+    }
+
+    playfield_polygon_.clear();
+    playfield_mask_.release();
+
+    cv::Mat green_mask{BuildGreenMask(frame)};
 
     std::vector<Contour> contours;
-    std::vector<cv::Vec4i> hierarchy;
-    cv::findContours(green_mask, contours, hierarchy, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
+    cv::findContours(green_mask, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
 
     Contour largest_contour;
     if (!ChooseLargestContour(contours, largest_contour))
@@ -127,12 +124,23 @@ void PlayfieldDetector::Detect(const cv::Mat& frame)
         return;
     }
 
-    Contour hull{};
-    cv::convexHull(largest_contour, hull);
+    Contour playfield_points;
+    if (!SelectPlayfieldPoints(green_mask, largest_contour, playfield_points))
+    {
+        return;
+    }
+
+    Contour playfield_contour;
+    cv::convexHull(playfield_points, playfield_contour);
+
+    if (!IsValidPlayfield(playfield_contour, frame.size()))
+    {
+        return;
+    }
 
     playfield_mask_ = cv::Mat::zeros(frame.size(), CV_8UC1);
-    cv::fillConvexPoly(playfield_mask_, hull, cv::Scalar(255));
-    playfield_polygon_ = ApproximatePolygon(hull);
+    cv::fillPoly(playfield_mask_, std::vector<Contour>{playfield_contour}, cv::Scalar(255));
+    playfield_polygon_ = ApproximatePolygon(playfield_contour);
     detected_          = true;
 }
 
@@ -148,4 +156,11 @@ void PlayfieldDetector::Draw(cv::Mat& frame) const
                   true,
                   detector_types::kPlayfieldDrawColor,
                   detector_types::kDrawThickness);
+}
+
+void PlayfieldDetector::Reset()
+{
+    detected_ = false;
+    playfield_polygon_.clear();
+    playfield_mask_.release();
 }

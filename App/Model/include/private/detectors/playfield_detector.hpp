@@ -2,12 +2,13 @@
 #define FOOSBALL_TRACKER_APP_MODEL_INCLUDE_PRIVATE_DETECTORS_PLAYFIELD_DETECTOR_HPP_
 
 #include <opencv2/core/mat.hpp>
+#include <opencv2/core/types.hpp>
 #include <vector>
 
 #include "detector.hpp"
 #include "detector_types.hpp"
 
-class PlayfieldDetector : public Detector
+class PlayfieldDetector : public IDetector
 {
   public:
     void Detect(const cv::Mat& frame) override;
@@ -17,8 +18,15 @@ class PlayfieldDetector : public Detector
     const Contour& GetPolygon() const { return playfield_polygon_; }
     bool HasDetection() const { return detected_; }
 
+    void Reset();
+
   private:
+    cv::Mat BuildGreenMask(const cv::Mat& frame) const;
     bool ChooseLargestContour(const std::vector<Contour>& contours, Contour& largest_contour) const;
+    bool SelectPlayfieldPoints(const cv::Mat& green_mask,
+                               const Contour& largest_contour,
+                               Contour& playfield_points) const;
+    bool IsValidPlayfield(const Contour& playfield_contour, const cv::Size& frame_size) const;
     Contour ApproximatePolygon(const Contour& hull) const;
 
     Contour playfield_polygon_;
